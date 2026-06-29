@@ -31,21 +31,7 @@ try {
     $total_aktif = (int)($stats['total_aktif'] ?? 0);
     $total_non_aktif = $total_users - $total_aktif;
 
-    // 3. Data untuk tabel (batasi jumlah baris)
-    $stmtUsers = $conn->prepare("
-        SELECT id, nama, username, email, telepon, status
-        FROM users
-        ORDER BY id DESC
-        LIMIT :limit OFFSET :offset
-    ");
-    $stmtUsers->bindValue(':limit', $perPage, PDO::PARAM_INT);
-    $stmtUsers->bindValue(':offset', $offset, PDO::PARAM_INT);
-    $stmtUsers->execute();
-
-    $users = $stmtUsers->fetchAll(PDO::FETCH_ASSOC);
-
-    // Pagination meta
-    $totalPages = $perPage > 0 ? (int)ceil($total_users / $perPage) : 1;
+// 3. (Tidak ada query tabel users, dashboard hanya menampilkan statistik)
 
 } catch(PDOException $e) {
     echo "Koneksi gagal: " . $e->getMessage();
@@ -93,6 +79,9 @@ try {
                 <li class="nav-item">
                     <a href="dashboard.php" class="nav-link active p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
                 </li>
+                <li class="nav-item">
+                    <a href="user.php" class="nav-link p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
+                </li>
             </ul>
             <div class="mt-auto pt-3">
                 <ul class="nav flex-column gap-2">
@@ -118,6 +107,9 @@ try {
             <ul class="nav flex-column gap-2">
                 <li class="nav-item">
                     <a href="dashboard.php" class="nav-link active p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a href="user.php" class="nav-link p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
                 </li>
             </ul>
             
@@ -157,6 +149,7 @@ try {
                         </div>
                     </div>
                 </div>
+
                 <div class="col-md-4">
                     <div class="card bg-success text-white mb-3 shadow-sm">
                         <div class="card-body d-flex justify-content-between align-items-center">
@@ -168,6 +161,7 @@ try {
                         </div>
                     </div>
                 </div>
+
                 <div class="col-md-4">
                     <div class="card bg-danger text-white mb-3 shadow-sm">
                         <div class="card-body d-flex justify-content-between align-items-center">
@@ -181,231 +175,12 @@ try {
                 </div>
             </div>
 
-            <!-- TABEL DATA USERS -->
-            <div class="card shadow-sm">
-            <div class="card-header bg-white d-flex flex-column flex-sm-row gap-2 justify-content-between align-items-sm-center">
-                    <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-table me-2"></i>Tabel Manajemen Pengguna</h5>
-                    <button type="button" class="btn btn-sm btn-dark" id="btnAddUser">
-                        <i class="bi bi-plus-lg me-1"></i> Tambah User
-                    </button>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover table-striped mb-0 align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Nama</th>
-                                    <th>Username</th>
-                                    <th>Email</th>
-                                    <th>Telepon</th>
-                                    <th>Status</th>
-                                    <th style="width: 120px;">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if ($total_users > 0): ?>
-                                    <?php foreach ($users as $user): ?>
-                                        <tr>
-                                            <td class="fw-bold">#<?= htmlspecialchars($user['id']) ?></td>
-                                            <td><?= htmlspecialchars($user['nama']) ?></td>
-                                            <td><code><?= htmlspecialchars($user['username']) ?></code></td>
-                                            <td><?= htmlspecialchars($user['email']) ?></td>
-                                            <td><?= htmlspecialchars($user['telepon']) ?></td>
-                                            <td>
-                                                <span class="badge <?= $user['status'] == 1 ? 'bg-success-subtle text-success border border-success' : 'bg-danger-subtle text-danger border border-danger' ?> px-2.5 py-1.5">
-                                                    <?= $user['status'] == 1 ? 'Aktif' : 'Non-Aktif' ?>
-                                                </span>
-                                            </td>
-                                            <td class="text-end">
-                                                <button type="button" class="btn btn-sm btn-outline-primary btnEditUser"
-                                                    data-id="<?= htmlspecialchars($user['id']) ?>"
-                                                    data-nama="<?= htmlspecialchars($user['nama']) ?>"
-                                                    data-username="<?= htmlspecialchars($user['username']) ?>"
-                                                    data-email="<?= htmlspecialchars($user['email']) ?>"
-                                                    data-telepon="<?= htmlspecialchars($user['telepon']) ?>"
-                                                    data-status="<?= (int)$user['status'] ?>"
-                                                >
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                                <button type="button" class="btn btn-sm btn-outline-danger btnDeleteUser"
-                                                    data-id="<?= htmlspecialchars($user['id']) ?>"
-                                                >
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
-                                    <tr>
-                                        <td colspan="6" class="text-center py-4 text-muted">Belum ada data di tabel users.</td>
-                                    </tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
 
-                    <?php if ($total_users > 0): ?>
-                        <div class="card-footer bg-white">
-                            <nav aria-label="Page navigation">
-                                <ul class="pagination justify-content-end mb-0">
-                                    <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
-                                        <a class="page-link" href="dashboard.php?page=<?= max(1, $page - 1) ?>" tabindex="-1">&laquo; Prev</a>
-                                    </li>
-
-                                    <?php
-                                    // Tampilkan rentang halaman kecil agar tidak ramai
-                                    $start = max(1, $page - 2);
-                                    $end = min($totalPages, $page + 2);
-                                    for ($p = $start; $p <= $end; $p++):
-                                    ?>
-                                        <li class="page-item <?= $p === $page ? 'active' : '' ?>">
-                                            <a class="page-link" href="dashboard.php?page=<?= $p ?>"><?= $p ?></a>
-                                        </li>
-                                    <?php endfor; ?>
-
-                                    <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
-                                        <a class="page-link" href="dashboard.php?page=<?= min($totalPages, $page + 1) ?>">Next &raquo;</a>
-                                    </li>
-                                </ul>
-                            </nav>
-
-                            <div class="text-muted small mt-2">
-                                Menampilkan <?= count($users) ?> dari <?= $total_users ?> user (halaman <?= $page ?> / <?= max(1, $totalPages) ?>)
-                            </div>
-                        </div>
-                    <?php endif; ?>
-                </div>
-            </div>
 </main>
     </div>
 </div>
 
-<?php include 'users_modal.php'; ?>
-
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const btnAddUser = document.getElementById('btnAddUser');
-        const userModalEl = document.getElementById('userModal');
-        const userModal = userModalEl ? new bootstrap.Modal(userModalEl) : null;
-
-        const form = document.getElementById('userForm');
-        const formAction = document.getElementById('formAction');
-        const formId = document.getElementById('formId');
-        const fieldNama = document.getElementById('fieldNama');
-        const fieldUsername = document.getElementById('fieldUsername');
-        const fieldEmail = document.getElementById('fieldEmail');
-        const fieldTelepon = document.getElementById('fieldTelepon');
-        const fieldStatus = document.getElementById('fieldStatus');
-        const formError = document.getElementById('formError');
-
-        function setError(msg) {
-            if (!formError) return;
-            if (!msg) {
-                formError.classList.add('d-none');
-                formError.textContent = '';
-                return;
-            }
-            formError.textContent = msg;
-            formError.classList.remove('d-none');
-        }
-
-        function resetForm() {
-            if (!form) return;
-            form.reset();
-            if (formAction) formAction.value = 'create';
-            if (formId) formId.value = '';
-            setError('');
-        }
-
-        if (btnAddUser && userModal) {
-            btnAddUser.addEventListener('click', () => {
-                resetForm();
-                if (fieldStatus) fieldStatus.value = '1';
-                userModal.show();
-            });
-        }
-
-document.querySelectorAll('.btnEditUser').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const id = btn.getAttribute('data-id') || '';
-                const nama = btn.getAttribute('data-nama') || '';
-                const username = btn.getAttribute('data-username') || '';
-                const email = btn.getAttribute('data-email') || '';
-                const telepon = btn.getAttribute('data-telepon') || '';
-                const status = btn.getAttribute('data-status') || '0';
-
-                if (formAction) formAction.value = 'update';
-                if (formId) formId.value = id;
-                if (fieldNama) fieldNama.value = nama;
-                if (fieldUsername) fieldUsername.value = username;
-                if (fieldEmail) fieldEmail.value = email;
-                if (fieldTelepon) fieldTelepon.value = telepon;
-                if (fieldStatus) fieldStatus.value = String(status);
-
-                setError('');
-                userModal.show();
-            });
-        });
-
-        document.querySelectorAll('.btnDeleteUser').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const id = btn.getAttribute('data-id');
-                if (!id) return;
-                if (!confirm('Hapus user ID ' + id + '?')) return;
-
-                const fd = new FormData();
-                fd.append('action', 'delete');
-                fd.append('id', id);
-
-                try {
-                    const res = await fetch('crud_users.php', {
-                        method: 'POST',
-                        body: fd
-                    });
-                    const json = await res.json();
-                    if (!json.ok) {
-                        alert(json.message || 'Gagal menghapus');
-                        return;
-                    }
-                    location.reload();
-                } catch (e) {
-                    alert('Gagal menghapus');
-                }
-            });
-        });
-
-        if (form) {
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                setError('');
-
-                const fd = new FormData(form);
-                const action = fd.get('action');
-                if (!action) fd.set('action', 'create');
-
-                try {
-                    const res = await fetch('crud_users.php', {
-                        method: 'POST',
-                        body: fd
-                    });
-                    const json = await res.json();
-
-                    if (!json.ok) {
-                        setError(json.message || 'Gagal menyimpan');
-                        return;
-                    }
-
-                    userModal.hide();
-                    location.reload();
-                } catch (err) {
-                    setError('Gagal menyimpan');
-                }
-            });
-        }
-    });
-</script>
 </body>
 </html>

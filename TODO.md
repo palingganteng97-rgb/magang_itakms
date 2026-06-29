@@ -1,5 +1,5 @@
-- [x] Update dashboard.php: ganti hitung statistik dari fetchAll->COUNT/SUM SQL
-- [x] Update dashboard.php: paginasi sederhana untuk tabel (LIMIT 50) + tampilkan total data/halaman
-- [x] Bikin tampilan lebih bagus: perapihan Bootstrap CSS/Icons
-- [ ] Test buka dashboard.php di browser, pastikan tidak error dan data tampil
+- [ ] Refactor dashboard.php: jadikan hanya menampilkan statistik (hapus tab/panel User Profil, tabel users, pagination, include modal, dan script CRUD)
+- [ ] Refactor user.php: jadikan hanya halaman manajemen user (hapus statistik ringkas)
+- [ ] Cek bahwa modal CRUD (users_modal.php) dan endpoint (crud_users.php) tetap berfungsi untuk user.php
+- [ ] Reload dashboard.php dan user.php untuk verifikasi tampilan sesuai requirement
 
