@@ -29,7 +29,7 @@ try {
     $stmtUsers = $conn->prepare(
         "SELECT id, nama, username, email, telepon, status
          FROM users
-         ORDER BY id DESC
+         ORDER BY id ASC
          LIMIT :limit OFFSET :offset"
     );
     $stmtUsers->bindValue(':limit', $perPage, PDO::PARAM_INT);

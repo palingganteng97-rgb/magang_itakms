@@ -38,6 +38,11 @@
                         </div>
 
                         <div class="col-md-6">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" name="password" id="fieldPassword" required>
+                        </div>
+
+                        <div class="col-md-6">
                             <label class="form-label">Status</label>
                             <select class="form-select" name="status" id="fieldStatus" required>
                                 <option value="1">Aktif</option>

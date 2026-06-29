@@ -21,8 +21,7 @@ try {
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     $action = $_POST['action'] ?? '';
-
-    if (!in_array($action, ['create','update','delete'], true)) {
+    if (!in_array($action, ['create', 'update', 'delete'], true)) {
         respond(false, 'Invalid action.');
     }
 
@@ -34,17 +33,11 @@ try {
     $status = isset($_POST['status']) ? (int)$_POST['status'] : 0;
     $role_id = isset($_POST['role_id']) ? (int)$_POST['role_id'] : 0;
 
-    // password default untuk user baru (123456)
-    $passwordDefaultPlain = '123456';
-    $passwordHash = password_hash($passwordDefaultPlain, PASSWORD_DEFAULT);
-
-
     if ($action === 'create' || $action === 'update') {
-
         if ($nama === '' || $usernameInput === '' || $email === '' || $telepon === '') {
             respond(false, 'Semua field harus diisi: nama, username, email, telepon.');
         }
-        if (!in_array($status, [0,1], true)) {
+        if (!in_array($status, [0, 1], true)) {
             respond(false, 'Status tidak valid.');
         }
         if ($role_id <= 0) {
@@ -52,12 +45,18 @@ try {
         }
     }
 
-
     if ($action === 'create') {
-        $stmt = $conn->prepare("
-            INSERT INTO users (nama, username, email, telepon, status, role_id, password)
-            VALUES (:nama, :username, :email, :telepon, :status, :role_id, :password)
-        ");
+        $passwordPlain = trim($_POST['password'] ?? '');
+        if ($passwordPlain === '') {
+            respond(false, 'Password wajib diisi.');
+        }
+
+        $passwordHash = password_hash($passwordPlain, PASSWORD_DEFAULT);
+
+        $stmt = $conn->prepare(
+            "INSERT INTO users (nama, username, email, telepon, status, role_id, password)
+             VALUES (:nama, :username, :email, :telepon, :status, :role_id, :password)"
+        );
         $stmt->execute([
             ':nama' => $nama,
             ':username' => $usernameInput,
@@ -67,7 +66,6 @@ try {
             ':role_id' => $role_id,
             ':password' => $passwordHash
         ]);
-
 
         respond(true, 'User berhasil ditambahkan.', [
             'id' => (int)$conn->lastInsertId()
@@ -80,17 +78,17 @@ try {
             respond(false, 'ID tidak valid.');
         }
 
-        $stmt = $conn->prepare("
-            UPDATE users
-            SET nama = :nama,
-                username = :username,
-                email = :email,
-                telepon = :telepon,
-                status = :status,
-                role_id = :role_id
-            WHERE id = :id
-
-        ");
+        // Update field tanpa password
+        $stmt = $conn->prepare(
+            "UPDATE users
+             SET nama = :nama,
+                 username = :username,
+                 email = :email,
+                 telepon = :telepon,
+                 status = :status,
+                 role_id = :role_id
+             WHERE id = :id"
+        );
         $stmt->execute([
             ':nama' => $nama,
             ':username' => $usernameInput,
@@ -101,6 +99,16 @@ try {
             ':id' => $id
         ]);
 
+        // Jika password diisi, update juga
+        $passwordPlain = trim($_POST['password'] ?? '');
+        if ($passwordPlain !== '') {
+            $passwordHash = password_hash($passwordPlain, PASSWORD_DEFAULT);
+            $stmt2 = $conn->prepare("UPDATE users SET password = :password WHERE id = :id");
+            $stmt2->execute([
+                ':password' => $passwordHash,
+                ':id' => $id
+            ]);
+        }
 
         respond(true, 'User berhasil diupdate.');
     }
@@ -120,6 +128,5 @@ try {
 } catch (PDOException $e) {
     respond(false, 'Database error: ' . $e->getMessage());
 }
-
 ?>
 
