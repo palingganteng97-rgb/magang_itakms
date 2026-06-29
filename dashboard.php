@@ -67,7 +67,7 @@ try {
     </div>
 </nav>
 
-<!-- OFFCANVAS SIDEBAR MOBILE (hidden by default) -->
+<!-- SIDEBAR MOBILE (OFFCANVAS) -->
 <div class="offcanvas offcanvas-start text-bg-dark" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
     <div class="offcanvas-header">
         <h5 class="offcanvas-title" id="mobileSidebarLabel"><i class="bi bi-speedometer2"></i> ITAKMS</h5>
@@ -77,14 +77,18 @@ try {
         <nav class="sidebar p-3 d-flex flex-column" style="min-height: calc(100vh - 56px);">
             <ul class="nav flex-column gap-2">
                 <li class="nav-item">
+                    <!-- STATUS ACTIVE UNTUK DASHBOARD -->
                     <a href="dashboard.php" class="nav-link active p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
                 </li>
                 <li class="nav-item">
                     <a href="user.php" class="nav-link p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
                 </li>
-                <!-- MENU ROLES BARU UNTUK TAMPILAN MOBILE -->
                 <li class="nav-item">
                     <a href="roles.php" class="nav-link p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Roles</a>
+                </li>
+                <!-- MENU OPSI BARU: RELASI -->
+                <li class="nav-item">
+                    <a href="relasi.php" class="nav-link p-2 rounded"><i class="bi bi-diagram-3 me-2"></i> Relasi</a>
                 </li>
             </ul>
             <div class="mt-auto pt-3">
@@ -100,16 +104,14 @@ try {
     </div>
 </div>
 
+<!-- SIDEBAR DESKTOP -->
 <div class="container-fluid">
     <div class="row">
-        <!-- 1. Mengubah d-md-block menjadi d-md-flex -->
-        <!-- 2. Menambahkan position-fixed start-0 top-0 h-100 agar mengunci layar desktop penuh -->
         <nav class="col-md-3 col-lg-2 d-none d-md-flex flex-column sidebar p-3">
-
             <h4 class="text-center mb-4 text-warning"><i class="bi bi-speedometer2"></i> ITAKMS</h4>
-
             <ul class="nav flex-column gap-2">
                 <li class="nav-item">
+                    <!-- STATUS ACTIVE UNTUK DASHBOARD -->
                     <a href="dashboard.php" class="nav-link active p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
                 </li>
                 <li class="nav-item">
@@ -118,9 +120,11 @@ try {
                 <li class="nav-item">
                     <a href="roles.php" class="nav-link p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Roles</a>
                 </li>
+                <!-- MENU OPSI BARU: RELASI -->
+                <li class="nav-item">
+                    <a href="relasi.php" class="nav-link p-2 rounded"><i class="bi bi-diagram-3 me-2"></i> Relasi</a>
+                </li>
             </ul>
-            
-            <!-- mt-auto sekarang bekerja penuh mendorong elemen ini ke dasar -->
             <div class="mt-auto pt-3 border-top border-secondary w-100">
                 <ul class="nav flex-column gap-2">
                     <li class="nav-item">
@@ -143,7 +147,7 @@ try {
 
             </div>
 
-<!-- STATISTIC CARDS (Ringkasan Data) -->
+            <!-- STATISTIC CARDS (Ringkasan Data) -->
             <div class="row mb-4 gx-2">
                 <div class="col-md-4">
                     <div class="card bg-primary text-white mb-3 shadow-sm">

@@ -51,6 +51,7 @@ try {
     </div>
 </nav>
 
+<!-- SIDEBAR MOBILE (OFFCANVAS) -->
 <div class="offcanvas offcanvas-start text-bg-dark" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
     <div class="offcanvas-header">
         <h5 class="offcanvas-title" id="mobileSidebarLabel"><i class="bi bi-speedometer2"></i> ITAKMS</h5>
@@ -59,9 +60,19 @@ try {
     <div class="offcanvas-body p-0">
         <nav class="sidebar p-3 d-flex flex-column" style="min-height: calc(100vh - 56px);">
             <ul class="nav flex-column gap-2">
-                <li class="nav-item"><a href="dashboard.php" class="nav-link p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a></li>
-                <li class="nav-item"><a href="user.php" class="nav-link p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a></li>
-                <li class="nav-item"><a href="roles.php" class="nav-link active p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Roles</a></li>
+                <li class="nav-item">
+                    <a href="dashboard.php" class="nav-link p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a href="user.php" class="nav-link p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
+                </li>
+                <li class="nav-item">
+                    <a href="roles.php" class="nav-link active p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Roles</a>
+                </li>
+                <!-- MENU OPSI BARU: RELASI MOBILE -->
+                <li class="nav-item">
+                    <a href="relasi.php" class="nav-link p-2 rounded"><i class="bi bi-diagram-3 me-2"></i> Relasi</a>
+                </li>
             </ul>
             <div class="mt-auto pt-3">
                 <ul class="nav flex-column gap-2">
@@ -76,14 +87,25 @@ try {
     </div>
 </div>
 
+<!-- SIDEBAR DESKTOP -->
 <div class="container-fluid">
     <div class="row">
         <nav class="col-md-3 col-lg-2 d-none d-md-flex flex-column sidebar p-3">
             <h4 class="text-center mb-4 text-warning"><i class="bi bi-speedometer2"></i> ITAKMS</h4>
             <ul class="nav flex-column gap-2">
-                <li class="nav-item"><a href="dashboard.php" class="nav-link p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a></li>
-                <li class="nav-item"><a href="user.php" class="nav-link p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a></li>
-                <li class="nav-item"><a href="roles.php" class="nav-link active p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Roles</a></li>
+                <li class="nav-item">
+                    <a href="dashboard.php" class="nav-link p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a href="user.php" class="nav-link p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
+                </li>
+                <li class="nav-item">
+                    <a href="roles.php" class="nav-link active p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Roles</a>
+                </li>
+                <!-- MENU OPSI BARU: RELASI DESKTOP -->
+                <li class="nav-item">
+                    <a href="relasi.php" class="nav-link p-2 rounded"><i class="bi bi-diagram-3 me-2"></i> Relasi</a>
+                </li>
             </ul>
             <div class="mt-auto pt-3 border-top border-secondary w-100">
                 <ul class="nav flex-column gap-2">

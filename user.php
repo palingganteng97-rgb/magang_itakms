@@ -90,6 +90,10 @@ try {
                 <li class="nav-item">
                     <a href="roles.php" class="nav-link p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Roles</a>
                 </li>
+                <!-- MENU OPSI BARU: RELASI -->
+                <li class="nav-item">
+                    <a href="relasi.php" class="nav-link p-2 rounded"><i class="bi bi-diagram-3 me-2"></i> Relasi</a>
+                </li>
             </ul>
             <div class="mt-auto pt-3">
                 <ul class="nav flex-column gap-2">
@@ -117,6 +121,10 @@ try {
                 </li>
                 <li class="nav-item">
                     <a href="roles.php" class="nav-link p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Roles</a>
+                </li>
+                <!-- MENU OPSI BARU: RELASI -->
+                <li class="nav-item">
+                    <a href="relasi.php" class="nav-link p-2 rounded"><i class="bi bi-diagram-3 me-2"></i> Relasi</a>
                 </li>
             </ul>
             <div class="mt-auto pt-3 border-top border-secondary w-100">
