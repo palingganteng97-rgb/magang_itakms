@@ -14,11 +14,11 @@ $success = '';
 // - Anda bisa mengganti menjadi mekanisme email token jika sudah menyiapkan kolom token.
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username'] ?? '');
     $email = trim($_POST['email'] ?? '');
+    $newPassword = $_POST['password'] ?? '';
 
-    if ($username === '' && $email === '') {
-        $errors[] = 'Masukkan username atau email.';
+    if ($email === '' || $newPassword === '') {
+        $errors[] = 'Email dan password baru wajib diisi.';
     } else {
         // Cek user ada
         $stmt = $conn->prepare('SELECT id, status FROM users WHERE (username = :username OR email = :email) LIMIT 1');
@@ -59,11 +59,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </style>
 </head>
 <body>
-<div class="container d-flex align-items-center" style="min-height: 100vh;">
+<div class="container px-2 d-flex align-items-center" style="min-height: 100vh;">
     <div class="row w-100 justify-content-center">
         <div class="col-12 col-md-6 col-lg-5">
-            <div class="text-center mb-4">
-                <h3 class="brand mb-0"><i class="bi bi-shield-lock"></i> ITAKMS</h3>
+            <div class="text-center mb-3">
+                <h3 class="brand mb-0" style="font-size:1.25rem;"><i class="bi bi-shield-lock"></i> ITAKMS</h3>
                 <div class="text-muted">Reset password</div>
             </div>
 
@@ -87,23 +87,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <form method="POST" autocomplete="off">
                         <div class="mb-3">
-                            <label class="form-label">Username (opsional)</label>
-                            <input class="form-control" name="username" type="text" value="<?= htmlspecialchars($_POST['username'] ?? '') ?>">
+                            <label class="form-label">Email</label>
+                            <input class="form-control" name="email" type="email" required value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Email (opsional)</label>
-                            <input class="form-control" name="email" type="email" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
+                            <label class="form-label">Password Baru</label>
+                            <input class="form-control" name="password" type="password" required>
+                            <div class="form-text">Demo: reset password langsung (tanpa token/email verification).</div>
                         </div>
 
                         <button class="btn btn-dark w-100" type="submit">
-                            <i class="bi bi-send me-1"></i> Kirim Instruksi
+                            <i class="bi bi-unlock me-1"></i> Ubah Password
                         </button>
 
                         <div class="text-center mt-3">
                             <a href="login.php" class="link-dark text-decoration-none">Kembali ke Login</a>
                         </div>
                     </form>
+
 
                     <div class="text-center text-muted small mt-3">
                         Catatan: fitur ini placeholder karena belum ada kolom token reset.

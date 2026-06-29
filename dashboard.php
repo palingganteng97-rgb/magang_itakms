@@ -71,9 +71,45 @@ try {
 </head>
 <body>
 
+<!-- TOPBAR MOBILE -->
+<nav class="navbar navbar-dark bg-dark d-md-none px-3 shadow">
+    <div class="d-flex align-items-center justify-content-between w-100">
+        <span class="navbar-brand text-warning fw-bold"><i class="bi bi-speedometer2"></i> ITAKMS</span>
+        <button class="btn btn-outline-light btn-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar">
+            <i class="bi bi-list"></i>
+        </button>
+    </div>
+</nav>
+
+<!-- OFFCANVAS SIDEBAR MOBILE (hidden by default) -->
+<div class="offcanvas offcanvas-start text-bg-dark" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="mobileSidebarLabel"><i class="bi bi-speedometer2"></i> ITAKMS</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body p-0">
+        <nav class="sidebar p-3 d-flex flex-column" style="min-height: calc(100vh - 56px);">
+            <ul class="nav flex-column gap-2">
+                <li class="nav-item">
+                    <a href="dashboard.php" class="nav-link active p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
+                </li>
+            </ul>
+            <div class="mt-auto pt-3">
+                <ul class="nav flex-column gap-2">
+                    <li class="nav-item">
+                        <a href="logout.php" class="nav-link p-2 rounded" style="color:#dc3545 !important;">
+                            <i class="bi bi-box-arrow-right me-2" style="color:#dc3545 !important;"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </div>
+</div>
+
 <div class="container-fluid">
     <div class="row">
-        <nav class="col-md-3 col-lg-2 d-md-block sidebar p-3 d-flex flex-column">
+        <nav class="col-md-3 col-lg-2 d-none d-md-block sidebar p-3 d-flex flex-column">
             <h4 class="text-center mb-4 text-warning"><i class="bi bi-speedometer2"></i> ITAKMS</h4>
             <ul class="nav flex-column gap-2">
                 <li class="nav-item">
@@ -99,8 +135,8 @@ try {
 
             </div>
 
-            <!-- STATISTIC CARDS (Ringkasan Data) -->
-            <div class="row mb-4">
+<!-- STATISTIC CARDS (Ringkasan Data) -->
+            <div class="row mb-4 gx-2">
                 <div class="col-md-4">
                     <div class="card bg-primary text-white mb-3 shadow-sm">
                         <div class="card-body d-flex justify-content-between align-items-center">
@@ -138,7 +174,7 @@ try {
 
             <!-- TABEL DATA USERS -->
             <div class="card shadow-sm">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <div class="card-header bg-white d-flex flex-column flex-sm-row gap-2 justify-content-between align-items-sm-center">
                     <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-table me-2"></i>Tabel Manajemen Pengguna</h5>
                     <button type="button" class="btn btn-sm btn-dark" id="btnAddUser">
                         <i class="bi bi-plus-lg me-1"></i> Tambah User

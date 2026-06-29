@@ -73,9 +73,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </style>
 </head>
 <body>
-<div class="container d-flex align-items-center" style="min-height: 100vh;">
+<div class="container px-2 d-flex align-items-center" style="min-height: 100vh;">
     <div class="row w-100 justify-content-center">
-        <div class="col-12 col-md-6 col-lg-4">
+        <div class="col-12 col-sm-10 col-md-6 col-lg-4">
+
             <div class="text-center mb-4">
                 <h3 class="brand mb-0"><i class="bi bi-speedometer2"></i> ITAKMS</h3>
                 <div class="text-muted">Silakan login untuk masuk ke dashboard</div>

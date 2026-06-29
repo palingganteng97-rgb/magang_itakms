@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </style>
 </head>
 <body>
-<div class="container d-flex align-items-center" style="min-height: 100vh;">
+<div class="container px-2 d-flex align-items-center" style="min-height: 100vh;">
     <div class="row w-100 justify-content-center">
         <div class="col-12 col-md-6 col-lg-4">
             <div class="text-center mb-4">
