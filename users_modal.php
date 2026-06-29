@@ -45,6 +45,19 @@
                             </select>
                         </div>
 
+                        <div class="col-md-6">
+                            <label class="form-label">Role</label>
+                            <select class="form-select" name="role_id" id="fieldRoleId" required>
+                                <option value="1">Super Admin</option>
+                                <option value="2">Admin IT</option>
+                                <option value="3">Teknisi</option>
+                                <option value="4">Viewer</option>
+                            </select>
+                        </div>
+
+
+
+
                         <div class="col-md-6 d-flex align-items-end">
                             <div class="w-100">
                                 <div class="alert alert-danger py-2 mb-0 d-none" id="formError"></div>

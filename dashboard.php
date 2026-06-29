@@ -82,6 +82,10 @@ try {
                 <li class="nav-item">
                     <a href="user.php" class="nav-link p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
                 </li>
+                <!-- MENU ROLES BARU UNTUK TAMPILAN MOBILE -->
+                <li class="nav-item">
+                    <a href="roles.php" class="nav-link p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Roles</a>
+                </li>
             </ul>
             <div class="mt-auto pt-3">
                 <ul class="nav flex-column gap-2">
@@ -110,6 +114,9 @@ try {
                 </li>
                 <li class="nav-item">
                     <a href="user.php" class="nav-link p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
+                </li>
+                <li class="nav-item">
+                    <a href="roles.php" class="nav-link p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Roles</a>
                 </li>
             </ul>
             

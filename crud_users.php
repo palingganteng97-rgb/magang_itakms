@@ -32,28 +32,42 @@ try {
     $email = trim($_POST['email'] ?? '');
     $telepon = trim($_POST['telepon'] ?? '');
     $status = isset($_POST['status']) ? (int)$_POST['status'] : 0;
+    $role_id = isset($_POST['role_id']) ? (int)$_POST['role_id'] : 0;
+
+    // password default untuk user baru (123456)
+    $passwordDefaultPlain = '123456';
+    $passwordHash = password_hash($passwordDefaultPlain, PASSWORD_DEFAULT);
+
 
     if ($action === 'create' || $action === 'update') {
+
         if ($nama === '' || $usernameInput === '' || $email === '' || $telepon === '') {
             respond(false, 'Semua field harus diisi: nama, username, email, telepon.');
         }
         if (!in_array($status, [0,1], true)) {
             respond(false, 'Status tidak valid.');
         }
+        if ($role_id <= 0) {
+            respond(false, 'role_id tidak valid.');
+        }
     }
+
 
     if ($action === 'create') {
         $stmt = $conn->prepare("
-            INSERT INTO users (nama, username, email, telepon, status)
-            VALUES (:nama, :username, :email, :telepon, :status)
+            INSERT INTO users (nama, username, email, telepon, status, role_id, password)
+            VALUES (:nama, :username, :email, :telepon, :status, :role_id, :password)
         ");
         $stmt->execute([
             ':nama' => $nama,
             ':username' => $usernameInput,
             ':email' => $email,
             ':telepon' => $telepon,
-            ':status' => $status
+            ':status' => $status,
+            ':role_id' => $role_id,
+            ':password' => $passwordHash
         ]);
+
 
         respond(true, 'User berhasil ditambahkan.', [
             'id' => (int)$conn->lastInsertId()
@@ -72,8 +86,10 @@ try {
                 username = :username,
                 email = :email,
                 telepon = :telepon,
-                status = :status
+                status = :status,
+                role_id = :role_id
             WHERE id = :id
+
         ");
         $stmt->execute([
             ':nama' => $nama,
@@ -81,8 +97,10 @@ try {
             ':email' => $email,
             ':telepon' => $telepon,
             ':status' => $status,
+            ':role_id' => $role_id,
             ':id' => $id
         ]);
+
 
         respond(true, 'User berhasil diupdate.');
     }
