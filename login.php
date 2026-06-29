@@ -12,27 +12,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Username dan password wajib diisi.';
     } else {
         // Kolom password & status menyesuaikan struktur tabel users.
-        // Pastikan di DB: nama kolom password adalah `password` (bukan password_hash)
-        // dan status aktif bernilai 1.
+        // Pastikan di DB: nama kolom password adalah `password`.
         $stmt = $conn->prepare('SELECT id, nama, username, status, password FROM users WHERE username = :username LIMIT 1');
         $stmt->execute([':username' => $username]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$user) {
-            $errors[] = 'Username tidak ditemukan.';
-        } elseif (!password_verify($password, $user['password'] ?? '')) {
-            // Jika field password di tabel masih plaintext (belum hash), ganti menjadi: $password !== ($user['password'] ?? '')
-            $errors[] = 'Password salah.';
-        } elseif ((int)($user['status'] ?? 0) !== 1) {
-            $errors[] = 'Akun tidak aktif.';
+            $errors[] = 'User tidak terdaftar. Periksa username.';
         } else {
-            $_SESSION['user'] = [
-                'id' => (int)$user['id'],
-                'nama' => $user['nama'],
-                'username' => $user['username']
-            ];
-            header('Location: dashboard.php');
-            exit;
+            $storedPassword = (string)($user['password'] ?? '');
+            $isValid = false;
+
+            // Jika tersimpan hash bcrypt -> gunakan password_verify
+            if (
+                $storedPassword !== '' && (
+                    str_starts_with($storedPassword, '$2y$') ||
+                    str_starts_with($storedPassword, '$2a$') ||
+                    str_starts_with($storedPassword, '$2b$')
+                )
+            ) {
+                $isValid = password_verify($password, $storedPassword);
+            } else {
+                // Jika ternyata plaintext -> bandingkan langsung
+                $isValid = ($password === $storedPassword);
+            }
+
+            if (!$isValid) {
+                $errors[] = 'Password salah.';
+            } elseif ((int)($user['status'] ?? 0) !== 1) {
+                $errors[] = 'Akun tidak aktif.';
+            } else {
+                $_SESSION['user'] = [
+                    'id' => (int)$user['id'],
+                    'nama' => $user['nama'],
+                    'username' => $user['username']
+                ];
+                header('Location: dashboard.php');
+                exit;
+            }
         }
     }
 }
@@ -93,9 +110,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <i class="bi bi-box-arrow-in-right me-1"></i> Masuk
                         </button>
 
-                        <div class="text-center mt-3">
-                            <a href="register.php" class="link-dark text-decoration-none">Belum punya akun? Register</a>
+                        <div class="d-flex justify-content-between align-items-center mt-3 gap-2">
+                            <a href="forgot_password.php" class="link-dark text-decoration-none">Lupa Password?</a>
+                            <a href="register.php" class="link-dark text-decoration-none">Register</a>
                         </div>
+
                     </form>
                 </div>
             </div>

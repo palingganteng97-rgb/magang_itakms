@@ -73,13 +73,20 @@ try {
 
 <div class="container-fluid">
     <div class="row">
-        <nav class="col-md-3 col-lg-2 d-md-block sidebar p-3">
+        <nav class="col-md-3 col-lg-2 d-md-block sidebar p-3 d-flex flex-column">
             <h4 class="text-center mb-4 text-warning"><i class="bi bi-speedometer2"></i> ITAKMS</h4>
             <ul class="nav flex-column gap-2">
                 <li class="nav-item">
                     <a href="dashboard.php" class="nav-link active p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
                 </li>
             </ul>
+            <div class="mt-auto">
+                <ul class="nav flex-column gap-2">
+                    <li class="nav-item">
+                        <a href="logout.php" class="nav-link p-2 rounded"><i class="bi bi-box-arrow-right me-2"></i> Logout</a>
+                    </li>
+                </ul>
+            </div>
         </nav>
         <!-- MAIN CONTENT (Konten Utama) -->
         <main class="col-md-9 col-12 px-2 px-md-4 py-4">
@@ -87,8 +94,8 @@ try {
                 <h1 class="h2">Dashboard Sistem</h1>
                 <div class="d-flex align-items-center gap-2">
                     <span class="badge bg-secondary p-2">Sesi Admin</span>
-                    <a class="btn btn-sm btn-outline-dark" href="logout.php"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
                 </div>
+
 
             </div>
 
