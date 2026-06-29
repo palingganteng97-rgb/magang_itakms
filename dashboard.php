@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__ . '/auth.php';
+require_login();
+
 // 1. Konfigurasi Database
 $host = "10.10.6.59";
 $username = "root_host";
@@ -82,7 +85,11 @@ try {
         <main class="col-md-9 col-12 px-2 px-md-4 py-4">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2">Dashboard Sistem</h1>
-                <span class="badge bg-secondary p-2">Sesi Admin</span>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-secondary p-2">Sesi Admin</span>
+                    <a class="btn btn-sm btn-outline-dark" href="logout.php"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
+                </div>
+
             </div>
 
             <!-- STATISTIC CARDS (Ringkasan Data) -->
