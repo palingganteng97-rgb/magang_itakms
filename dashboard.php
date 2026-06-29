@@ -109,21 +109,30 @@ try {
 
 <div class="container-fluid">
     <div class="row">
-        <nav class="col-md-3 col-lg-2 d-none d-md-block sidebar p-3 d-flex flex-column">
+        <!-- 1. Mengubah d-md-block menjadi d-md-flex -->
+        <!-- 2. Menambahkan position-fixed start-0 top-0 h-100 agar mengunci layar desktop penuh -->
+        <nav class="col-md-3 col-lg-2 d-none d-md-flex flex-column sidebar p-3">
+
             <h4 class="text-center mb-4 text-warning"><i class="bi bi-speedometer2"></i> ITAKMS</h4>
+
             <ul class="nav flex-column gap-2">
                 <li class="nav-item">
                     <a href="dashboard.php" class="nav-link active p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
                 </li>
             </ul>
-            <div class="mt-auto">
+            
+            <!-- mt-auto sekarang bekerja penuh mendorong elemen ini ke dasar -->
+            <div class="mt-auto pt-3 border-top border-secondary w-100">
                 <ul class="nav flex-column gap-2">
                     <li class="nav-item">
-                        <a href="logout.php" class="nav-link p-2 rounded"><i class="bi bi-box-arrow-right me-2"></i> Logout</a>
+                        <a href="logout.php" class="nav-link p-2 rounded" style="color:#dc3545 !important;">
+                            <i class="bi bi-box-arrow-right me-2" style="color:#dc3545 !important;"></i> Logout
+                        </a>
                     </li>
                 </ul>
             </div>
         </nav>
+
         <!-- MAIN CONTENT (Konten Utama) -->
         <main class="col-md-9 col-12 px-2 px-md-4 py-4">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
