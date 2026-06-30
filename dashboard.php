@@ -92,7 +92,7 @@ try {
                 </li>
                 <!-- 4. Assets (Opsi Baru) -->
                 <li class="nav-item">
-                    <a href="asset.php" class="nav-link p-2 rounded"><i class="bi bi-boxes me-2"></i> Assets</a>
+                    <a href="asset.php" class="nav-link p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
                 </li>
                 <!-- 5. User Profil -->
                 <li class="nav-item">
@@ -134,7 +134,7 @@ try {
                 </li>
                 <!-- 4. Assets (Opsi Baru) -->
                 <li class="nav-item">
-                    <a href="asset.php" class="nav-link p-2 rounded"><i class="bi bi-boxes me-2"></i> Assets</a>
+                    <a href="asset.php" class="nav-link p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
                 </li>
                 <!-- 5. User Profil -->
                 <li class="nav-item">
