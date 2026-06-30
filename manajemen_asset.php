@@ -72,209 +72,277 @@ try {
 
 <!-- SIDEBAR MOBILE (OFFCANVAS) -->
 <div class="offcanvas offcanvas-start text-bg-dark" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
-    <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="mobileSidebarLabel"><i class="bi bi-speedometer2"></i> ITAKMS</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-    </div>
-    <div class="offcanvas-body p-0">
-        <nav class="sidebar p-3 d-flex flex-column" style="min-height: calc(100vh - 56px);">
-            <ul class="nav flex-column gap-2">
-                <!-- 1. Dashboard -->
-                <li class="nav-item">
-                    <a href="dashboard.php" class="nav-link p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
-                </li>
-                <!-- 2. Manajemen Roles -->
-                <li class="nav-item">
-                    <a href="roles.php" class="nav-link p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Manajemen Roles</a>
-                </li>
-                <!-- 3. Manajemen Bangunan & Ruang -->
-                <li class="nav-item">
-                    <a href="relasi.php" class="nav-link p-2 rounded text-nowrap" style="overflow: hidden; text-overflow: ellipsis;">
-                        <i class="bi bi-diagram-3 me-2"></i> Manajemen Bangunan & Ruang
-                    </a>
-                </li>
-                <!-- 4. Assets (Opsi Baru) -->
-                <li class="nav-item">
-                    <a href="asset.php" class="nav-link active p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
-                </li>
-                <!-- 5. User Profil -->
-                <li class="nav-item">
-                    <a href="user.php" class="nav-link p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
-                </li>
-            </ul>
-            <div class="mt-auto pt-3">
-                <ul class="nav flex-column gap-2">
-                    <li class="nav-item">
-                        <a href="logout.php" class="nav-link p-2 rounded" style="color:#dc3545 !important;">
-                            <i class="bi bi-box-arrow-right me-2" style="color:#dc3545 !important;"></i> Logout
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </nav>
-    </div>
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="mobileSidebarLabel"><i class="bi bi-speedometer2"></i> ITAKMS</h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body p-0">
+    <nav class="sidebar p-3 d-flex flex-column" style="min-height: calc(100vh - 56px);">
+      <ul class="nav flex-column gap-2">
+        <!-- 1. Dashboard -->
+        <li class="nav-item">
+          <a href="dashboard.php" class="nav-link p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
+        </li>
+        <!-- 2. Manajemen Roles -->
+        <li class="nav-item">
+          <a href="roles.php" class="nav-link p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Manajemen Roles</a>
+        </li>
+        <!-- 3. Manajemen Bangunan & Ruang -->
+        <li class="nav-item">
+          <a href="relasi.php" class="nav-link p-2 rounded text-nowrap" style="overflow: hidden; text-overflow: ellipsis;">
+            <i class="bi bi-diagram-3 me-2"></i> Manajemen Bangunan & Ruang
+          </a>
+        </li>
+        <!-- 4. Assets -->
+        <li class="nav-item">
+          <a href="assets.php" class="nav-link p-2 rounded"><i class="bi bi-folder2-open me-2"></i> Assets</a>
+        </li>
+        <!-- 5. Manajemen Asset (AKTIF) -->
+        <li class="nav-item">
+          <a href="manajemen_asset.php" class="nav-link active p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
+        </li>
+        <!-- 6. User Profil -->
+        <li class="nav-item">
+          <a href="user.php" class="nav-link p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
+        </li>
+      </ul>
+      <div class="mt-auto pt-3">
+        <ul class="nav flex-column gap-2">
+          <li class="nav-item">
+            <a href="logout.php" class="nav-link p-2 rounded" style="color:#dc3545 !important;">
+              <i class="bi bi-box-arrow-right me-2" style="color:#dc3545 !important;"></i> Logout
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+  </div>
 </div>
 
-<!-- SIDEBAR DESKTOP -->
+<!-- SIDEBAR DESKTOP & KONTEN UTAMA -->
 <div class="container-fluid">
-    <div class="row">
-        <nav class="col-md-4 col-lg-3 d-none d-md-flex flex-column sidebar p-3">
-            <h4 class="text-center mb-4 text-warning"><i class="bi bi-speedometer2"></i> ITAKMS</h4>
-            <ul class="nav flex-column gap-2">
-                <!-- 1. Dashboard -->
-                <li class="nav-item">
-                    <a href="dashboard.php" class="nav-link p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
-                </li>
-                <!-- 2. Manajemen Roles -->
-                <li class="nav-item">
-                    <a href="roles.php" class="nav-link p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Manajemen Roles</a>
-                </li>
-                <!-- 3. Manajemen Bangunan & Ruang -->
-                <li class="nav-item">
-                    <a href="relasi.php" class="nav-link p-2 rounded text-nowrap" style="overflow: hidden; text-overflow: ellipsis;" title="Manajemen Bangunan & Ruang">
-                        <i class="bi bi-diagram-3 me-2"></i> Manajemen Bangunan & Ruang
-                    </a>
-                </li>
-                <!-- 4. Assets (Opsi Baru) -->
-                <li class="nav-item">
-                    <a href="asset.php" class="nav-link active p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Assets</a>
-                </li>
-                <!-- 5. User Profil -->
-                <li class="nav-item">
-                    <a href="user.php" class="nav-link p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
-                </li>
-            </ul>
-            <div class="mt-auto pt-3 border-top border-secondary w-100">
-                <ul class="nav flex-column gap-2">
-                    <li class="nav-item">
-                        <a href="logout.php" class="nav-link p-2 rounded" style="color:#dc3545 !important;">
-                            <i class="bi bi-box-arrow-right me-2" style="color:#dc3545 !important;"></i> Logout
-                        </a>
-                    </li>
-                </ul>
+  <div class="row">
+    <!-- Sidebar Desktop -->
+    <nav class="col-md-4 col-lg-3 d-none d-md-flex flex-column sidebar p-3 text-bg-dark" style="min-height: 100vh;">
+      <h4 class="text-center mb-4 text-warning"><i class="bi bi-speedometer2"></i> ITAKMS</h4>
+      <ul class="nav flex-column gap-2">
+        <!-- 1. Dashboard -->
+        <li class="nav-item">
+          <a href="dashboard.php" class="nav-link p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
+        </li>
+        <!-- 2. Manajemen Roles -->
+        <li class="nav-item">
+          <a href="roles.php" class="nav-link p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Manajemen Roles</a>
+        </li>
+        <!-- 3. Manajemen Bangunan & Ruang -->
+        <li class="nav-item">
+          <a href="relasi.php" class="nav-link p-2 rounded text-nowrap" style="overflow: hidden; text-overflow: ellipsis;" title="Manajemen Bangunan & Ruang">
+            <i class="bi bi-diagram-3 me-2"></i> Manajemen Bangunan & Ruang
+          </a>
+        </li>
+        <!-- 4. Assets (Opsi Baru) -->
+        <li class="nav-item">
+          <a href="assets.php" class="nav-link p-2 rounded"><i class="bi bi-folder2-open me-2"></i> Assets</a>
+        </li>
+        <!-- 5. Manajemen Asset -->
+        <li class="nav-item">
+          <a href="manajemen_asset.php" class="nav-link active p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
+        </li>
+        <!-- 6. User Profil -->
+        <li class="nav-item">
+          <a href="user.php" class="nav-link p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
+        </li>
+      </ul>
+      <div class="mt-auto pt-3 border-top border-secondary w-100">
+        <ul class="nav flex-column gap-2">
+          <li class="nav-item">
+            <a href="logout.php" class="nav-link p-2 rounded" style="color:#dc3545 !important;">
+              <i class="bi bi-box-arrow-right me-2" style="color:#dc3545 !important;"></i> Logout
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- AREA KONTEN UTAMA BARU (SUDAH DIPERBAIKI AGAR NAIK KE ATAS) -->
+    <main class="col-md-8 col-lg-9 px-md-4 pt-4 bg-light" style="min-height: 100vh;">
+  
+    <!-- 1. Banner Header Halaman & Tombol Tab -->
+    <div class="row align-items-center mb-4 g-3">
+        <div class="col-md-6">
+            <h1 class="h3 fw-bold text-dark m-0">Master Data Asset</h1>
+            <p class="text-muted small m-0">Kelola informasi merek, kategori, dan status operasional aset sistem ITAKMS.</p>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <!-- Navigasi Tab Gaya Modern -->
+            <div class="nav nav-pills d-inline-flex gap-2 bg-white p-1 rounded-3 shadow-sm" id="masterDataTabs" role="tablist">
+                <button class="nav-link active rounded-3 px-3 py-2 fw-bold small" id="tab-brand" data-bs-toggle="tab" data-bs-target="#content-brand" type="button" role="tab">
+                    <i class="bi bi-tag me-1"></i> Brands
+                </button>
+                <button class="nav-link rounded-3 px-3 py-2 fw-bold small" id="tab-category" data-bs-toggle="tab" data-bs-target="#content-category" type="button" role="tab">
+                    <i class="bi bi-grid me-1"></i> Categories
+                </button>
+                <button class="nav-link rounded-3 px-3 py-2 fw-bold small" id="tab-status" data-bs-toggle="tab" data-bs-target="#content-status" type="button" role="tab">
+                    <i class="bi bi-info-circle me-1"></i> Statuses
+                </button>
             </div>
-        </nav>
-        
-        <!-- ========================================================================= -->
-        <!-- TAHAP 1: PONDASI PEMBUNGKUS KONTEN UTAMA KANAN                           -->
-        <!-- ========================================================================= -->
-        <main class="col-md-8 col-lg-9 px-md-4 pt-4">
+        </div>
+    </div>
+
+    <!-- 2. Wadah Konten Tabel Utama -->
+    <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4">
+        <div class="tab-content">
             
-            <!-- Judul Halaman Atas -->
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2 fw-bold text-dark">Manajemen Data Master Asset</h1>
+            <!-- ========================================== -->
+            <!-- PANEL TAB 1: ASSET BRANDS                  -->
+            <!-- ========================================== -->
+            <div class="tab-pane fade show active" id="content-brand" role="tabpanel">
+                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-tag-fill me-2 text-primary"></i> Daftar Komponen Merek</h5>
+                    <button type="button" class="btn btn-primary btn-sm rounded-3 px-3 d-flex align-items-center gap-2" onclick="bukaModalPaksa('modalAddBrand')">
+                        <i class="bi bi-plus-lg"></i> Tambah Brand
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4" style="width: 80px;">No</th>
+                                <th>Nama Brand</th>
+                                <th>Status Operasional</th>
+                                <th class="text-end pe-4" style="width: 150px;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($brands)): ?>
+                                <tr><td colspan="4" class="text-center text-muted py-5">Belum ada data brand.</td></tr>
+                            <?php else: $no=1; foreach ($brands as $b): ?>
+                                <tr>
+                                    <td class="ps-4 fw-bold text-muted"><?= $no++; ?></td>
+                                    <td class="fw-semibold text-dark"><?= htmlspecialchars($b['nama']); ?></td>
+                                    <td>
+                                        <span class="badge <?= ($b['status'] ?? 0) == 1 ? 'bg-success-subtle text-success border-success' : 'bg-danger-subtle text-danger border-danger'; ?> border px-3 py-2 rounded-pill">
+                                            <?= ($b['status'] ?? 0) == 1 ? 'Aktif' : 'Non-Aktif'; ?>
+                                        </span>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <div class="btn-group btn-group-sm">
+                                            <button type="button" class="btn btn-outline-warning border-0" onclick="prosesEditBrand(<?= $b['id']; ?>, '<?= addslashes($b['nama']); ?>', <?= $b['status']; ?>)">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger border-0" onclick="prosesHapusAssetCrud('delete_brand', <?= $b['id']; ?>, 'Hapus brand ini?')">
+                                                <i class="bi bi-trash3"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; endif; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            <!-- Baris Utama untuk menampung 3 Kolom Master Data ke samping -->
-            <div class="row g-4 mt-2">
-
-                <!-- ========================================== -->
-                <!-- TAHAP 2: KOLOM 1 - ASSET BRANDS (MERK)     -->
-                <!-- ========================================== -->
-                <div class="col-md-4">
-                    <div class="card shadow-sm border-0 h-100">
-                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
-                            <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-tag me-2 text-primary"></i> Asset Brands</h5>
-                            <button type="button" class="btn btn-primary btn-sm rounded-circle px-2 py-1" onclick="bukaModalPaksa('modalAddBrand')">
-                                <i class="bi bi-plus-lg"></i>
-                            </button>
-                        </div>
-                        <div class="card-body p-3 overflow-auto" style="max-height: 500px;">
-                            <?php if (empty($brands)): ?>
-                                <div class="text-center text-muted py-4">Belum ada data brand.</div>
-                            <?php else: ?>
-                                <?php foreach ($brands as $b): ?>
-                                    <div class="p-3 mb-3 bg-white rounded border d-flex justify-content-between align-items-center shadow-sm">
-                                        <div>
-                                            <h6 class="mb-1 fw-bold text-dark"><?= htmlspecialchars($b['nama']); ?></h6>
-                                            <small class="text-muted">
-                                                Status: 
-                                                <span class="badge <?= ($b['status'] ?? 0) == 1 ? 'bg-success-subtle text-success border-success' : 'bg-danger-subtle text-danger border-danger'; ?> border px-2">
-                                                    <?= ($b['status'] ?? 0) == 1 ? 'Aktif' : 'Non-Aktif'; ?>
-                                                </span>
-                                            </small>
-                                        </div>
-                                        <div class="btn-group btn-group-sm">
-                                            <button type="button" class="btn btn-outline-warning border-0" onclick="prosesEditBrand(<?= $b['id']; ?>, '<?= addslashes($b['nama']); ?>', <?= $b['status']; ?>)"><i class="bi bi-pencil-square"></i></button>
-                                            <button type="button" class="btn btn-outline-danger border-0" onclick="prosesHapusAssetCrud('delete_brand', <?= $b['id']; ?>, 'Hapus brand ini?')"><i class="bi bi-trash3"></i></button>
-                                        </div>
-                                    </div>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </div>
-                    </div>
+            <!-- ========================================== -->
+            <!-- PANEL TAB 2: ASSET CATEGORIES              -->
+            <!-- ========================================== -->
+            <div class="tab-pane fade" id="content-category" role="tabpanel">
+                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-grid-fill me-2 text-success"></i> Daftar Kategori Asset</h5>
+                    <button type="button" class="btn btn-success btn-sm rounded-3 px-3 d-flex align-items-center gap-2" onclick="bukaModalPaksa('modalAddCategory')">
+                        <i class="bi bi-plus-lg"></i> Tambah Kategori
+                    </button>
                 </div>
-
-                <!-- ========================================== -->
-                <!-- TAHAP 3: KOLOM 2 - ASSET CATEGORIES        -->
-                <!-- ========================================== -->
-                <div class="col-md-4">
-                    <div class="card shadow-sm border-0 h-100">
-                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
-                            <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-grid me-2 text-success"></i> Asset Categories</h5>
-                            <button type="button" class="btn btn-success btn-sm rounded-circle px-2 py-1" onclick="bukaModalPaksa('modalAddCategory')">
-                                <i class="bi bi-plus-lg"></i>
-                            </button>
-                        </div>
-                        <div class="card-body p-3 overflow-auto" style="max-height: 500px;">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4" style="width: 80px;">No</th>
+                                <th>Nama Kategori</th>
+                                <th>Aksen Warna</th>
+                                <th class="text-end pe-4" style="width: 150px;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
                             <?php if (empty($categories)): ?>
-                                <div class="text-center text-muted py-4">Belum ada data kategori.</div>
-                            <?php else: ?>
-                                <?php foreach ($categories as $c): ?>
-                                    <div class="p-3 mb-3 bg-white rounded border d-flex justify-content-between align-items-center shadow-sm">
-                                        <div>
-                                            <h6 class="mb-1 fw-bold text-dark">
-                                                <?php if(!empty($c['icon'])): ?><i class="<?= htmlspecialchars($c['icon']); ?> me-1"></i><?php endif; ?>
-                                                <?= htmlspecialchars($c['nama']); ?>
-                                            </h6>
-                                            <small class="text-muted d-block">
-                                                Warna: <span class="badge text-dark border bg-light" style="border-left: 5px solid <?= htmlspecialchars($c['warna'] ?? '#000'); ?> !important;"><?= htmlspecialchars($c['warna'] ?? '-'); ?></span>
-                                            </small>
-                                        </div>
+                                <tr><td colspan="4" class="text-center text-muted py-5">Belum ada data kategori.</td></tr>
+                            <?php else: $no=1; foreach ($categories as $c): ?>
+                                <tr>
+                                    <td class="ps-4 fw-bold text-muted"><?= $no++; ?></td>
+                                    <td class="fw-semibold text-dark">
+                                        <?php if(!empty($c['icon'])): ?><i class="<?= htmlspecialchars($c['icon']); ?> me-2 text-success"></i><?php endif; ?>
+                                        <?= htmlspecialchars($c['nama']); ?>
+                                    </td>
+                                    <td>
+                                        <span class="badge text-dark border bg-light px-3 py-2 rounded-3" style="border-left: 5px solid <?= htmlspecialchars($c['warna'] ?? '#000'); ?> !important;">
+                                            <?= htmlspecialchars($c['warna'] ?? '-'); ?>
+                                        </span>
+                                    </td>
+                                    <td class="text-end pe-4">
                                         <div class="btn-group btn-group-sm">
-                                            <button type="button" class="btn btn-outline-warning border-0" onclick="prosesEditCategory(<?= $c['id']; ?>, '<?= addslashes($c['nama']); ?>', '<?= addslashes($c['icon'] ?? ''); ?>', '<?= addslashes($c['warna'] ?? ''); ?>')"><i class="bi bi-pencil-square"></i></button>
-                                            <button type="button" class="btn btn-outline-danger border-0" onclick="prosesHapusAssetCrud('delete_category', <?= $c['id']; ?>, 'Hapus kategori ini?')"><i class="bi bi-trash3"></i></button>
+                                            <button type="button" class="btn btn-outline-warning border-0" onclick="prosesEditCategory(<?= $c['id']; ?>, '<?= addslashes($c['nama']); ?>', '<?= addslashes($c['icon'] ?? ''); ?>', '<?= addslashes($c['warna'] ?? ''); ?>')">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger border-0" onclick="prosesHapusAssetCrud('delete_category', <?= $c['id']; ?>, 'Hapus kategori ini?')">
+                                                <i class="bi bi-trash3"></i>
+                                            </button>
                                         </div>
-                                    </div>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </div>
-                    </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; endif; ?>
+                        </tbody>
+                    </table>
                 </div>
-
-                <!-- ========================================================== -->
-                <!-- TAHAP 4: KOLOM 3 - ASSET STATUSES (STATUS)                 -->
-                <!-- ========================================================== -->
-                <div class="col-md-4">
-                    <div class="card shadow-sm border-0 h-100">
-                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
-                            <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-info-circle me-2 text-danger"></i> Asset Statuses</h5>
-                            <button type="button" class="btn btn-danger btn-sm rounded-circle px-2 py-1" onclick="bukaModalPaksa('modalAddStatus')">
-                                <i class="bi bi-plus-lg"></i>
-                            </button>
-                        </div>
-                        <div class="card-body p-3 overflow-auto" style="max-height: 500px;">
+            </div>
+            <!-- ========================================== -->
+            <!-- PANEL TAB 3: ASSET STATUSES                -->
+            <!-- ========================================== -->
+            <div class="tab-pane fade" id="content-status" role="tabpanel">
+                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-info-circle-fill me-2 text-danger"></i> Parameter Status Kondisi</h5>
+                    <button type="button" class="btn btn-danger btn-sm rounded-3 px-3 d-flex align-items-center gap-2" onclick="bukaModalPaksa('modalAddStatus')">
+                        <i class="bi bi-plus-lg"></i> Tambah Status
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4" style="width: 80px;">No</th>
+                                <th>Nama Status Label</th>
+                                <th class="text-end pe-4" style="width: 150px;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
                             <?php if (empty($statuses)): ?>
-                                <div class="text-center text-muted py-4">Belum ada data status.</div>
-                            <?php else: ?>
-                                <?php foreach ($statuses as $s): ?>
-                                    <div class="p-3 mb-3 bg-white rounded border d-flex justify-content-between align-items-center shadow-sm">
-                                        <div>
-                                            <h6 class="mb-0 fw-bold text-dark"><?= htmlspecialchars($s['nama']); ?></h6>
-                                        </div>
+                                <tr><td colspan="3" class="text-center text-muted py-5">Belum ada data status.</td></tr>
+                            <?php else: $no=1; foreach ($statuses as $s): ?>
+                                <tr>
+                                    <td class="ps-4 fw-bold text-muted"><?= $no++; ?></td>
+                                    <td class="fw-semibold text-dark">
+                                        <span class="badge bg-light border text-dark px-3 py-2 rounded-3">
+                                            <i class="bi bi-info-circle me-1 text-danger"></i> <?= htmlspecialchars($s['nama']); ?>
+                                        </span>
+                                    </td>
+                                    <td class="text-end pe-4">
                                         <div class="btn-group btn-group-sm">
-                                            <button type="button" class="btn btn-outline-warning border-0" onclick="prosesEditStatus(<?= $s['id']; ?>, '<?= addslashes($s['nama']); ?>')"><i class="bi bi-pencil-square"></i></button>
-                                            <button type="button" class="btn btn-outline-danger border-0" onclick="prosesHapusAssetCrud('delete_status', <?= $s['id']; ?>, 'Hapus status ini?')"><i class="bi bi-trash3"></i></button>
+                                            <button type="button" class="btn btn-outline-warning border-0" onclick="prosesEditStatus(<?= $s['id']; ?>, '<?= addslashes($s['nama']); ?>')">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger border-0" onclick="prosesHapusAssetCrud('delete_status', <?= $s['id']; ?>, 'Hapus status ini?')">
+                                                <i class="bi bi-trash3"></i>
+                                            </button>
                                         </div>
-                                    </div>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </div>
-                    </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; endif; ?>
+                        </tbody>
+                    </table>
                 </div>
+            </div>
 
-            </div> <!-- Penutup Row Grid Utama -->
-        </main> <!-- Penutup Konten Utama Kanan -->
+        </div> <!-- /tab-content -->
+    </div> <!-- /card -->
+</main>
 
 <!-- ========================================================================= -->
 <!-- TAHAP 5: MODAL POPUP INPUT DATA (TAMBAH DATA MASTER ASSET)                -->
