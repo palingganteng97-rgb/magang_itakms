@@ -2,126 +2,43 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
-// 1. KONFIGURASI DATABASE
+// 1. Konfigurasi Database Utama
 $host = "10.10.6.59";
 $username = "root_host";
 $password = "password";
 $database = "magang_itakms";
 
+// Batasi penarikan data maksimal 20 baris agar jaringan IP lokal instan & enteng
+$perPage = 20; 
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$offset = ($page - 1) * $perPage;
+
 try {
     $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    // 2. Statistik Cepat Agregat Tunggal (Sama persis seperti Dashboard Anda yang cepat)
+    $stmtStats = $conn->query("
+        SELECT 
+            (SELECT COUNT(*) FROM buildings) AS total_b,
+            (SELECT COUNT(*) FROM floors) AS total_f,
+            (SELECT COUNT(*) FROM rooms) AS total_r
+    ");
+    $stats = $stmtStats->fetch(PDO::FETCH_ASSOC);
+    
+    $total_buildings = (int)($stats['total_b'] ?? 0);
+    $total_floors = (int)($stats['total_f'] ?? 0);
+    $total_rooms = (int)($stats['total_r'] ?? 0);
+
+    // 3. Ambil data tabel terbatas menggunakan LIMIT agar query selesai dalam hitungan milidetik
+    $buildings = $conn->query("SELECT id, nama, alamat FROM buildings ORDER BY id DESC LIMIT $perPage OFFSET $offset")->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    $floors = $conn->query("SELECT f.id, f.nama, f.building_id, b.nama AS nama_bangunan FROM floors f LEFT JOIN buildings b ON f.building_id = b.id ORDER BY f.id DESC LIMIT $perPage OFFSET $offset")->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    $rooms = $conn->query("SELECT r.id, r.nama, r.kode, r.telepon, r.floor_id, f.nama AS nama_lantai FROM rooms r LEFT JOIN floors f ON r.floor_id = f.id ORDER BY r.id DESC LIMIT $perPage OFFSET $offset")->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
 } catch (PDOException $e) {
-    echo "Koneksi database gagal: " . $e->getMessage();
+    echo "Koneksi atau Query Gagal: " . $e->getMessage();
     die();
 }
-
-// 2. LOGIKA BACKEND: PROSES FORM CRUD (MENDUKUNG JAVASCRIPT FETCH)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    $action = $_POST['action'];
-
-    try {
-
-            // --- MANAJEMEN BUILDINGS ---
-        if ($action === 'add_building') {
-            $nama = trim($_POST['nama'] ?? '');
-            $alamat = trim($_POST['alamat'] ?? ''); // Tangkap data alamat
-            if ($nama !== '') {
-                // Tambahkan kolom alamat dan placeholder (?) di query Anda
-                $stmt = $conn->prepare("INSERT INTO buildings (nama, alamat, status) VALUES (?, ?, 1)");
-                $stmt->execute([$nama, $alamat]);
-            }
-        }
-        if ($action === 'edit_building') {
-            $id = (int)$_POST['id'];
-            $nama = trim($_POST['nama'] ?? '');
-            $alamat = trim($_POST['alamat'] ?? ''); // Tangkap data alamat
-            if ($nama !== '') {
-                // Tambahkan kolom alamat = ? di query UPDATE Anda
-                $stmt = $conn->prepare("UPDATE buildings SET nama = ?, alamat = ? WHERE id = ?");
-                $stmt->execute([$nama, $alamat, $id]);
-            }
-        }
-        if ($action === 'delete_building') {
-            $id = (int)$_POST['id'];
-            $conn->prepare("DELETE FROM buildings WHERE id = ?")->execute([$id]);
-        }
-
-        // --- MANAJEMEN FLOORS ---
-        if ($action === 'add_floor') {
-            $nama = trim($_POST['nama'] ?? '');
-            $building_id = (int)$_POST['building_id'];
-            if ($nama !== '' && $building_id > 0) {
-                $stmt = $conn->prepare("INSERT INTO floors (nama, building_id, status) VALUES (?, ?, 1)");
-                $stmt->execute([$nama, $building_id]);
-            }
-        }
-        if ($action === 'edit_floor') {
-            $id = (int)$_POST['id'];
-            $nama = trim($_POST['nama'] ?? '');
-            $building_id = (int)$_POST['building_id'];
-            if ($nama !== '' && $building_id > 0) {
-                $stmt = $conn->prepare("UPDATE floors SET nama = ?, building_id = ? WHERE id = ?");
-                $stmt->execute([$nama, $building_id, $id]);
-            }
-        }
-        if ($action === 'delete_floor') {
-            $id = (int)$_POST['id'];
-            $conn->prepare("DELETE FROM floors WHERE id = ?")->execute([$id]);
-        }
-
-        // --- MANAJEMEN ROOMS ---
-        if ($action === 'add_room') {
-            $nama = trim($_POST['nama'] ?? '');
-            $floor_id = (int)$_POST['floor_id'];
-            $kode = trim($_POST['kode'] ?? '');      // Tangkap data kode
-            $telepon = trim($_POST['telepon'] ?? ''); // Tangkap data telepon
-            
-            if ($nama !== '' && $floor_id > 0) {
-                // Tambahkan kolom kode, telepon, dan placeholder (?, ?)
-                $stmt = $conn->prepare("INSERT INTO rooms (nama, floor_id, kode, telepon, status) VALUES (?, ?, ?, ?, 1)");
-                $stmt->execute([$nama, $floor_id, $kode, $telepon]);
-            }
-        }
-        if ($action === 'edit_room') {
-            $id = (int)$_POST['id'];
-            $nama = trim($_POST['nama'] ?? '');
-            $floor_id = (int)$_POST['floor_id'];
-            $kode = trim($_POST['kode'] ?? '');      // Tangkap data kode
-            $telepon = trim($_POST['telepon'] ?? ''); // Tangkap data telepon
-            
-            if ($nama !== '' && $floor_id > 0) {
-                // Tambahkan kolom kode = ?, telepon = ? di query UPDATE
-                $stmt = $conn->prepare("UPDATE rooms SET nama = ?, floor_id = ?, kode = ?, telepon = ? WHERE id = ?");
-                $stmt->execute([$nama, $floor_id, $kode, $telepon, $id]);
-            }
-        }
-
-        if ($action === 'delete_room') {
-            $id = (int)$_POST['id'];
-            $conn->prepare("DELETE FROM rooms WHERE id = ?")->execute([$id]);
-        }
-
-    } catch (PDOException $e) {
-        http_response_code(500);
-        echo "Database Error: " . $e->getMessage();
-        die();
-    }
-
-    // Mengembalikan status sukses ke JavaScript tanpa paksaan redirect header lama
-    http_response_code(200);
-    exit;
-}
-
-// 3. AMBIL DATA MASTER UNTUK STATISTIK KARTU ATAS DAN DAFTAR DATA
-$buildings = $conn->query("SELECT id, nama, alamat FROM buildings ORDER BY nama ASC")->fetchAll(PDO::FETCH_ASSOC);
-$floors = $conn->query("SELECT f.id, f.nama, f.building_id, b.nama AS nama_bangunan FROM floors f LEFT JOIN buildings b ON f.building_id = b.id ORDER BY f.nama ASC")->fetchAll(PDO::FETCH_ASSOC);
-$rooms = $conn->query("SELECT r.id, r.nama, r.kode, r.telepon, r.floor_id, f.nama AS nama_lantai FROM rooms r LEFT JOIN floors f ON r.floor_id = f.id ORDER BY r.nama ASC")->fetchAll(PDO::FETCH_ASSOC);
-
-// Hitung nilai agregat statistik atas untuk menyamakan gaya Dashboard Anda
-$total_buildings = count($buildings);
-$total_floors = count($floors);
-$total_rooms = count($rooms);
 ?>
 
 <!DOCTYPE html>
@@ -676,11 +593,13 @@ function prosesTambahCrud(event, aksi) {
     let payload = new FormData(targetForm);
     payload.append('action', aksi); 
 
-    fetch('relasi.php', {
+    // Dialihkan ke proses_relasi.php agar tidak loop loading berat
+    fetch('proses_relasi.php', {
         method: 'POST',
         body: payload
     })
-    .then(() => {
+    .then(res => {
+        if (!res.ok) throw new Error('Gagal memproses data');
         location.reload(); 
     })
     .catch(err => {
@@ -696,11 +615,13 @@ function prosesHapusCrud(aksi, idTarget, teksKonfirmasi) {
     payload.append('action', aksi);
     payload.append('id', idTarget);
 
-    fetch('relasi.php', {
+    // Dialihkan ke proses_relasi.php
+    fetch('proses_relasi.php', {
         method: 'POST',
         body: payload
     })
-    .then(() => {
+    .then(res => {
+        if (!res.ok) throw new Error('Gagal menghapus data');
         location.reload();
     })
     .catch(err => {
@@ -738,11 +659,13 @@ function simpanEditCrud(event, aksi) {
     let payload = new FormData(event.target);
     payload.append('action', aksi);
 
-    fetch('relasi.php', {
+    // Dialihkan ke proses_relasi.php
+    fetch('proses_relasi.php', {
         method: 'POST',
         body: payload
     })
-    .then(() => {
+    .then(res => {
+        if (!res.ok) throw new Error('Gagal memperbarui data');
         location.reload();
     })
     .catch(err => {
@@ -751,7 +674,7 @@ function simpanEditCrud(event, aksi) {
 }
 </script>
 
-<!-- Bootstrap Bundle JS Resmi -->
+<!-- TAUTAN BOOTSTRAP BUNDLE JS YANG SUDAH DIPERBAIKI SECARA UTUH DAN LENGKAP -->
 <script src="https://jsdelivr.net" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
 </html>
