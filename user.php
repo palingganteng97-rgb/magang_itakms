@@ -225,7 +225,7 @@ try {
     </div>
 </nav>
 
-<!-- SIDEBAR MOBILE (OFFCANVAS) -->
+<!-- SIDEBAR MOBILE (OFFCANVAS) KHUSUS UNTUK USER.PHP -->
 <div class="offcanvas offcanvas-start text-bg-dark" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
   <div class="offcanvas-header">
     <h5 class="offcanvas-title" id="mobileSidebarLabel"><i class="bi bi-speedometer2"></i> ITAKMS</h5>
@@ -234,31 +234,30 @@ try {
   <div class="offcanvas-body p-0">
     <nav class="sidebar p-3 d-flex flex-column" style="min-height: calc(100vh - 56px);">
       <ul class="nav flex-column gap-2">
-        <!-- 1. Dashboard -->
         <li class="nav-item">
           <a href="dashboard.php" class="nav-link p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
         </li>
-        <!-- 2. Manajemen Roles -->
         <li class="nav-item">
           <a href="roles.php" class="nav-link p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Manajemen Roles</a>
         </li>
-        <!-- 3. Manajemen Bangunan & Ruang -->
         <li class="nav-item">
           <a href="relasi.php" class="nav-link p-2 rounded text-nowrap" style="overflow: hidden; text-overflow: ellipsis;">
             <i class="bi bi-diagram-3 me-2"></i> Manajemen Bangunan & Ruang
           </a>
         </li>
-        <!-- 4. Assets -->
         <li class="nav-item">
           <a href="assets.php" class="nav-link p-2 rounded"><i class="bi bi-folder2-open me-2"></i> Assets</a>
         </li>
-        <!-- 5. Manajemen Asset -->
         <li class="nav-item">
           <a href="manajemen_asset.php" class="nav-link p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
         </li>
-        <!-- 6. User Profil (AKTIF) -->
+        <!-- Posisi Log Perpindahan Di Atas User Profil -->
         <li class="nav-item">
-          <a href="user.php" class="nav-link active p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
+          <a href="asset_movements.php" class="nav-link p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
+        </li>
+        <!-- User Profil Aktif -->
+        <li class="nav-item">
+          <a href="user.php" class="nav-link active bg-primary text-white p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
         </li>
       </ul>
       <div class="mt-auto pt-3">
@@ -274,38 +273,36 @@ try {
   </div>
 </div>
 
-<!-- SIDEBAR DESKTOP & KONTEN UTAMA -->
+<!-- SIDEBAR DESKTOP KHUSUS UNTUK USER.PHP -->
 <div class="container-fluid">
   <div class="row">
-    <!-- Sidebar Desktop -->
     <nav class="col-md-4 col-lg-3 d-none d-md-flex flex-column sidebar p-3 text-bg-dark" style="min-height: 100vh;">
       <h4 class="text-center mb-4 text-warning"><i class="bi bi-speedometer2"></i> ITAKMS</h4>
       <ul class="nav flex-column gap-2">
-        <!-- 1. Dashboard -->
         <li class="nav-item">
           <a href="dashboard.php" class="nav-link p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
         </li>
-        <!-- 2. Manajemen Roles -->
         <li class="nav-item">
           <a href="roles.php" class="nav-link p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Manajemen Roles</a>
         </li>
-        <!-- 3. Manajemen Bangunan & Ruang -->
         <li class="nav-item">
           <a href="relasi.php" class="nav-link p-2 rounded text-nowrap" style="overflow: hidden; text-overflow: ellipsis;" title="Manajemen Bangunan & Ruang">
             <i class="bi bi-diagram-3 me-2"></i> Manajemen Bangunan & Ruang
           </a>
         </li>
-        <!-- 4. Assets -->
         <li class="nav-item">
           <a href="assets.php" class="nav-link p-2 rounded"><i class="bi bi-folder2-open me-2"></i> Assets</a>
         </li>
-        <!-- 5. Manajemen Asset -->
         <li class="nav-item">
           <a href="manajemen_asset.php" class="nav-link p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
         </li>
-        <!-- 6. User Profil (AKTIF) -->
+        <!-- Posisi Log Perpindahan Di Atas User Profil -->
         <li class="nav-item">
-          <a href="user.php" class="nav-link active p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
+          <a href="asset_movements.php" class="nav-link p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
+        </li>
+        <!-- User Profil Aktif -->
+        <li class="nav-item">
+          <a href="user.php" class="nav-link active bg-primary text-white p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
         </li>
       </ul>
       <div class="mt-auto pt-3 border-top border-secondary w-100">

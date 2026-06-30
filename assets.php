@@ -1,6 +1,6 @@
 <?php
 // =========================================================================
-// LOGIKA BACKEND: assets.php (SUDAH FIX UNTUK MENAMPILKAN ROOM/RUANGAN)
+// LOGIKA BACKEND: assets.php (SUDAH MENDUKUNG FILTER MULTIKOLOM)
 // =========================================================================
 $host     = "10.10.6.59";
 $username = "root_host";
@@ -11,16 +11,40 @@ try {
     $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
-    $search = isset($_GET['search']) ? trim($_GET['search']) : '';
-    $where_clause = "";
+    // 1. AMBIL PARAMETER FILTER & PENCARIAN DARI URL (GET)
+    $filter_brand   = isset($_GET['filter_brand']) ? trim($_GET['filter_brand']) : '';
+    $filter_room    = isset($_GET['filter_room']) ? trim($_GET['filter_room']) : '';
+    $filter_status  = isset($_GET['filter_status']) ? trim($_GET['filter_status']) : '';
+    $search_keyword = isset($_GET['search_keyword']) ? trim($_GET['search_keyword']) : '';
+
+    $where_clauses = [];
     $params = [];
 
-    if (!empty($search)) {
-        $where_clause = " WHERE a.nama LIKE :search OR a.kode_asset LIKE :search OR a.serial_number LIKE :search";
-        $params[':search'] = "%$search%";
+    // Kondisi filter jika data dipilih
+    if (!empty($filter_brand)) {
+        $where_clauses[] = "a.brand_id = :filter_brand";
+        $params[':filter_brand'] = $filter_brand;
+    }
+    if (!empty($filter_room)) {
+        $where_clauses[] = "a.room_id = :filter_room";
+        $params[':filter_room'] = $filter_room;
+    }
+    if (!empty($filter_status)) {
+        $where_clauses[] = "a.status_id = :filter_status";
+        $params[':filter_status'] = $filter_status;
+    }
+    if (!empty($search_keyword)) {
+        $where_clauses[] = "(a.nama LIKE :search OR a.kode_asset LIKE :search OR a.serial_number LIKE :search)";
+        $params[':search'] = "%$search_keyword%";
     }
 
-    // PERBAIKAN: Menambahkan r.nama AS nama_ruangan dan LEFT JOIN rooms r
+    // Menggabungkan seluruh kondisi ke dalam WHERE clause
+    $where_clause = "";
+    if (count($where_clauses) > 0) {
+        $where_clause = " WHERE " . implode(" AND ", $where_clauses);
+    }
+
+    // 2. QUERY UTAMA DENGAN FILTER AKTIF
     $query = "SELECT 
                 a.id, 
                 a.kode_asset, 
@@ -43,21 +67,22 @@ try {
                 cat.nama AS nama_kategori, 
                 b.nama AS nama_brand, 
                 s.nama AS nama_status,
-                r.nama AS nama_ruangan       -- 1. Mengambil kolom nama dari tabel rooms
+                r.nama AS nama_ruangan
               FROM assets a
               LEFT JOIN asset_categories cat ON a.kategori_id = cat.id
               LEFT JOIN asset_brands b ON a.brand_id = b.id
               LEFT JOIN asset_statuses s ON a.status_id = s.id
-              LEFT JOIN rooms r ON a.room_id = r.id" . $where_clause . " ORDER BY a.id DESC"; // 2. Menghubungkan ke tabel rooms
+              LEFT JOIN rooms r ON a.room_id = r.id" 
+              . $where_clause . 
+              " ORDER BY a.id DESC";
 
     $stmt = $conn->prepare($query);
     $stmt->execute($params);
     $assets_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // AMBIL DATA RELASI UNTUK DROPDOWN MODAL
+    // 3. AMBIL DATA MASTER RELASI UNTUK ISI DROPDOWN FILTER & MODAL INPUT
     $list_kategori = $conn->query("SELECT id, nama FROM asset_categories ORDER BY nama ASC")->fetchAll(PDO::FETCH_ASSOC);
     $list_brand    = $conn->query("SELECT id, nama FROM asset_brands ORDER BY nama ASC")->fetchAll(PDO::FETCH_ASSOC);
-    $list_ruangan  = $conn->query("SELECT id, nama FROM rooms ORDER BY nama ASC")->fetchAll(PDO::FETCH_ASSOC);
     $list_status   = $conn->query("SELECT id, nama FROM asset_statuses ORDER BY nama ASC")->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (PDOException $e) {
@@ -94,7 +119,7 @@ try {
     </div>
 </nav>
 
-<!-- SIDEBAR MOBILE (OFFCANVAS) -->
+<!-- SIDEBAR MOBILE (OFFCANVAS) KHUSUS UNTUK ASSETS.PHP -->
 <div class="offcanvas offcanvas-start text-bg-dark" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
   <div class="offcanvas-header">
     <h5 class="offcanvas-title" id="mobileSidebarLabel"><i class="bi bi-speedometer2"></i> ITAKMS</h5>
@@ -103,29 +128,28 @@ try {
   <div class="offcanvas-body p-0">
     <nav class="sidebar p-3 d-flex flex-column" style="min-height: calc(100vh - 56px);">
       <ul class="nav flex-column gap-2">
-        <!-- 1. Dashboard -->
         <li class="nav-item">
           <a href="dashboard.php" class="nav-link p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
         </li>
-        <!-- 2. Manajemen Roles -->
         <li class="nav-item">
           <a href="roles.php" class="nav-link p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Manajemen Roles</a>
         </li>
-        <!-- 3. Manajemen Bangunan & Ruang -->
         <li class="nav-item">
           <a href="relasi.php" class="nav-link p-2 rounded text-nowrap" style="overflow: hidden; text-overflow: ellipsis;">
             <i class="bi bi-diagram-3 me-2"></i> Manajemen Bangunan & Ruang
           </a>
         </li>
-        <!-- 4. Assets (AKTIF) -->
+        <!-- Assets Aktif -->
         <li class="nav-item">
-          <a href="assets.php" class="nav-link active p-2 rounded"><i class="bi bi-folder2-open me-2"></i> Assets</a>
+          <a href="assets.php" class="nav-link active bg-primary text-white p-2 rounded"><i class="bi bi-folder2-open me-2"></i> Assets</a>
         </li>
-        <!-- 5. Manajemen Asset -->
         <li class="nav-item">
           <a href="manajemen_asset.php" class="nav-link p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
         </li>
-        <!-- 6. User Profil -->
+        <!-- Posisi Log Perpindahan Di Atas User Profil -->
+        <li class="nav-item">
+          <a href="asset_movements.php" class="nav-link p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
+        </li>
         <li class="nav-item">
           <a href="user.php" class="nav-link p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
         </li>
@@ -143,11 +167,9 @@ try {
   </div>
 </div>
 
-<!-- SIDEBAR DESKTOP & KONTEN UTAMA -->
+<!-- SIDEBAR DESKTOP KHUSUS UNTUK ASSETS.PHP -->
 <div class="container-fluid">
   <div class="row">
-    
-    <!-- 1. Sidebar Desktop (Sisi Kiri) -->
     <nav class="col-md-4 col-lg-3 d-none d-md-flex flex-column sidebar p-3 text-bg-dark" style="min-height: 100vh;">
       <h4 class="text-center mb-4 text-warning"><i class="bi bi-speedometer2"></i> ITAKMS</h4>
       <ul class="nav flex-column gap-2">
@@ -162,11 +184,16 @@ try {
             <i class="bi bi-diagram-3 me-2"></i> Manajemen Bangunan & Ruang
           </a>
         </li>
+        <!-- Assets Aktif -->
         <li class="nav-item">
-          <a href="assets.php" class="nav-link active p-2 rounded"><i class="bi bi-folder2-open me-2"></i> Assets</a>
+          <a href="assets.php" class="nav-link active bg-primary text-white p-2 rounded"><i class="bi bi-folder2-open me-2"></i> Assets</a>
         </li>
         <li class="nav-item">
           <a href="manajemen_asset.php" class="nav-link p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
+        </li>
+        <!-- Posisi Log Perpindahan Di Atas User Profil -->
+        <li class="nav-item">
+          <a href="asset_movements.php" class="nav-link p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
         </li>
         <li class="nav-item">
           <a href="user.php" class="nav-link p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
@@ -196,195 +223,222 @@ try {
     </div>
   </div>
 
-  <!-- Antarmuka Pencarian -->
-  <div class="row mb-3">
-    <div class="col-md-4 ms-auto">
-      <form method="GET" action="assets.php">
-        <div class="input-group input-group-sm">
-          <input type="text" name="search" class="form-control" placeholder="Cari kode atau nama..." value="<?= isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '' ?>">
-          <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
-        </div>
-      </form>
+    <!-- Antarmuka Filter & Pencarian Multikolom Baru (FIX TATA LETAK LEBAR) -->
+  <form method="GET" action="assets.php" class="bg-white p-3 rounded shadow-sm mb-4 border">
+    <div class="row g-2 align-items-end">
+      
+      <div class="col-xl-2 col-md-4">
+        <label class="form-label small fw-bold text-secondary mb-1" style="font-size:0.8rem;">Filter Brand</label>
+        <select name="filter_brand" class="form-select form-select-sm">
+          <option value="">Semua Brand</option>
+          <?php if(!empty($list_brand)): foreach ($list_brand as $brd): ?>
+            <option value="<?= $brd['id']; ?>" <?= ($filter_brand ?? '') == $brd['id'] ? 'selected' : '' ?>><?= htmlspecialchars($brd['nama']); ?></option>
+          <?php endforeach; endif; ?>
+        </select>
+      </div>
+
+      <div class="col-xl-2 col-md-4">
+        <label class="form-label small fw-bold text-secondary mb-1" style="font-size:0.8rem;">Filter Room</label>
+        <select name="filter_room" class="form-select form-select-sm">
+          <option value="">Semua Ruangan</option>
+          <?php if(!empty($list_ruangan)): foreach ($list_ruangan as $rm): ?>
+            <option value="<?= $rm['id']; ?>" <?= ($filter_room ?? '') == $rm['id'] ? 'selected' : '' ?>><?= htmlspecialchars($rm['nama']); ?></option>
+          <?php endforeach; endif; ?>
+        </select>
+      </div>
+
+      <div class="col-xl-2 col-md-4">
+        <label class="form-label small fw-bold text-secondary mb-1" style="font-size:0.8rem;">Filter Status</label>
+        <select name="filter_status" class="form-select form-select-sm">
+          <option value="">Semua Status</option>
+          <?php if(!empty($list_status)): foreach ($list_status as $st): ?>
+            <option value="<?= $st['id']; ?>" <?= ($filter_status ?? '') == $st['id'] ? 'selected' : '' ?>><?= htmlspecialchars($st['nama']); ?></option>
+          <?php endforeach; endif; ?>
+        </select>
+      </div>
+
+      <div class="col-xl-4 col-md-8">
+        <label class="form-label small fw-bold text-secondary mb-1" style="font-size:0.8rem;">Cari Kode / Nama</label>
+        <input type="text" name="search_keyword" class="form-control form-control-sm" placeholder="Ketik kode asset atau nama..." value="<?= htmlspecialchars($search_keyword ?? '') ?>">
+      </div>
+
+      <div class="col-xl-2 col-md-4 d-flex gap-1">
+        <button class="btn btn-sm btn-primary w-100" type="submit"><i class="bi bi-filter"></i> Filter</button>
+        <a href="assets.php" class="btn btn-sm btn-outline-secondary w-100" title="Reset Filter"><i class="bi bi-arrow-clockwise"></i> Reset</a>
+      </div>
+
     </div>
-  </div>
+  </form>
 
-  <!-- Tabel Data -->
-  <div class="card shadow-sm border-0">
-    <div class="table-responsive">
-      <table class="table table-hover table-striped align-middle mb-0" style="font-size: 0.9rem;">
-        <thead class="table-dark">
-          <tr>
-            <th scope="col" class="text-center" style="width: 50px;">No</th>
-            <th scope="col">Kategori</th>
-            <th scope="col">Brand</th>
-            <th scope="col">Rooms</th>
-            <th scope="col">Status</th>
-            <th scope="col">Kode Asset</th>
-            <th scope="col">Nama</th>
-            <th scope="col" class="text-center" style="width: 120px;">Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php if (!empty($assets_data)): ?>
-            <?php $no = 1; foreach ($assets_data as $asset): ?>
-              <tr>
-                <td class="text-center fw-bold"><?= $no++; ?></td>
-                <td><span class="badge bg-secondary"><?= htmlspecialchars($asset['nama_kategori'] ?? 'Tidak ada') ?></span></td>
-                <td><?= htmlspecialchars($asset['nama_brand'] ?? '-') ?></td>
-                
-                <!-- FIX: Memanggil nama_ruangan hasil JOIN database -->
-                <td><?= htmlspecialchars($asset['nama_ruangan'] ?? '-') ?></td>
-                
-                <td>
-                  <?php 
-                    $status = strtolower($asset['nama_status'] ?? '');
-                    $badge_class = 'bg-success'; 
-                    if (strpos($status, 'rusak') !== false || strpos($status, 'maintenance') !== false) {
-                        $badge_class = 'bg-danger';
-                    } elseif (strpos($status, 'perbaikan') !== false) {
-                        $badge_class = 'bg-warning text-dark';
-                    }
-                  ?>
-                  <span class="badge <?= $badge_class ?>"><?= htmlspecialchars($asset['nama_status'] ?? '-') ?></span>
-                </td>
-                <td class="fw-monospace text-primary"><?= htmlspecialchars($asset['kode_asset'] ?? '-') ?></td>
-                <td class="fw-semibold"><?= htmlspecialchars($asset['nama_asset'] ?? '-') ?></td>
-                <td class="text-center">
-                  <div class="btn-group gap-1">
-                    <!-- 1. Tombol Detail -->
-                    <button type="button" 
-                            class="btn btn-xs btn-info text-white btn-detail" 
-                            data-bs-toggle="modal" 
-                            data-bs-target="#assetDetailModal"
-                            data-id="<?= $asset['id'] ?>"
-                            data-kode="<?= htmlspecialchars($asset['kode_asset'] ?? '-') ?>"
-                            data-nama="<?= htmlspecialchars($asset['nama_asset'] ?? '-') ?>"
-                            data-serial="<?= htmlspecialchars($asset['serial_number'] ?? '-') ?>"
-                            data-hostname="<?= htmlspecialchars($asset['hostname'] ?? '-') ?>"
-                            data-ip="<?= htmlspecialchars($asset['ip_address'] ?? '-') ?>"
-                            data-mac="<?= htmlspecialchars($asset['mac_address'] ?? '-') ?>"
-                            data-tgl="<?= htmlspecialchars($asset['tanggal_beli'] ?? '-') ?>"
-                            data-garansi="<?= htmlspecialchars($asset['garansi'] ?? '-') ?>"
-                            data-foto="<?= htmlspecialchars($asset['foto'] ?? 'default.jpg') ?>"
-                            data-manual="<?= htmlspecialchars($asset['manual_book'] ?? '-') ?>"
-                            data-spek="<?= htmlspecialchars($asset['spesifikasi'] ?? '-') ?>"
-                            title="Lihat Detail">
-                      <i class="bi bi-eye-fill"></i>
-                    </button>
-
-                    <!-- 2. Tombol Edit -->
-                    <button type="button" 
-                            class="btn btn-xs btn-warning text-dark btn-edit" 
-                            data-bs-toggle="modal" 
-                            data-bs-target="#editAssetModal"
-                            data-id="<?= $asset['id'] ?>"
-                            data-kategori="<?= $asset['kategori_id'] ?>"
-                            data-brand="<?= $asset['brand_id'] ?>"
-                            data-room="<?= $asset['room_id'] ?>"
-                            data-status="<?= $asset['status_id'] ?>"
-                            data-kode="<?= htmlspecialchars($asset['kode_asset'] ?? '-') ?>"
-                            data-nama="<?= htmlspecialchars($asset['nama_asset'] ?? '-') ?>"
-                            data-serial="<?= htmlspecialchars($asset['serial_number'] ?? '-') ?>"
-                            data-hostname="<?= htmlspecialchars($asset['hostname'] ?? '-') ?>"
-                            data-ip="<?= htmlspecialchars($asset['ip_address'] ?? '-') ?>"
-                            data-mac="<?= htmlspecialchars($asset['mac_address'] ?? '-') ?>"
-                            data-tgl="<?= htmlspecialchars($asset['tanggal_beli'] ?? '-') ?>"
-                            data-garansi="<?= htmlspecialchars($asset['garansi'] ?? '-') ?>"
-                            data-spek="<?= htmlspecialchars($asset['spesifikasi'] ?? '-') ?>"
-                            title="Ubah Data">
-                      <i class="bi bi-pencil-square"></i>
-                    </button>
-
-                    <!-- 3. Tombol Hapus -->
-                    <a href="proses_asset.php?action=delete&id=<?= $asset['id'] ?>" 
-                       class="btn btn-xs btn-danger" 
-                       onclick="return confirm('Apakah Anda yakin ingin menghapus asset <?= htmlspecialchars($asset['nama_asset'] ?? '') ?> ini?');"
-                       title="Hapus Data">
-                      <i class="bi bi-trash-fill"></i>
-                    </a>
-                  </div>
-                </td>
-              </tr>
-            <?php endforeach; ?>
-          <?php else: ?>
+<!-- Tabel Data -->
+<div class="card shadow-sm border-0">
+  <div class="table-responsive">
+    <table class="table table-hover table-striped align-middle mb-0" style="font-size: 0.9rem;">
+      <thead class="table-dark">
+        <tr>
+          <th scope="col" class="text-center" style="width: 50px;">No</th>
+          <th scope="col">Kategori</th>
+          <th scope="col">Brand</th>
+          <th scope="col">Rooms</th>
+          <th scope="col">Status</th>
+          <th scope="col">Kode Asset</th>
+          <th scope="col">Nama</th>
+          <th scope="col" class="text-center" style="width: 120px;">Perpindahan</th>
+          <th scope="col" class="text-center" style="width: 120px;">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php if (!empty($assets_data)): ?>
+          <?php $no = 1; foreach ($assets_data as $asset): ?>
             <tr>
-              <td colspan="8" class="text-center py-4 text-muted">Tidak ada data asset yang ditemukan.</td>
-            </tr>
-          <?php endif; ?>
-        </tbody>
-      </table>
-    </div>
-  </div>
+              <td class="text-center fw-bold"><?= $no++; ?></td>
+              <td><span class="badge bg-secondary"><?= htmlspecialchars($asset['nama_kategori'] ?? 'Tidak ada') ?></span></td>
+              <td><?= htmlspecialchars($asset['nama_brand'] ?? '-') ?></td>
+              <td><?= htmlspecialchars($asset['nama_ruangan'] ?? '-') ?></td>
+              <td>
+                <?php 
+                  $status = strtolower($asset['nama_status'] ?? '');
+                  $badge_class = 'bg-success'; 
+                  if (strpos($status, 'rusak') !== false || strpos($status, 'maintenance') !== false) {
+                      $badge_class = 'bg-danger';
+                  } elseif (strpos($status, 'perbaikan') !== false) {
+                      $badge_class = 'bg-warning text-dark';
+                  }
+                ?>
+                <span class="badge <?= $badge_class ?>"><?= htmlspecialchars($asset['nama_status'] ?? '-') ?></span>
+              </td>
+              <td class="fw-monospace text-primary"><?= htmlspecialchars($asset['kode_asset'] ?? '-') ?></td>
+              <td class="fw-semibold"><?= htmlspecialchars($asset['nama_asset'] ?? '-') ?></td>
+              
+              <!-- FIX UTAMA: Tombol Pindahkan yang sudah dibersihkan atributnya -->
+              <td class="text-center">
+                <button type="button" class="btn btn-xs btn-outline-dark px-2 py-1 btn-pindah" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#moveAssetModal"
+                        data-id="<?= $asset['id']; ?>"
+                        data-nama="<?= htmlspecialchars($asset['nama_asset'] ?? '-'); ?>"
+                        data-room="<?= $asset['room_id']; ?>"
+                        style="font-size: 0.75rem;" 
+                        title="Pindahkan Ruangan Asset">
+                  <i class="bi bi-box-arrow-right me-1"></i> Pindahkan
+                </button>
+              </td>
 
+              <td class="text-center">
+                <div class="btn-group gap-1">
+                  <!-- Tombol Detail -->
+                  <button type="button" class="btn btn-xs btn-info text-white btn-detail" data-bs-toggle="modal" data-bs-target="#assetDetailModal" data-id="<?= $asset['id'] ?>" data-kode="<?= htmlspecialchars($asset['kode_asset'] ?? '-') ?>" data-nama="<?= htmlspecialchars($asset['nama_asset'] ?? '-') ?>" data-serial="<?= htmlspecialchars($asset['serial_number'] ?? '-') ?>" data-hostname="<?= htmlspecialchars($asset['hostname'] ?? '-') ?>" data-ip="<?= htmlspecialchars($asset['ip_address'] ?? '-') ?>" data-mac="<?= htmlspecialchars($asset['mac_address'] ?? '-') ?>" data-tgl="<?= htmlspecialchars($asset['tanggal_beli'] ?? '-') ?>" data-garansi="<?= htmlspecialchars($asset['garansi'] ?? '-') ?>" data-foto="<?= htmlspecialchars($asset['foto'] ?? 'default.jpg') ?>" data-manual="<?= htmlspecialchars($asset['manual_book'] ?? '-') ?>" data-spek="<?= htmlspecialchars($asset['spesifikasi'] ?? '-') ?>" title="Lihat Detail"><i class="bi bi-eye-fill"></i></button>
+
+                  <!-- Tombol Edit -->
+                  <button type="button" class="btn btn-xs btn-warning text-dark btn-edit" data-bs-toggle="modal" data-bs-target="#editAssetModal" data-id="<?= $asset['id'] ?>" data-kategori="<?= $asset['kategori_id'] ?>" data-brand="<?= $asset['brand_id'] ?>" data-room="<?= $asset['room_id'] ?>" data-status="<?= $asset['status_id'] ?>" data-kode="<?= htmlspecialchars($asset['kode_asset'] ?? '-') ?>" data-nama="<?= htmlspecialchars($asset['nama_asset'] ?? '-') ?>" data-serial="<?= htmlspecialchars($asset['serial_number'] ?? '-') ?>" data-hostname="<?= htmlspecialchars($asset['hostname'] ?? '-') ?>" data-ip="<?= htmlspecialchars($asset['ip_address'] ?? '-') ?>" data-mac="<?= htmlspecialchars($asset['mac_address'] ?? '-') ?>" data-tgl="<?= htmlspecialchars($asset['tanggal_beli'] ?? '-') ?>" data-garansi="<?= htmlspecialchars($asset['garansi'] ?? '-') ?>" data-spek="<?= htmlspecialchars($asset['spesifikasi'] ?? '-') ?>" title="Ubah Data"><i class="bi bi-pencil-square"></i></button>
+
+                  <!-- Tombol Hapus -->
+                  <a href="proses_asset.php?action=delete&id=<?= $asset['id'] ?>" class="btn btn-xs btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus asset <?= htmlspecialchars($asset['nama_asset'] ?? '') ?> ini?');" title="Hapus Data"><i class="bi bi-trash-fill"></i></a>
+                </div>
+              </td>
+            </tr>
+          <?php endforeach; ?>
+        <?php else: ?>
+          <tr>
+            <td colspan="9" class="text-center py-4 text-muted">Tidak ada data asset yang ditemukan.</td>
+          </tr>
+        <?php endif; ?>
+      </tbody>
+    </table>
+  </div>
+</div>
 </main> <!-- Penutup Utama Konten -->
 </div> <!-- Penutup Row Grid -->
 </div> <!-- Penutup Container-Fluid -->
 
-<!-- MODAL DETAIL ASSET -->
+<!-- ========================================================================= -->
+<!-- MODAL DETAIL ASSET (BERSIH TANPA RIWAYAT PERPINDAHAN)                     -->
+<!-- ========================================================================= -->
 <div class="modal fade" id="assetDetailModal" tabindex="-1" aria-labelledby="assetDetailModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header bg-dark text-white">
-        <h5 class="modal-title" id="assetDetailModalLabel"><i class="bi bi-info-circle-fill me-2"></i> Detail Informasi Asset</h5>
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header bg-dark text-white py-3">
+        <h5 class="modal-title" id="assetDetailModalLabel"><i class="bi bi-info-circle-fill me-2 text-info"></i> Detail Informasi Asset</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-        <div class="row">
-          <!-- Kolom Foto Asset -->
-          <div class="col-md-4 text-center mb-3 mb-md-0 border-end border-light">
-            <div class="bg-light p-2 rounded mb-2 d-flex align-items-center justify-content-center" style="height: 200px;">
-              <img id="detail-foto" src="uploads/default.jpg" alt="Foto Asset" class="img-fluid rounded shadow-sm" style="max-height: 100%; object-fit: cover;">
+      <div class="modal-body p-4">
+        <div class="row g-4">
+          
+          <!-- SISI KIRI: Pratinjau Foto & Identitas Utama -->
+          <div class="col-md-4 text-center border-end border-light-subtle">
+            <div class="bg-light p-2 rounded-4 mb-3 d-flex align-items-center justify-content-center border border-dashed" style="height: 220px;">
+              <img id="detail-foto" src="uploads/default.jpg" alt="Foto Asset" class="img-fluid rounded-3 shadow-sm" style="max-height: 100%; object-fit: contain;" onerror="this.onerror=null; this.src='https://placehold.co';">
             </div>
-            <h6 id="detail-kode" class="text-primary fw-monospace mb-1">-</h6>
-            <small id="detail-nama" class="text-muted fw-semibold">-</small>
+            <div class="bg-primary-subtle rounded-3 py-1 px-2 d-inline-block mb-2">
+              <h6 id="detail-kode" class="text-primary fw-monospace m-0 small fw-bold">-</h6>
+            </div>
+            <div>
+              <span id="detail-nama" class="text-dark fw-bold h6 d-block mb-0">-</span>
+            </div>
           </div>
           
-          <!-- Kolom Informasi Teknis & Administrasi -->
+          <!-- SISI KANAN: Informasi Teknis & Administrasi -->
           <div class="col-md-8">
-            <table class="table table-sm table-borderless align-middle" style="font-size: 0.9rem;">
-              <tbody>
-                <tr>
-                  <th style="width: 35%;" class="text-secondary">Serial Number</th>
-                  <td>: <span id="detail-serial" class="fw-semibold">-</span></td>
-                </tr>
-                <tr>
-                  <th class="text-secondary">Hostname</th>
-                  <td>: <span id="detail-hostname">-</span></td>
-                </tr>
-                <tr>
-                  <th class="text-secondary">IP Address</th>
-                  <td>: <code id="detail-ip" class="text-dark bg-light px-1 rounded">-</code></td>
-                </tr>
-                <tr>
-                  <th class="text-secondary">MAC Address</th>
-                  <td>: <code id="detail-mac" class="text-dark bg-light px-1 rounded">-</code></td>
-                </tr>
-                <tr>
-                  <th class="text-secondary">Tanggal Beli</th>
-                  <td>: <span id="detail-tgl">-</span></td>
-                </tr>
-                <tr>
-                  <th class="text-secondary">Garansi Hingga</th>
-                  <td>: <span id="detail-garansi" class="text-danger fw-semibold">-</span></td>
-                </tr>
-                <tr>
-                  <th class="text-secondary">Manual Book</th>
-                  <td>: <a id="detail-manual-link" href="#" target="_blank" class="btn btn-xs btn-outline-secondary py-0 px-2" style="font-size: 0.8rem;"><i class="bi bi-file-earmark-pdf"></i> Lihat Dokumen</a><span id="detail-manual-text" class="text-muted">-</span></td>
-                </tr>
-              </tbody>
-            </table>
-            
-            <div class="mt-3">
-              <label class="form-label fw-bold text-secondary mb-1" style="font-size: 0.85rem;">Spesifikasi Lengkap:</label>
-              <div id="detail-spek" class="p-3 bg-light rounded text-dark border" style="font-size: 0.85rem; max-height: 120px; overflow-y: auto; white-space: pre-line;">
+            <div class="table-responsive">
+              <table class="table table-sm table-borderless align-middle mb-0" style="font-size: 0.9rem;">
+                <tbody>
+                  <tr>
+                    <td class="text-secondary fw-semibold py-2" style="width: 32%;">Serial Number</td>
+                    <td class="text-dark py-2" style="width: 3%;">:</td>
+                    <td class="fw-semibold text-dark py-2"><span id="detail-serial">-</span></td>
+                  </tr>
+                  <tr>
+                    <td class="text-secondary fw-semibold py-2">Hostname</td>
+                    <td class="text-dark py-2">:</td>
+                    <td class="text-dark py-2"><span id="detail-hostname">-</span></td>
+                  </tr>
+                  <tr>
+                    <td class="text-secondary fw-semibold py-2">IP Address</td>
+                    <td class="text-dark py-2">:</td>
+                    <td class="py-2"><code id="detail-ip" class="text-dark bg-light px-2 py-1 rounded border small">-</code></td>
+                  </tr>
+                  <tr>
+                    <td class="text-secondary fw-semibold py-2">MAC Address</td>
+                    <td class="text-dark py-2">:</td>
+                    <td class="py-2"><code id="detail-mac" class="text-dark bg-light px-2 py-1 rounded border small">-</code></td>
+                  </tr>
+                  <tr>
+                    <td class="text-secondary fw-semibold py-2">Tanggal Beli</td>
+                    <td class="text-dark py-2">:</td>
+                    <td class="text-dark py-2"><span id="detail-tgl">-</span></td>
+                  </tr>
+                  <tr>
+                    <td class="text-secondary fw-semibold py-2">Garansi Hingga</td>
+                    <td class="text-dark py-2">:</td>
+                    <td class="py-2"><span id="detail-garansi" class="text-danger fw-bold">-</span></td>
+                  </tr>
+                  <tr>
+                    <td class="text-secondary fw-semibold py-2">Manual Book</td>
+                    <td class="text-dark py-2">:</td>
+                    <td class="py-2">
+                      <a id="detail-manual-link" href="#" target="_blank" class="btn btn-sm btn-outline-secondary py-0 px-2 fw-semibold" style="font-size: 0.8rem;">
+                        <i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i> Lihat Dokumen
+                      </a>
+                      <span id="detail-manual-text" class="text-muted small">-</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Bagian Spesifikasi Terpisah di Bawah Tabel -->
+            <div class="mt-3 pt-3 border-top border-light">
+              <label class="form-label fw-bold text-secondary mb-1" style="font-size: 0.85rem;"><i class="bi bi-cpu me-1"></i> Spesifikasi Lengkap / Catatan:</label>
+              <div id="detail-spek" class="p-3 bg-light rounded-3 text-dark border border-light-subtle" style="font-size: 0.85rem; max-height: 100px; overflow-y: auto; white-space: pre-line; line-height: 1.4;">
                 -
               </div>
             </div>
+
           </div>
         </div>
       </div>
-      <div class="modal-footer bg-light py-2">
-        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Tutup</button>
+      <div class="modal-footer bg-light py-2 border-0 rounded-bottom-4">
+        <button type="button" class="btn btn-sm btn-secondary px-3 rounded-3" data-bs-dismiss="modal">Tutup</button>
       </div>
     </div>
   </div>
@@ -683,15 +737,62 @@ try {
   </div>
 </div>
 
+<!-- ========================================================================= -->
+<!-- MODAL POP-UP PERPINDAHAN ASSET (SUDAH DENGAN INPUT ALANAN MANUAL)          -->
+<!-- ========================================================================= -->
+<div class="modal fade" id="moveAssetModal" tabindex="-1" aria-labelledby="moveAssetModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title" id="moveAssetModalLabel"><i class="bi bi-arrow-left-right me-2"></i> Mutasi Ruangan Asset</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="proses_asset.php?action=update_room" method="POST">
+        <div class="modal-body">
+          <!-- Input Hidden ID Asset -->
+          <input type="hidden" name="asset_id" id="pindah-id">
+          
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-secondary">Nama Asset</label>
+            <input type="text" id="pindah-nama" class="form-control form-control-sm bg-light" readonly>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-dark">Pindahkan ke Ruangan Baru *</label>
+            <select name="room_id" id="pindah-room" class="form-select form-select-sm" required>
+              <option value="">-- Pilih Ruangan Tujuan --</option>
+              <?php if(!empty($list_ruangan)): foreach ($list_ruangan as $rm): ?>
+                <option value="<?= $rm['id']; ?>"><?= htmlspecialchars($rm['nama']); ?></option>
+              <?php endforeach; endif; ?>
+            </select>
+          </div>
+
+          <!-- DI SINI TEMPATNYA: Input Alasan Perpindahan Manual -->
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-dark">Alasan Perpindahan</label>
+            <textarea name="alasan" class="form-control form-control-sm" rows="2" placeholder="Contoh: Perangkat rusak, mutasi divisi, atau pemeliharaan..."></textarea>
+          </div>
+
+        </div>
+        <div class="modal-footer bg-light py-2">
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-sm btn-dark fw-bold">Konfirmasi Perpindahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     // ==========================================
-    // LOGIKA 1: MODAL POP-UP DETAIL ASSET (SUDAH DIPERBAIKI)
+    // LOGIKA 1: MODAL POP-UP DETAIL ASSET (DENGAN AJAX RIWAYAT)
     // ==========================================
     const detailButtons = document.querySelectorAll('.btn-detail');
     
     detailButtons.forEach(button => {
         button.addEventListener('click', function () {
+            const id = this.getAttribute('data-id'); // Ambil parameter ID asset
             const kode = this.getAttribute('data-kode');
             const nama = this.getAttribute('data-nama');
             const serial = this.getAttribute('data-serial') || '-';
@@ -715,7 +816,6 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('detail-spek').innerText = spek;
 
             const imgElement = document.getElementById('detail-foto');
-            // PERBAIKAN: Ditambah pengaman jika data foto null, kosong, atau string "null"
             if (foto && foto.trim() !== '' && foto !== 'default.jpg' && foto !== '-' && foto !== 'null') {
                 imgElement.src = 'uploads/' + foto;
             } else {
@@ -858,95 +958,21 @@ document.addEventListener('DOMContentLoaded', function () {
             btnBukaWebcam.classList.replace('btn-danger', 'btn-primary');
         }
     }
+
+    // ==========================================
+    // LOGIKA 5: PEMETAAN DATA MODAL PERPINDAHAN (BARU)
+    // ==========================================
+    const pindahButtons = document.querySelectorAll('.btn-pindah');
+    pindahButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            document.getElementById('pindah-id').value   = this.getAttribute('data-id');
+            document.getElementById('pindah-nama').value = this.getAttribute('data-nama');
+            document.getElementById('pindah-room').value = this.getAttribute('data-room');
+        });
+    });
 });
-
-    // ==========================================
-    // LOGIKA 4: PENGENDALI WEBCAM DI MODAL EDIT
-    // ==========================================
-    const editBtnBukaWebcam  = document.getElementById('edit-btn-aktifkan-webcam');
-    const editBtnJepret      = document.getElementById('edit-btn-jepret-foto');
-    const editContainerCam   = document.getElementById('edit-webcam-container');
-    const editVideo          = document.getElementById('edit-webcam-video');
-    const editCanvas         = document.getElementById('edit-webcam-canvas');
-    const editInputBase64    = document.getElementById('edit-foto-base64');
-    const editImgPreview     = document.getElementById('edit-pratinjau-hasil-foto');
-    const editTeksPanduan    = document.getElementById('edit-teks-panduan-pratinjau');
-    const editInputFile      = document.getElementById('edit-input-file-foto');
-
-    let editStreamLokal = null;
-
-    if (editBtnBukaWebcam) {
-        editBtnBukaWebcam.addEventListener('click', async function () {
-            if (editStreamLokal) {
-                matikanEditWebcam();
-                return;
-            }
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: "user" },
-                    audio: false
-                });
-                editStreamLokal = stream;
-                editVideo.srcObject = stream;
-                editContainerCam.classList.remove('d-none');
-                editBtnBukaWebcam.innerHTML = '<i class="bi bi-camera-video-off-fill me-1"></i> Tutup Kamera';
-                editBtnBukaWebcam.classList.replace('btn-primary', 'btn-danger');
-                if (editInputFile) editInputFile.value = ''; 
-            } catch (err) {
-                alert("Gagal mengakses kamera di modal edit: " + err.message);
-            }
-        });
-    }
-
-    if (editBtnJepret) {
-        editBtnJepret.addEventListener('click', function () {
-            if (!editStreamLokal) return;
-            editCanvas.width = editVideo.videoWidth;
-            editCanvas.height = editVideo.videoHeight;
-            const ctx = editCanvas.getContext('2d');
-            ctx.translate(editCanvas.width, 0);
-            ctx.scale(-1, 1);
-            ctx.drawImage(editVideo, 0, 0, editCanvas.width, editCanvas.height);
-            
-            const base64Data = editCanvas.toDataURL('image/png');
-            editInputBase64.value = base64Data;
-            editImgPreview.src = base64Data;
-            editImgPreview.classList.remove('d-none');
-            editTeksPanduan.classList.add('d-none');
-            matikanEditWebcam();
-        });
-    }
-
-    if (editInputFile) {
-        editInputFile.addEventListener('change', function() {
-            if (this.files && this.files[0]) {
-                matikanEditWebcam(); 
-                editInputBase64.value = ''; 
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    editImgPreview.src = e.target.result;
-                    editImgPreview.classList.remove('d-none');
-                    editTeksPanduan.classList.add('d-none');
-                }
-                reader.readAsDataURL(this.files[0]);
-            }
-        });
-    }
-
-    function matikanEditWebcam() {
-        if (editStreamLokal) {
-            editStreamLokal.getTracks().forEach(track => track.stop());
-            editStreamLokal = null;
-        }
-        if (editVideo) editVideo.srcObject = null;
-        if (editContainerCam) editContainerCam.classList.add('d-none');
-        if (editBtnBukaWebcam) {
-            editBtnBukaWebcam.innerHTML = '<i class="bi bi-camera-video-fill me-1"></i> Buka Kamera';
-            editBtnBukaWebcam.classList.replace('btn-danger', 'btn-primary');
-        }
-    }
-
 </script>
+
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

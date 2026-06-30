@@ -202,4 +202,57 @@ if ($action == 'delete') {
         die("Gagal menghapus data: " . $e->getMessage());
     }
 }
+
+// -------------------------------------------------------------------------
+// LOGIKA 4: MUTASI / PINDAH RUANGAN + OTOMATIS CATAT LOG ASSET MOVEMENTS
+// -------------------------------------------------------------------------
+if ($action == 'update_room') {
+    $asset_id = isset($_POST['asset_id']) ? intval($_POST['asset_id']) : 0;
+    $room_to  = !empty($_POST['room_id']) ? intval($_POST['room_id']) : null;
+    $alasan   = isset($_POST['alasan']) ? trim($_POST['alasan']) : 'Perpindahan ruangan asset melalui sistem.';
+
+    if ($asset_id <= 0) { die("Data Asset tidak valid."); }
+
+    try {
+        // 1. Ambil ID ruangan lama (room_from) sebelum diubah
+        $get_old_room = $conn->prepare("SELECT room_id FROM assets WHERE id = :asset_id");
+        $get_old_room->execute([':asset_id' => $asset_id]);
+        $old_room_data = $get_old_room->fetch(PDO::FETCH_ASSOC);
+        $room_from = $old_room_data ? $old_room_data['room_id'] : null;
+
+        // 2. Mulai Transaction database agar kedua proses wajib sukses bersamaan
+        $conn->beginTransaction();
+
+        // 3. Update ruangan baru di tabel utama 'assets'
+        $sql_update_asset = "UPDATE assets SET room_id = :room_to, updated_at = NOW() WHERE id = :asset_id";
+        $stmt1 = $conn->prepare($sql_update_asset);
+        $stmt1->execute([
+            ':room_to'  => $room_to,
+            ':asset_id' => $asset_id
+        ]);
+
+        // 4. Masukkan baris data log baru ke dalam tabel 'asset_movements'
+        $sql_insert_log = "INSERT INTO asset_movements (asset_id, room_from, room_to, tanggal, alasan) 
+                           VALUES (:asset_id, :room_from, :room_to, CURDATE(), :alasan)";
+        $stmt2 = $conn->prepare($sql_insert_log);
+        $stmt2->execute([
+            ':asset_id'  => $asset_id,
+            ':room_from' => $room_from,
+            ':room_to'   => $room_to,
+            ':alasan'    => $alasan
+        ]);
+
+        // Komit semua query jika tidak ada kendala
+        $conn->commit();
+
+        header("Location: assets.php");
+        exit();
+
+    } catch (PDOException $e) {
+        // Batalkan semua perubahan jika salah satu query gagal
+        $conn->rollBack();
+        die("Gagal mencatat perpindahan asset: " . $e->getMessage());
+    }
+}
+
 ?>
