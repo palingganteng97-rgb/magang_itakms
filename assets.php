@@ -287,7 +287,7 @@ try {
           <th scope="col">Status</th>
           <th scope="col">Kode Asset</th>
           <th scope="col">Nama</th>
-          <th scope="col" class="text-center" style="width: 120px;">Perpindahan</th>
+          <th scope="col" class="text-center" style="width: 180px;">Perpindahan</th>
           <th scope="col" class="text-center" style="width: 120px;">Aksi</th>
         </tr>
       </thead>
@@ -314,18 +314,32 @@ try {
               <td class="fw-monospace text-primary"><?= htmlspecialchars($asset['kode_asset'] ?? '-') ?></td>
               <td class="fw-semibold"><?= htmlspecialchars($asset['nama_asset'] ?? '-') ?></td>
               
-              <!-- FIX UTAMA: Tombol Pindahkan yang sudah dibersihkan atributnya -->
+              <!-- KOLOM PERPINDAHAN: Tombol Pindahkan & Riwayat Berjejer Rapi -->
               <td class="text-center">
-                <button type="button" class="btn btn-xs btn-outline-dark px-2 py-1 btn-pindah" 
-                        data-bs-toggle="modal" 
-                        data-bs-target="#moveAssetModal"
-                        data-id="<?= $asset['id']; ?>"
-                        data-nama="<?= htmlspecialchars($asset['nama_asset'] ?? '-'); ?>"
-                        data-room="<?= $asset['room_id']; ?>"
-                        style="font-size: 0.75rem;" 
-                        title="Pindahkan Ruangan Asset">
-                  <i class="bi bi-box-arrow-right me-1"></i> Pindahkan
-                </button>
+                <div class="d-flex justify-content-center gap-1">
+                  <!-- Tombol Pindahkan -->
+                  <button type="button" class="btn btn-xs btn-outline-dark px-2 py-1 btn-pindah" 
+                          data-bs-toggle="modal" 
+                          data-bs-target="#moveAssetModal"
+                          data-id="<?= $asset['id']; ?>"
+                          data-nama="<?= htmlspecialchars($asset['nama_asset'] ?? '-'); ?>"
+                          data-room="<?= $asset['room_id']; ?>"
+                          style="font-size: 0.75rem;" 
+                          title="Pindahkan Ruangan Asset">
+                    <i class="bi bi-box-arrow-right me-1"></i> Pindahkan
+                  </button>
+
+                  <!-- Tombol Riwayat -->
+                  <button type="button" class="btn btn-xs btn-secondary text-white px-2 py-1 btn-riwayat" 
+                          data-bs-toggle="modal" 
+                          data-bs-target="#historyAssetModal"
+                          data-id="<?= $asset['id']; ?>"
+                          data-nama="<?= htmlspecialchars($asset['nama_asset'] ?? '-'); ?>"
+                          style="font-size: 0.75rem;" 
+                          title="Lihat Riwayat Perpindahan">
+                    <i class="bi bi-clock-history me-1"></i> Riwayat
+                  </button>
+                </div>
               </td>
 
               <td class="text-center">
@@ -354,6 +368,37 @@ try {
 </main> <!-- Penutup Utama Konten -->
 </div> <!-- Penutup Row Grid -->
 </div> <!-- Penutup Container-Fluid -->
+
+<!-- Modal Riwayat Perpindahan -->
+<div class="modal fade" id="historyAssetModal" tabindex="-1" aria-labelledby="historyAssetModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-md modal-dialog-centered"> <!-- Mengubah modal-lg menjadi modal-md agar pas dengan ukuran list -->
+    <div class="modal-content">
+      <div class="modal-header bg-secondary text-white py-2">
+        <h5 class="modal-title" id="historyAssetModalLabel" style="font-size: 1rem;">
+          <i class="bi bi-clock-history me-2"></i>Riwayat Perpindahan Asset
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body bg-light"> <!-- Menambahkan bg-light agar list box putih terlihat kontras -->
+        <!-- Informasi Nama Asset Yang Dipilih -->
+        <div class="alert alert-white border mb-3 py-2 shadow-sm" style="font-size: 0.9rem; background-color: #fff;">
+          <strong>Nama Asset:</strong> <span id="history-asset-name" class="text-primary fw-semibold">-</span>
+        </div>
+        
+        <!-- Wadah List Riwayat Perpindahan (PHP merender layout kotak langsung di sini) -->
+        <div id="history-content-container">
+          <div class="text-center py-3 text-muted">
+            <div class="spinner-border spinner-border-sm text-secondary me-2" role="status"></div>
+            Memuat data riwayat...
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ========================================================================= -->
 <!-- MODAL DETAIL ASSET (BERSIH TANPA RIWAYAT PERPINDAHAN)                     -->
@@ -955,26 +1000,58 @@ document.addEventListener('DOMContentLoaded', function () {
             streamLokal.getTracks().forEach(track => track.stop());
             streamLokal = null;
         }
-        if (video) video.srcObject = null;
-        if (containerCam) containerCam.classList.add('d-none');
+        if (video) {
+            video.srcObject = null;
+        }
+        if (containerCam) {
+            containerCam.classList.add('d-none');
+        }
         if (btnBukaWebcam) {
-            btnBukaWebcam.innerHTML = '<i class="bi bi-camera-video-fill me-1"></i> Buka Kamera';
+            btnBukaWebcam.innerHTML = '<i class="bi bi-camera-video-fill me-1"></i> Aktifkan Webcam';
             btnBukaWebcam.classList.replace('btn-danger', 'btn-primary');
         }
     }
 
     // ==========================================
-    // LOGIKA 5: PEMETAAN DATA MODAL PERPINDAHAN (BARU)
+    // LOGIKA 4: MODAL POP-UP RIWAYAT PERPINDAHAN (FIX)
     // ==========================================
-    const pindahButtons = document.querySelectorAll('.btn-pindah');
-    pindahButtons.forEach(button => {
+    const historyButtons = document.querySelectorAll('.btn-riwayat');
+    const historyTableName = document.getElementById('history-asset-name');
+    const historyContentContainer = document.getElementById('history-content-container');
+
+    historyButtons.forEach(button => {
         button.addEventListener('click', function () {
-            document.getElementById('pindah-id').value   = this.getAttribute('data-id');
-            document.getElementById('pindah-nama').value = this.getAttribute('data-nama');
-            document.getElementById('pindah-room').value = this.getAttribute('data-room');
+            const id = this.getAttribute('data-id');
+            const nama = this.getAttribute('data-nama');
+
+            // 1. Tampilkan nama asset di modal info
+            if (historyTableName) {
+                historyTableName.innerText = nama;
+            }
+
+            // 2. Tampilkan spinner loading awal
+            if (historyContentContainer) {
+                historyContentContainer.innerHTML = '<div class="text-center py-3 text-muted"><div class="spinner-border spinner-border-sm text-secondary me-2" role="status"></div>Memuat data riwayat...</div>';
+            }
+
+            // 3. Ambil data HTML dari get_movement_history.php
+            fetch('get_movement_history.php?asset_id=' + id)
+                .then(response => response.text()) // Mengambil respon sebagai teks HTML murni
+                .then(htmlData => {
+                    if (historyContentContainer) {
+                        historyContentContainer.innerHTML = htmlData; // Masukkan list box langsung ke modal
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    if (historyContentContainer) {
+                        historyContentContainer.innerHTML = '<div class="alert alert-danger py-2 small mb-0"><i class="bi bi-exclamation-triangle-fill me-1"></i> Gagal terhubung ke database server.</div>';
+                    }
+                });
         });
     });
-});
+
+}); // <--- WAJIB ADA: Penutup dari document.addEventListener('DOMContentLoaded', ... )
 </script>
 
 <!-- Bootstrap JS -->
