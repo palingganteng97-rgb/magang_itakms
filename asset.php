@@ -78,7 +78,7 @@ try {
             <ul class="nav flex-column gap-2">
                 <!-- 1. Dashboard -->
                 <li class="nav-item">
-                    <a href="dashboard.php" class="nav-link active p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
+                    <a href="dashboard.php" class="nav-link p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
                 </li>
                 <!-- 2. Manajemen Roles -->
                 <li class="nav-item">
@@ -90,9 +90,9 @@ try {
                         <i class="bi bi-diagram-3 me-2"></i> Manajemen Bangunan & Ruang
                     </a>
                 </li>
-                <!-- 4. Assets (Opsi Baru) -->
+                <!-- 4. Assets (STATUS ACTIVE PINDAH KE SINI) -->
                 <li class="nav-item">
-                    <a href="asset.php" class="nav-link p-2 rounded"><i class="bi bi-boxes me-2"></i> Assets</a>
+                    <a href="asset.php" class="nav-link active p-2 rounded"><i class="bi bi-boxes me-2"></i> Assets</a>
                 </li>
                 <!-- 5. User Profil -->
                 <li class="nav-item">
@@ -120,7 +120,7 @@ try {
             <ul class="nav flex-column gap-2">
                 <!-- 1. Dashboard -->
                 <li class="nav-item">
-                    <a href="dashboard.php" class="nav-link active p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
+                    <a href="dashboard.php" class="nav-link p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
                 </li>
                 <!-- 2. Manajemen Roles -->
                 <li class="nav-item">
@@ -132,9 +132,9 @@ try {
                         <i class="bi bi-diagram-3 me-2"></i> Manajemen Bangunan & Ruang
                     </a>
                 </li>
-                <!-- 4. Assets (Opsi Baru) -->
+                <!-- 4. Assets (STATUS ACTIVE PINDAH KE SINI) -->
                 <li class="nav-item">
-                    <a href="asset.php" class="nav-link p-2 rounded"><i class="bi bi-boxes me-2"></i> Assets</a>
+                    <a href="asset.php" class="nav-link active p-2 rounded"><i class="bi bi-boxes me-2"></i> Assets</a>
                 </li>
                 <!-- 5. User Profil -->
                 <li class="nav-item">
@@ -151,63 +151,3 @@ try {
                 </ul>
             </div>
         </nav>
-        
-        <!-- MAIN CONTENT (Konten Utama) -->
-        <main class="col-md-9 col-12 px-2 px-md-4 py-4">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">Dashboard Sistem</h1>
-                <div class="d-flex align-items-center gap-2">
-                    <span class="badge bg-secondary p-2">Sesi Admin</span>
-                </div>
-
-
-            </div>
-
-            <!-- STATISTIC CARDS (Ringkasan Data) -->
-            <div class="row mb-4 gx-2">
-                <div class="col-md-4">
-                    <div class="card bg-primary text-white mb-3 shadow-sm">
-                        <div class="card-body d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="card-title text-white-50">Total Users</h6>
-                                <h2 class="card-text fw-bold"><?= $total_users ?></h2>
-                            </div>
-                            <i class="bi bi-people fs-1 text-white-50"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="card bg-success text-white mb-3 shadow-sm">
-                        <div class="card-body d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="card-title text-white-50">User Aktif</h6>
-                                <h2 class="card-text fw-bold"><?= $total_aktif ?></h2>
-                            </div>
-                            <i class="bi bi-person-check fs-1 text-white-50"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="card bg-danger text-white mb-3 shadow-sm">
-                        <div class="card-body d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="card-title text-white-50">User Non-Aktif</h6>
-                                <h2 class="card-text fw-bold"><?= $total_non_aktif ?></h2>
-                            </div>
-                            <i class="bi bi-person-x fs-1 text-white-50"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-
-</main>
-    </div>
-</div>
-
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>

@@ -162,19 +162,27 @@ $total_rooms = count($rooms);
     <div class="offcanvas-body p-0">
         <nav class="sidebar p-3 d-flex flex-column" style="min-height: calc(100vh - 56px);">
             <ul class="nav flex-column gap-2">
+                <!-- 1. Dashboard -->
                 <li class="nav-item">
-                    <!-- STATUS ACTIVE UNTUK DASHBOARD -->
                     <a href="dashboard.php" class="nav-link p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
                 </li>
+                <!-- 2. Manajemen Roles -->
+                <li class="nav-item">
+                    <a href="roles.php" class="nav-link p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Manajemen Roles</a>
+                </li>
+                <!-- 3. Manajemen Bangunan & Ruang (STATUS ACTIVE PINDAH KE SINI) -->
+                <li class="nav-item">
+                    <a href="relasi.php" class="nav-link active p-2 rounded text-nowrap" style="overflow: hidden; text-overflow: ellipsis;">
+                        <i class="bi bi-diagram-3 me-2"></i> Manajemen Bangunan & Ruang
+                    </a>
+                </li>
+                <!-- 4. Assets -->
+                <li class="nav-item">
+                    <a href="asset.php" class="nav-link p-2 rounded"><i class="bi bi-boxes me-2"></i> Assets</a>
+                </li>
+                <!-- 5. User Profil -->
                 <li class="nav-item">
                     <a href="user.php" class="nav-link p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
-                </li>
-                <li class="nav-item">
-                    <a href="roles.php" class="nav-link p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Roles</a>
-                </li>
-                <!-- MENU OPSI BARU: RELASI -->
-                <li class="nav-item">
-                    <a href="relasi.php" class="nav-link active p-2 rounded"><i class="bi bi-diagram-3 me-2"></i> Relasi</a>
                 </li>
             </ul>
             <div class="mt-auto pt-3">
@@ -193,22 +201,30 @@ $total_rooms = count($rooms);
 <!-- SIDEBAR DESKTOP -->
 <div class="container-fluid">
     <div class="row">
-        <nav class="col-md-3 col-lg-2 d-none d-md-flex flex-column sidebar p-3">
+        <nav class="col-md-4 col-lg-3 d-none d-md-flex flex-column sidebar p-3">
             <h4 class="text-center mb-4 text-warning"><i class="bi bi-speedometer2"></i> ITAKMS</h4>
             <ul class="nav flex-column gap-2">
+                <!-- 1. Dashboard -->
                 <li class="nav-item">
-                    <!-- STATUS ACTIVE UNTUK DASHBOARD -->
                     <a href="dashboard.php" class="nav-link p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
                 </li>
+                <!-- 2. Manajemen Roles -->
+                <li class="nav-item">
+                    <a href="roles.php" class="nav-link p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Manajemen Roles</a>
+                </li>
+                <!-- 3. Manajemen Bangunan & Ruang (STATUS ACTIVE PINDAH KE SINI) -->
+                <li class="nav-item">
+                    <a href="relasi.php" class="nav-link active p-2 rounded text-nowrap" style="overflow: hidden; text-overflow: ellipsis;" title="Manajemen Bangunan & Ruang">
+                        <i class="bi bi-diagram-3 me-2"></i> Manajemen Bangunan & Ruang
+                    </a>
+                </li>
+                <!-- 4. Assets -->
+                <li class="nav-item">
+                    <a href="asset.php" class="nav-link p-2 rounded"><i class="bi bi-boxes me-2"></i> Assets</a>
+                </li>
+                <!-- 5. User Profil -->
                 <li class="nav-item">
                     <a href="user.php" class="nav-link p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
-                </li>
-                <li class="nav-item">
-                    <a href="roles.php" class="nav-link p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Roles</a>
-                </li>
-                <!-- MENU OPSI BARU: RELASI -->
-                <li class="nav-item">
-                    <a href="relasi.php" class="nav-link active p-2 rounded"><i class="bi bi-diagram-3 me-2"></i> Relasi</a>
                 </li>
             </ul>
             <div class="mt-auto pt-3 border-top border-secondary w-100">
