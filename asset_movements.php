@@ -1,11 +1,11 @@
 <?php
 // =========================================================================
-// LOGIKA BACKEND: asset_movements.php (OPTIMAL & BEBAS BENTROK)
+// LOGIKA BACKEND UTUH: asset_movements.php (PULIH TOTAL & KILAT)
 // =========================================================================
 require_once __DIR__ . '/auth.php';
 require_login();
 
-// 1. Konfigurasi Database
+// 1. Konfigurasi Database Kredensial Anda
 $host     = "10.10.6.59";
 $username = "root_host";
 $password = "password";
@@ -15,12 +15,12 @@ try {
     $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
-    // Ambil parameter kata kunci pencarian teks dari URL
+    // Mengambil kata kunci pencarian dari kolom teks filter di halaman depan
     $search_keyword = isset($_GET['search_keyword']) ? trim($_GET['search_keyword']) : '';
     $where_clause = "";
     $params = [];
 
-    // Jika user mengetik sesuatu di kolom pencarian
+    // Logika jika user mengetik sesuatu untuk mencari log data
     if (!empty($search_keyword)) {
         $where_clause = " WHERE a.nama LIKE :search 
                           OR a.kode_asset LIKE :search 
@@ -28,21 +28,18 @@ try {
         $params[':search'] = "%$search_keyword%";
     }
 
-    // 2. QUERY UTAMA: Join tabel sesuai struktur kolom di HeidiSQL Anda
+    // 2. QUERY UTAMA: DITAMBAHKAN GROUP BY am.id AGAR DATA TIDAK GANDA / DOUBLE
     $query = "SELECT 
-                am.id, 
-                am.tanggal, 
-                am.alasan,
-                a.kode_asset, 
-                a.nama AS nama_asset,
-                r1.nama AS dari_ruangan,  -- Mengambil nama ruangan asal berdasarkan room_from
-                r2.nama AS ke_ruangan     -- Mengambil nama ruangan tujuan berdasarkan room_to
+                am.id, am.tanggal, am.alasan,
+                a.kode_asset, a.nama AS nama_asset,
+                r1.nama AS dari_ruangan, r2.nama AS ke_ruangan
               FROM asset_movements am
               LEFT JOIN assets a ON am.asset_id = a.id
-              LEFT JOIN rooms r1 ON am.room_from = r1.id   -- Join pertama untuk room_from
-              LEFT JOIN rooms r2 ON am.room_to = r2.id     -- Join kedua untuk room_to"
+              LEFT JOIN rooms r1 ON am.room_from = r1.id
+              LEFT JOIN rooms r2 ON am.room_to = r2.id"
               . $where_clause . 
-              " ORDER BY am.id DESC LIMIT 100"; // Membatasi data teratas agar loading instan
+              " GROUP BY am.id 
+                ORDER BY am.id DESC LIMIT 100";
 
     $stmt = $conn->prepare($query);
     $stmt->execute($params);
@@ -175,16 +172,15 @@ try {
       </div>
     </nav>
 
-        <!-- AREA KONTEN UTAMA KANAN -->
+    <!-- AREA KONTEN UTAMA KANAN -->
     <main class="col-md-8 col-lg-9 p-4">
       
-      <!-- Banner Judul Halaman -->
+      <!-- Banner Judul Halaman (Tombol Kembali Sudah Dihapus) -->
       <div class="d-flex justify-content-between align-items-center pt-2 pb-2 mb-3 border-bottom">
-        <div class="div">
+        <div>
           <h1 class="h3 fw-bold text-dark m-0">Log Riwayat Perpindahan Asset</h1>
           <p class="text-muted small m-0">Memantau mutasi dan pergerakan lokasi inventaris perangkat ITAKMS.</p>
         </div>
-        <a href="assets.php" class="btn btn-sm btn-outline-secondary px-3 rounded-3"><i class="bi bi-arrow-left me-1"></i> Kembali</a>
       </div>
 
       <!-- Form Filter Pencarian -->
@@ -196,23 +192,23 @@ try {
           </div>
           <div class="col-md-3 d-flex gap-1">
             <button class="btn btn-sm btn-primary w-100 fw-bold rounded-2" type="submit"><i class="bi bi-search"></i> Cari Log</button>
-            <a href="asset_movements.php" class="btn btn-sm btn-outline-secondary w-100 rounded-2" title="Reset Pencarian"><i class="bi bi-arrow-clockwise"></i> Reset</a>
+            <a href="asset_movements.php" class="btn btn-sm btn-outline-secondary w-100 rounded-2"><i class="bi bi-arrow-clockwise"></i> Reset</a>
           </div>
         </div>
       </form>
 
-      <!-- Tabel Riwayat Transparansi Pergerakan -->
+      <!-- Tabel Riwayat Transparansi Pergerakan (Anti Melar) -->
       <div class="card shadow-sm border-0 rounded-3 overflow-hidden">
         <div class="table-responsive">
-          <table class="table table-hover table-striped align-middle mb-0" style="font-size: 0.88rem;">
+          <table class="table table-hover table-striped align-middle mb-0" style="font-size: 0.88rem; table-layout: fixed; width: 100%;">
             <thead class="table-dark">
               <tr>
-                <th scope="col" class="text-center" style="width: 50px;">No</th>
+                <th scope="col" class="text-center" style="width: 55px;">No</th>
                 <th scope="col" style="width: 130px;">Tanggal</th>
-                <th scope="col">Kode Asset</th>
-                <th scope="col">Nama Asset</th>
-                <th scope="col" class="text-center" style="width: 280px;">Alur Perpindahan</th>
-                <th scope="col">Alasan Mutasi</th>
+                <th scope="col" style="width: 140px;">Kode Asset</th>
+                <th scope="col" style="width: 180px;">Nama Asset</th>
+                <th scope="col" class="text-center" style="width: 250px;">Alur Perpindahan</th>
+                <th scope="col" style="width: 320px;">Alasan Perpindahan</th>
               </tr>
             </thead>
             <tbody>
@@ -230,22 +226,30 @@ try {
                     </td>
                     
                     <!-- Identitas Perangkat -->
-                    <td class="fw-monospace text-primary small"><?= htmlspecialchars($log['kode_asset'] ?? '-'); ?></td>
-                    <td class="fw-bold text-dark"><?= htmlspecialchars($log['nama_asset'] ?? 'Asset Terhapus'); ?></td>
+                    <td class="fw-monospace text-primary small text-truncate" title="<?= htmlspecialchars($log['kode_asset'] ?? '-'); ?>">
+                      <?= htmlspecialchars($log['kode_asset'] ?? '-'); ?>
+                    </td>
+                    <td class="fw-bold text-dark text-truncate" title="<?= htmlspecialchars($log['nama_asset'] ?? 'Asset Terhapus'); ?>">
+                      <?= htmlspecialchars($log['nama_asset'] ?? 'Asset Terhapus'); ?>
+                    </td>
                     
                     <!-- Rute Alur Perpindahan Ruangan -->
                     <td class="text-center">
-                      <span class="badge bg-secondary-subtle text-secondary border px-2 py-1 fw-semibold">
+                      <span class="badge bg-secondary-subtle text-secondary border px-2 py-1 fw-semibold d-inline-block text-truncate" style="max-width: 90px;" title="<?= !empty($log['dari_ruangan']) ? htmlspecialchars($log['dari_ruangan']) : 'Awal'; ?>">
                         <?= !empty($log['dari_ruangan']) ? htmlspecialchars($log['dari_ruangan']) : 'Awal'; ?>
                       </span>
-                      <i class="bi bi-arrow-right text-primary mx-2 fw-bold"></i>
-                      <span class="badge bg-success-subtle text-success border px-2 py-1 fw-bold">
+                      <i class="bi bi-arrow-right text-primary mx-1 fw-bold"></i>
+                      <span class="badge bg-success-subtle text-success border px-2 py-1 fw-bold d-inline-block text-truncate" style="max-width: 90px;" title="<?= !empty($log['ke_ruangan']) ? htmlspecialchars($log['ke_ruangan']) : '-'; ?>">
                         <?= !empty($log['ke_ruangan']) ? htmlspecialchars($log['ke_ruangan']) : '-'; ?>
                       </span>
                     </td>
                     
-                    <!-- Alasan Perpindahan -->
-                    <td class="text-muted small"><?= htmlspecialchars($log['alasan'] ?? 'Tanpa catatan alasan.'); ?></td>
+                    <!-- Alasan Perpindahan (Menggunakan Kotak Scroll Rapi) -->
+                    <td>
+                      <div class="text-muted small pe-1" style="max-height: 65px; overflow-y: auto; white-space: normal; line-height: 1.4; word-break: break-word;">
+                        <?= htmlspecialchars($log['alasan'] ?? 'Tanpa catatan alasan.'); ?>
+                      </div>
+                    </td>
                   </tr>
                 <?php endforeach; ?>
               <?php else: ?>

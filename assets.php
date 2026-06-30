@@ -1,6 +1,6 @@
 <?php
 // =========================================================================
-// LOGIKA BACKEND: assets.php (SUDAH MENDUKUNG FILTER MULTIKOLOM)
+// LOGIKA BACKEND: assets.php (SUDAH MEMULIHKAN DROPDOWN RUANGAN MODAL MUTASI)
 // =========================================================================
 $host     = "10.10.6.59";
 $username = "root_host";
@@ -83,6 +83,10 @@ try {
     // 3. AMBIL DATA MASTER RELASI UNTUK ISI DROPDOWN FILTER & MODAL INPUT
     $list_kategori = $conn->query("SELECT id, nama FROM asset_categories ORDER BY nama ASC")->fetchAll(PDO::FETCH_ASSOC);
     $list_brand    = $conn->query("SELECT id, nama FROM asset_brands ORDER BY nama ASC")->fetchAll(PDO::FETCH_ASSOC);
+    
+    // FIX UTAMA: Mengambil kembali data ruangan untuk menyuplai dropdown modal mutasi pop-up
+    $list_ruangan  = $conn->query("SELECT id, nama FROM rooms ORDER BY nama ASC")->fetchAll(PDO::FETCH_ASSOC);
+    
     $list_status   = $conn->query("SELECT id, nama FROM asset_statuses ORDER BY nama ASC")->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (PDOException $e) {
@@ -744,7 +748,7 @@ try {
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header bg-dark text-white">
-        <h5 class="modal-title" id="moveAssetModalLabel"><i class="bi bi-arrow-left-right me-2"></i> Mutasi Ruangan Asset</h5>
+        <h5 class="modal-title" id="moveAssetModalLabel"><i class="bi bi-arrow-left-right me-2"></i> Pindahkan Ruangan Asset</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <form action="proses_asset.php?action=update_room" method="POST">
