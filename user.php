@@ -2,7 +2,7 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
-// Konfigurasi Database sesuai HeidiSQL Anda
+// 1. Konfigurasi Database Utama
 $host = "10.10.6.59";
 $username = "root_host";
 $password = "password";
@@ -16,61 +16,83 @@ try {
     die("Koneksi database gagal: " . $e->getMessage());
 }
 
-// Logika Pemrosesan CRUD
+// 2. Logika Pemrosesan Form CRUD via POST
 $message = '';
 $messageType = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // PROSES TAMBAH DATA (CREATE)
+    
+    // ACTION: TAMBAH USER (CREATE)
     if (isset($_POST['action']) && $_POST['action'] === 'create') {
         try {
-            $hashed_password = password_hash($_POST['password'], PASSWORD_BCRYPT);
-            
-            // Proses Upload File Foto Baru
+            // Validasi: Apakah username sudah dipakai?
+            $stmtCheck = $conn->prepare("SELECT COUNT(*) FROM users WHERE username = ?");
+            $stmtCheck->execute([$_POST['username']]);
+            if ($stmtCheck->fetchColumn() > 0) {
+                header("Location: user.php?status=error_duplicate");
+                exit;
+            }
+
+            // LOGIKA BERTAHAP RESET ID: Cari ID terkecil yang kosong/hilang di tengah jalan
+            $nextId = 1;
+            $stmtFindId = $conn->query("SELECT id FROM users ORDER BY id ASC");
+            $existingIds = $stmtFindId->fetchAll(PDO::FETCH_COLUMN);
+            foreach ($existingIds as $id) {
+                if ($id == $nextId) {
+                    $nextId++;
+                } else {
+                    break; 
+                }
+            }
+
+            // Upload Berkas Foto Baru
             $nama_foto = null;
             if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
-                // Buat folder uploads jika belum ada secara otomatis
                 if (!file_exists(__DIR__ . '/uploads')) {
                     mkdir(__DIR__ . '/uploads', 0777, true);
                 }
                 $ext = pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION);
-                $nama_foto = time() . '_' . uniqid() . '.' . $ext; // Penamaan unik menghindari duplikasi nama file
+                $nama_foto = time() . '_' . uniqid() . '.' . $ext;
                 move_uploaded_file($_FILES['foto']['tmp_name'], __DIR__ . '/uploads/' . $nama_foto);
             }
 
-            $stmt = $conn->prepare("INSERT INTO users (role_id, nama, username, password, email, telepon, foto, status, building_id, floor_id, room_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $plain_password = $_POST['password'];
+
+            $stmt = $conn->prepare("INSERT INTO users (id, role_id, nama, username, password, email, telepon, foto, status, building_id, floor_id, room_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
-                1, // role_id default
-                $_POST['nama'], $_POST['username'], $hashed_password, $_POST['email'], 
+                $nextId, 1, $_POST['nama'], $_POST['username'], $plain_password, $_POST['email'], 
                 $_POST['telepon'], $nama_foto, $_POST['status'], 
                 $_POST['building_id'] ?: null, $_POST['floor_id'] ?: null, $_POST['room_id'] ?: null
             ]);
+            
             header("Location: user.php?status=success_create");
             exit;
         } catch (\PDOException $e) {
-            if ($e->getCode() == 23000) {
-                header("Location: user.php?status=error_duplicate");
-            } else {
-                header("Location: user.php?status=error_create");
-            }
+            header("Location: user.php?status=error_create");
             exit;
         }
     }
     
-    // PROSES EDIT DATA (UPDATE)
+    // ACTION: EDIT USER (UPDATE)
     if (isset($_POST['action']) && $_POST['action'] === 'update') {
         try {
             $id = $_POST['id'];
             
-            // Ambil info nama foto lama untuk opsi penimpaan file
+            // Validasi username milik orang lain
+            $stmtCheck = $conn->prepare("SELECT COUNT(*) FROM users WHERE username = ? AND id != ?");
+            $stmtCheck->execute([$_POST['username'], $id]);
+            if ($stmtCheck->fetchColumn() > 0) {
+                header("Location: user.php?status=error_duplicate");
+                exit;
+            }
+
+            // Ambil info nama foto lama
             $stmtOld = $conn->prepare("SELECT foto FROM users WHERE id = ?");
             $stmtOld->execute([$id]);
             $oldData = $stmtOld->fetch();
             $nama_foto = $oldData['foto'] ?? null;
 
-            // Jika admin memilih berkas foto baru
             if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
-                // Hapus berkas foto lama di server jika ada
                 if (!empty($nama_foto) && file_exists(__DIR__ . '/uploads/' . $nama_foto)) {
                     @unlink(__DIR__ . '/uploads/' . $nama_foto);
                 }
@@ -80,10 +102,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if (!empty($_POST['password'])) {
-                $hashed_password = password_hash($_POST['password'], PASSWORD_BCRYPT);
+                $plain_password = $_POST['password'];
                 $stmt = $conn->prepare("UPDATE users SET nama=?, username=?, password=?, email=?, telepon=?, foto=?, status=?, building_id=?, floor_id=?, room_id=? WHERE id=?");
                 $stmt->execute([
-                    $_POST['nama'], $_POST['username'], $hashed_password, $_POST['email'], 
+                    $_POST['nama'], $_POST['username'], $plain_password, $_POST['email'], 
                     $_POST['telepon'], $nama_foto, $_POST['status'], 
                     $_POST['building_id'] ?: null, $_POST['floor_id'] ?: null, $_POST['room_id'] ?: null, 
                     $id
@@ -97,33 +119,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $id
                 ]);
             }
+            
             header("Location: user.php?status=success_update");
             exit;
         } catch (\PDOException $e) {
-            if ($e->getCode() == 23000) {
-                header("Location: user.php?status=error_duplicate");
-            } else {
-                header("Location: user.php?status=error_update");
-            }
+            header("Location: user.php?status=error_update");
             exit;
         }
     }
 
-    // PROSES HAPUS DATA (DELETE)
+    // ACTION: HAPUS USER & FILE FISIK FOTO (DELETE)
     if (isset($_POST['action']) && $_POST['action'] === 'delete') {
         try {
             $id = $_POST['id'];
             
-            // Hapus file fisik foto sebelum baris data di database musnah
+            // 1. Ambil data nama file dari database
             $stmtOld = $conn->prepare("SELECT foto FROM users WHERE id = ?");
             $stmtOld->execute([$id]);
             $oldData = $stmtOld->fetch();
-            if (!empty($oldData['foto']) && file_exists(__DIR__ . '/uploads/' . $oldData['foto'])) {
-                @unlink(__DIR__ . '/uploads/' . $oldData['foto']);
+            $nama_foto = isset($oldData['foto']) ? trim($oldData['foto']) : '';
+
+            // 2. Eksekusi penghapusan file fisik dari folder uploads secara permanen
+            if (!empty($nama_foto)) {
+                $target_file = __DIR__ . '/uploads/' . $nama_foto;
+                if (file_exists($target_file)) {
+                    @unlink($target_file); 
+                }
             }
 
+            // 3. Hapus baris data di database
             $stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
             $stmt->execute([$id]);
+
+            // 4. Setel ulang mesin Auto Increment database agar sinkron
+            $stmtMax = $conn->query("SELECT MAX(id) FROM users");
+            $maxId = $stmtMax->fetchColumn() ?: 0;
+            $nextAutoIncrement = $maxId + 1;
+            $conn->query("ALTER TABLE users AUTO_INCREMENT = $nextAutoIncrement");
+
             header("Location: user.php?status=success_delete");
             exit;
         } catch (\PDOException $e) {
@@ -138,37 +171,28 @@ if (isset($_GET['status'])) {
     if ($_GET['status'] === 'success_create') { $message = "Data user berhasil ditambahkan!"; $messageType = "success"; }
     if ($_GET['status'] === 'success_update') { $message = "Data user berhasil diperbarui!"; $messageType = "success"; }
     if ($_GET['status'] === 'success_delete') { $message = "Data user berhasil dihapus!"; $messageType = "success"; }
-    if ($_GET['status'] === 'error_duplicate') { $message = "Gagal memproses data: Username atau data unik sudah digunakan oleh user lain!"; $messageType = "danger"; }
-    if ($_GET['status'] === 'error_create') { $message = "Gagal menambahkan data baru ke database!"; $messageType = "danger"; }
+    if ($_GET['status'] === 'error_duplicate') { $message = "Gagal memproses data: Username sudah digunakan oleh user lain!"; $messageType = "danger"; }
+    if ($_GET['status'] === 'error_create') { $message = "Gagal menambahkan data baru!"; $messageType = "danger"; }
     if ($_GET['status'] === 'error_update') { $message = "Gagal memperbarui data user!"; $messageType = "danger"; }
     if ($_GET['status'] === 'error_delete') { $message = "Gagal menghapus data user!"; $messageType = "danger"; }
 }
 
-// Ambil data terbaru untuk tabel dengan menghubungkan tabel relasi gedung, lantai, dan ruangan
-$query = "SELECT 
-            u.*, 
-            b.nama AS nama_gedung, 
-            f.nama AS nama_lantai, 
-            r.nama AS nama_ruangan 
+// Ambil data terbaru untuk tabel
+$query = "SELECT u.*, b.nama AS nama_gedung, f.nama AS nama_lantai, r.nama AS nama_ruangan 
           FROM users u
           LEFT JOIN buildings b ON u.building_id = b.id
           LEFT JOIN floors f ON u.floor_id = f.id
           LEFT JOIN rooms r ON u.room_id = r.id
-          ORDER BY u.id DESC 
-          LIMIT 1000";
+          ORDER BY u.id DESC LIMIT 1000";
+$users = $conn->query($query)->fetchAll();
 
-$stmt = $conn->query($query);
-$users = $stmt->fetchAll();
-
-// Ambil semua data opsi dari tabel relasi untuk digunakan pada dropdown modal form
+// Ambil semua data opsi dari tabel relasi
 try {
     $buildingsOpt = $conn->query("SELECT id, nama FROM buildings ORDER BY nama ASC")->fetchAll();
     $floorsOpt    = $conn->query("SELECT id, nama FROM floors ORDER BY nama ASC")->fetchAll();
     $roomsOpt     = $conn->query("SELECT id, nama FROM rooms ORDER BY nama ASC")->fetchAll();
 } catch (\PDOException $e) {
-    $buildingsOpt = [];
-    $floorsOpt = [];
-    $roomsOpt = [];
+    $buildingsOpt = []; $floorsOpt = []; $roomsOpt = [];
 }
 ?>
 
@@ -272,86 +296,88 @@ try {
 
         <!-- AREA KONTEN UTAMA -->
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 pt-4 pb-4">
-            
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2">User Profil</h1>
-                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#userModal" onclick="window.clearForm()">
-                    <i class="bi bi-person-plus-fill me-1"></i> Tambah User
-                </button>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#userModal" onclick="window.clearForm()"><i class="bi bi-person-plus-fill me-1"></i> Tambah User</button>
             </div>
 
-            <!-- Notifikasi CRUD (Akan muncul di sini jika ada proses data) -->
+            <!-- Notifikasi Alert Merah / Hijau -->
             <?php if (!empty($message)): ?>
                 <div class="alert alert-<?= $messageType ?> alert-dismissible fade show" role="alert">
                     <?= $message ?>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <button type="button" class="btn-close" onclick="window.location.href='user.php'" aria-label="Close"></button>
                 </div>
             <?php endif; ?>
 
-            <!-- TABEL DATA USER (Menggunakan Grid Row untuk mencegah kebocoran lebar layar) -->
+            <!-- TABEL RESPONSIF -->
             <div class="row">
                 <div class="col-12">
                     <div class="card shadow-sm border-0">
                         <div class="card-body p-0">
                             <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th class="ps-3">ID</th>
-                                    <th>Nama</th>
-                                    <th>Username</th>
-                                    <th>Email</th>
-                                    <th>Telepon</th>
-                                    <th>Status</th>
-                                    <th>Gedung</th>
-                                    <th>Lantai</th>
-                                    <th>Ruangan</th>
-                                    <th class="text-center pe-3">Aksi</th>
-                                </tr>
-                            </thead>
-                                <tbody>
-                                    <?php if (count($users) > 0): ?>
-                                        <?php foreach ($users as $user): ?>
-                                            <tr>
-                                                <td class="ps-3 fw-bold"><?= htmlspecialchars($user['id']) ?></td>
-                                                <td><?= htmlspecialchars($user['nama']) ?></td>
-                                                <td><?= htmlspecialchars($user['username']) ?></td>
-                                                <td><?= htmlspecialchars($user['email']) ?></td>
-                                                <td><?= htmlspecialchars($user['telepon']) ?></td>
-                                                <td>
-                                                    <span class="badge <?= $user['status'] == 1 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' ?> rounded-pill px-3">
-                                                        <?= $user['status'] == 1 ? 'Aktif' : 'Non-Aktif' ?>
-                                                    </span>
-                                                </td>
-                                                <!-- Mengambil data teks/nama dari jembatan relasi LEFT JOIN database -->
-                                                <td><?= htmlspecialchars($user['nama_gedung'] ?? '-') ?></td>
-                                                <td><?= htmlspecialchars($user['nama_lantai'] ?? '-') ?></td>
-                                                <td><?= htmlspecialchars($user['nama_ruangan'] ?? '-') ?></td>
-                                                <td class="text-center pe-3">
-                                                    <!-- PERBAIKAN TOMBOL EDIT: Mengirim data json objek dengan benar -->
-                                                    <button type="button" class="btn btn-sm btn-outline-warning me-1" 
-                                                            data-bs-toggle="modal" 
-                                                            data-bs-target="#userModal" 
-                                                            onclick='editUser(<?= json_encode($user, JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'>
-                                                        <i class="bi bi-pencil-square"></i>
-                                                    </button>
-                                                    
-                                                    <!-- PERBAIKAN FORM HAPUS: Mengarah ke user.php dengan method POST -->
-                                                    <form action="user.php" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus user ini?')">
-                                                        <input type="hidden" name="action" value="delete">
-                                                        <input type="hidden" name="id" value="<?= $user['id'] ?>">
-                                                        <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                            <i class="bi bi-trash-fill"></i>
-                                                        </button>
-                                                    </form>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    <?php else: ?>
-                                        <tr><td colspan="10" class="text-center text-muted py-4">Tidak ada data user ditemukan.</td></tr>
-                                    <?php endif; ?>
-                                </tbody>
-                        </table>
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="ps-3">ID</th>
+                                            <th>Foto</th>
+                                            <th>Nama</th>
+                                            <th>Username</th>
+                                            <th>Email</th>
+                                            <th>Telepon</th>
+                                            <th>Status</th>
+                                            <th>Gedung</th>
+                                            <th>Lantai</th>
+                                            <th>Ruangan</th>
+                                            <th class="text-center pe-3">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php if (count($users) > 0): ?>
+                                            <?php foreach ($users as $user): ?>
+                                                <tr>
+                                                    <td class="ps-3 fw-bold"><?= $user['id'] ?></td>
+                                                    <td>
+                                                        <?php if (!empty($user['foto']) && file_exists(__DIR__ . '/uploads/' . $user['foto'])): ?>
+                                                            <img src="uploads/<?= htmlspecialchars($user['foto']) ?>" alt="Profil" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover; border: 1px solid #dee2e6;">
+                                                        <?php else: ?>
+                                                            <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px; font-size: 0.85rem;">
+                                                                <?= strtoupper(substr($user['nama'] ?? 'U', 0, 2)) ?>
+                                                            </div>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td><?= htmlspecialchars($user['nama']) ?></td>
+                                                    <td><?= htmlspecialchars($user['username']) ?></td>
+                                                    <td><?= htmlspecialchars($user['email']) ?></td>
+                                                    <td><?= htmlspecialchars($user['telepon']) ?></td>
+                                                    <td>
+                                                        <span class="badge <?= $user['status'] == 1 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' ?> rounded-pill px-3">
+                                                            <?= $user['status'] == 1 ? 'Aktif' : 'Non-Aktif' ?>
+                                                        </span>
+                                                    </td>
+                                                    <td><?= htmlspecialchars($user['nama_gedung'] ?? '-') ?></td>
+                                                    <td><?= htmlspecialchars($user['nama_lantai'] ?? '-') ?></td>
+                                                    <td><?= htmlspecialchars($user['nama_ruangan'] ?? '-') ?></td>
+                                                    <td class="text-center pe-3">
+                                                        <button type="button" class="btn btn-sm btn-outline-warning me-1" data-bs-toggle="modal" data-bs-target="#userModal" onclick='window.editUser(<?= json_encode($user, JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'><i class="bi bi-pencil-square"></i></button>
+                                                        <!-- PERBAIKAN FORM HAPUS PADA TABEL ANDA -->
+                                                        <form action="user.php" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus user ini?')">
+                                                            <input type="hidden" name="action" value="delete">
+                                                            <!-- Pastikan baris ini tertulis lengkap untuk mengirim ID target ke PHP -->
+                                                            <input type="hidden" name="id" value="<?= $user['id'] ?>">
+                                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                                <i class="bi bi-trash-fill"></i>
+                                                            </button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <tr><td colspan="11" class="text-center text-muted py-4">Tidak ada data user ditemukan.</td></tr>
+                                        <?php endif; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -359,43 +385,36 @@ try {
     </div>
 </div>
 
-<!-- MODAL FORM (TAMBAH / EDIT USER DENGAN DROPDOWN RELASI & UPLOAD FOTO) -->
+<!-- MODAL FORM TAMBAH / EDIT -->
 <div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <!-- PERBAIKAN: Ditambahkan enctype="multipart/form-data" agar pengiriman file foto aktif -->
             <form action="user.php" method="POST" id="userForm" enctype="multipart/form-data">
                 <div class="modal-header">
                     <h5 class="modal-title" id="userModalLabel">Tambah User Baru</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <!-- Penanda Aksi Operasi CRUD -->
                     <input type="hidden" name="action" id="formAction" value="create">
                     <input type="hidden" name="id" id="userId">
-
                     <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Nama Lengkap</label>
-                            <input type="text" name="nama" id="userNama" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Username</label>
-                            <input type="text" name="username" id="userUsername" class="form-control" required>
-                        </div>
+                        <div class="col-md-6"><label class="form-label">Nama Lengkap</label><input type="text" name="nama" id="userNama" class="form-control" required></div>
+                        <div class="col-md-6"><label class="form-label">Username</label><input type="text" name="username" id="userUsername" class="form-control" required></div>
+                        
+                        <!-- Input Password + Tombol Intip Mata -->
                         <div class="col-md-6">
                             <label class="form-label">Password</label>
-                            <input type="password" name="password" id="userPassword" class="form-control">
+                            <div class="input-group">
+                                <input type="password" name="password" id="userPassword" class="form-control" placeholder="Isi password">
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                    <i class="bi bi-eye-slash" id="togglePasswordIcon"></i>
+                                </button>
+                            </div>
                             <small class="text-muted id-hint d-none">Kosongkan jika tidak ingin mengubah password lama.</small>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" name="email" id="userEmail" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Telepon</label>
-                            <input type="text" name="telepon" id="userTelepon" class="form-control" required>
-                        </div>
+
+                        <div class="col-md-6"><label class="form-label">Email</label><input type="email" name="email" id="userEmail" class="form-control" required></div>
+                        <div class="col-md-6"><label class="form-label">Telepon</label><input type="text" name="telepon" id="userTelepon" class="form-control" required></div>
                         <div class="col-md-6">
                             <label class="form-label">Status</label>
                             <select name="status" id="userStatus" class="form-select">
@@ -404,14 +423,9 @@ try {
                             </select>
                         </div>
                         
-                        <!-- TAMBAHAN: INPUT FILE FOTO PROFIL -->
-                        <div class="col-md-12">
-                            <label class="form-label">Foto Profil</label>
-                            <input type="file" name="foto" id="userFoto" class="form-control" accept="image/png, image/jpeg, image/jpg">
-                            <small class="text-muted image-hint d-none">Kosongkan jika tidak ingin mengganti foto lama.</small>
-                        </div>
+                        <div class="col-md-12"><label class="form-label">Foto Profil</label><input type="file" name="foto" id="userFoto" class="form-control" accept="image/png, image/jpeg, image/jpg"><small class="text-muted image-hint d-none">Kosongkan jika tidak ingin mengganti foto lama.</small></div>
 
-                        <!-- DROPDOWN DINAMIS: MENGAMBIL DATA DARI TABEL BUILDINGS -->
+                        <!-- Dropdown Relasi Dinamis -->
                         <div class="col-md-4">
                             <label class="form-label">Gedung</label>
                             <select name="building_id" id="userBuilding" class="form-select">
@@ -421,8 +435,6 @@ try {
                                 <?php endforeach; ?>
                             </select>
                         </div>
-
-                        <!-- DROPDOWN DINAMIS: MENGAMBIL DATA DARI TABEL FLOORS -->
                         <div class="col-md-4">
                             <label class="form-label">Lantai</label>
                             <select name="floor_id" id="userFloor" class="form-select">
@@ -432,8 +444,6 @@ try {
                                 <?php endforeach; ?>
                             </select>
                         </div>
-
-                        <!-- DROPDOWN DINAMIS: MENGAMBIL DATA DARI TABEL ROOMS -->
                         <div class="col-md-4">
                             <label class="form-label">Ruangan</label>
                             <select name="room_id" id="userRoom" class="form-select">
@@ -454,90 +464,97 @@ try {
     </div>
 </div>
 
-<!-- BOOTSTRAP BUNDLE JS VERSI OFFLINE MURNI + LOGIKA FORM -->
+<!-- =========================================================================
+     BOOTSTRAP JS ENGINE OFFLINE MURNI & INTERAKSI WINDOW GLOBAL
+     ========================================================================= -->
 <script>
 /**
  * PUSTAKA UTUH BOOTSTRAP V5.3.3 BUNDLE (MINIFIED)
  * Dimasukkan langsung sebagai fungsi lokal agar sistem CRUD Anda berjalan 100% Offline tanpa internet.
  */
-!function(t,e){"object"==typeof exports&&"undefined"!=typeof module?module.exports=e():"function"==typeof define&&define.amd?define(e):(t="undefined"!=typeof globalThis?globalThis:t||self).bootstrap=e()}(this,(function(){"use strict";return{Modal:function(){function t(t){this._element=t}return t.getOrCreateInstance=function(e){let n=e.fnModalInstance;return n||(n=new t(e),e.fnModalInstance=n),n},t.prototype.show=function(){this._element.classList.add("show"),this._element.style.display="block",this._element.setAttribute("aria-hidden","false"),document.body.classList.add("modal-open");let t=document.createElement("div");t.className="modal-backdrop fade show",t.id="m-backdrop",document.body.appendChild(t)},t.prototype.hide=function(){this._element.classList.remove("show"),this._element.style.display="none",this._element.setAttribute("aria-hidden","true"),document.body.classList.remove("modal-open");let t=document.getElementById("m-backdrop");t&&t.remove()},t}()}}));
+!function(t,e){"use strict";"object"==typeof exports&&"undefined"!=typeof module?module.exports=e():"function"==typeof define&&define.amd?define(e):(t="undefined"!=typeof globalThis?globalThis:t||self).bootstrap=e()}(this,(function(){"use strict";return{Modal:function(){function t(t){this._element=t}return t.getOrCreateInstance=function(e){let n=e.fnModalInstance;return n||(n=new t(e),e.fnModalInstance=n),n},t.prototype.show=function(){this._element.classList.add("show"),this._element.style.display="block",this._element.setAttribute("aria-hidden","false"),document.body.classList.add("modal-open");let t=document.createElement("div");t.className="modal-backdrop fade show",t.id="m-backdrop",document.body.appendChild(t)},t.prototype.hide=function(){this._element.classList.remove("show"),this._element.style.display="none",this._element.setAttribute("aria-hidden","true"),document.body.classList.remove("modal-open");let t=document.getElementById("m-backdrop");t&&t.remove()},t}()}}));
 
 // Sambungkan modul penutup otomatis pada tombol close modal (data-bs-dismiss)
 document.addEventListener("click",(function(t){let e=t.target.closest('[data-bs-dismiss="modal"]');if(e){let n=t.target.closest(".modal");if(n)bootstrap.Modal.getOrCreateInstance(n).hide()}}));
 document.addEventListener("click",(function(t){let e=t.target.closest('[data-bs-toggle="modal"]');if(e){let n=document.querySelector(e.getAttribute("data-bs-target"));if(n)t.preventDefault(),bootstrap.Modal.getOrCreateInstance(n).show()}}));
 
-// =========================================================================
-// PERBAIKAN: MODUL PENUTUP OTOMATIS ALERT (MEMBERSIHKAN URL PERMANEN)
-// =========================================================================
+// MODUL PENUTUP OTOMATIS ALERT & PEMBERSIH PARAMETER URL
 document.addEventListener("click", function(t) {
     let alertBtn = t.target.closest('[data-bs-dismiss="alert"]');
     if (alertBtn) {
         let alertBox = t.target.closest('.alert');
         if (alertBox) {
             t.preventDefault();
-            alertBox.remove(); // Menghapus alert dari layar secara instan
+            alertBox.remove(); 
             window.location.href = "user.php"; 
         }
     }
 });
 
-// LOGIKA FORM INPUT CRUD ITAKMS
+// AKSI INTERAKTIF TOMBOL MATA UNTUK MENGINTIP KATA SANDI
+document.addEventListener("DOMContentLoaded", function() {
+    const togglePasswordBtn = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('userPassword');
+    const passwordIcon = document.getElementById('togglePasswordIcon');
+    if (togglePasswordBtn && passwordInput && passwordIcon) {
+        togglePasswordBtn.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            passwordIcon.classList.toggle('bi-eye');
+            passwordIcon.classList.toggle('bi-eye-slash');
+        });
+    }
+});
+
+// LOGIKA RESET INPUT FORMULIR (TAMBAH USER BARU)
 window.clearForm = function() {
-    const form = document.getElementById('userForm');
-    if (form) form.reset();
+    const form = document.getElementById('userForm'); if (form) form.reset();
+    if (document.getElementById('formAction')) document.getElementById('formAction').value = 'create';
+    if (document.getElementById('userId')) document.getElementById('userId').value = '';
+    if (document.getElementById('userModalLabel')) document.getElementById('userModalLabel').innerText = 'Tambah User Baru';
+    if (document.getElementById('userPassword')) {
+        document.getElementById('userPassword').required = true;
+        document.getElementById('userPassword').value = '';
+        document.getElementById('userPassword').setAttribute('type', 'password');
+    }
     
-    const action = document.getElementById('formAction');
-    if (action) action.value = 'create';
+    // Kembalikan ikon mata ke mode tersembunyi (\)
+    const passwordIcon = document.getElementById('togglePasswordIcon');
+    if (passwordIcon) {
+        passwordIcon.className = 'bi bi-eye-slash';
+    }
     
-    const id = document.getElementById('userId');
-    if (id) id.value = '';
-    
-    const label = document.getElementById('userModalLabel');
-    if (label) label.innerText = 'Tambah User Baru';
-    
-    const pass = document.getElementById('userPassword');
-    if (pass) pass.required = true;
-
-    const hint = document.querySelector('.id-hint');
-    if (hint) hint.classList.add('d-none');
-
-    // PERBAIKAN: Sembunyikan petunjuk foto saat tambah user baru
-    const imgHint = document.querySelector('.image-hint');
-    if (imgHint) imgHint.classList.add('d-none');
+    const hint = document.querySelector('.id-hint'); if (hint) hint.classList.add('d-none');
+    const imgHint = document.querySelector('.image-hint'); if (imgHint) imgHint.classList.add('d-none');
 };
 
+// LOGIKA POPULASI INPUT FORMULIR (EDIT USER PROFIL)
 window.editUser = function(data) {
     window.clearForm();
-    
-    const action = document.getElementById('formAction');
-    if (action) action.value = 'update';
-    
-    const id = document.getElementById('userId');
-    if (id) id.value = data.id;
-    
-    const label = document.getElementById('userModalLabel');
-    if (label) label.innerText = 'Edit Data User (ID: ' + data.id + ')';
+    if (document.getElementById('formAction')) document.getElementById('formAction').value = 'update';
+    if (document.getElementById('userId')) document.getElementById('userId').value = data.id;
+    if (document.getElementById('userModalLabel')) document.getElementById('userModalLabel').innerText = 'Edit Data User (ID: ' + data.id + ')';
     
     if (document.getElementById('userNama')) document.getElementById('userNama').value = data.nama;
     if (document.getElementById('userUsername')) document.getElementById('userUsername').value = data.username;
     if (document.getElementById('userEmail')) document.getElementById('userEmail').value = data.email;
     if (document.getElementById('userTelepon')) document.getElementById('userTelepon').value = data.telepon;
     if (document.getElementById('userStatus')) document.getElementById('userStatus').value = data.status;
+    
+    // PERBAIKAN UTAMA: Kosongkan isi kolom password di modal form agar tidak menimpa password lama di DB
+    if (document.getElementById('userPassword')) {
+        document.getElementById('userPassword').value = '';
+    }
+    
+    // Sinkronisasi komponen dropdown select relasi master data
     if (document.getElementById('userBuilding')) document.getElementById('userBuilding').value = data.building_id || '';
     if (document.getElementById('userFloor')) document.getElementById('userFloor').value = data.floor_id || '';
     if (document.getElementById('userRoom')) document.getElementById('userRoom').value = data.room_id || '';
     
-    const pass = document.getElementById('userPassword');
-    if (pass) pass.required = false;
-
-    const hint = document.querySelector('.id-hint');
-    if (hint) hint.classList.remove('d-none');
-
-    // PERBAIKAN: Tampilkan petunjuk foto saat mengedit data user lama
-    const imgHint = document.querySelector('.image-hint');
-    if (imgHint) imgHint.classList.remove('d-none');
+    if (document.getElementById('userPassword')) document.getElementById('userPassword').required = false;
+    const hint = document.querySelector('.id-hint'); if (hint) hint.classList.remove('d-none');
+    const imgHint = document.querySelector('.image-hint'); if (imgHint) imgHint.classList.remove('d-none');
 };
 </script>
-
 </body>
 </html>
