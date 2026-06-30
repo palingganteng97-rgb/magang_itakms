@@ -573,5 +573,8 @@ window.editUser = function(data) {
     const imgHint = document.querySelector('.image-hint'); if (imgHint) imgHint.classList.remove('d-none');
 };
 </script>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
