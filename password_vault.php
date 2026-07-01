@@ -388,20 +388,20 @@ if (isset($_GET['status'])) {
         
         <div class="card-body p-0">
           <div class="table-responsive">
-            <!-- text-nowrap menjaga agar seluruh data dan aksi berjajar horizontal lurus di layar HP -->
-            <table class="table table-striped table-hover align-middle mb-0 table-sm table-md-normal text-nowrap" style="border-color: #dee2e6;">
-              <thead class="table-light text-dark fw-bold">
+            <!-- FIX: Menghapus table-sm agar longgar, menambah table-bordered untuk garis pembatas, dan table-striped untuk warna baris selang-seling -->
+            <table class="table table-striped table-bordered table-hover align-middle mb-0 text-nowrap" style="border-color: #dee2e6;">
+              <thead class="table-light text-dark fw-bold border-bottom border-2">
                 <tr>
-                  <th scope="col" class="text-center" style="width: 60px;">No</th>
-                  <th scope="col">Kategori</th>
-                  <th scope="col">Nama Akun / Layanan</th>
-                  <th scope="col">URL / Link</th>
-                  <th scope="col">IP Address</th>
-                  <th scope="col">Username</th>
-                  <th scope="col">Password</th>
-                  <th scope="col">Tipe</th>
-                  <th scope="col">Catatan</th>
-                  <th scope="col" class="text-center" style="width: 250px;">Aksi</th>
+                  <th scope="col" class="text-center p-3" style="width: 60px;">No</th>
+                  <th scope="col" class="p-3" style="width: 150px;">Kategori</th>
+                  <th scope="col" class="p-3">Nama Akun / Layanan</th>
+                  <th scope="col" class="p-3">URL / Link</th>
+                  <th scope="col" class="p-3">IP Address</th>
+                  <th scope="col" class="p-3">Username</th>
+                  <th scope="col" class="p-3">Password</th>
+                  <th scope="col" class="p-3" style="width: 120px;">Tipe</th>
+                  <th scope="col" class="p-3">Catatan</th>
+                  <th scope="col" class="text-center p-3" style="width: 250px;">Aksi</th>
                 </tr>
               </thead>
               <tbody class="text-dark">
@@ -415,24 +415,23 @@ if (isset($_GET['status'])) {
                 <?php else: ?>
                   <?php $no = 1; foreach ($vaults as $row): ?>
                     <tr>
-                      <td class="text-center fw-semibold text-secondary"><?= $no++; ?></td>
-                      <td>
+                      <td class="text-center fw-semibold text-secondary p-3"><?= $no++; ?></td>
+                      <td class="p-3">
                         <span class="badge bg-info bg-opacity-10 text-info border border-info-subtle px-2 py-1 fs-7">
                           <?= htmlspecialchars($row['nama_kategori'] ?? 'Tanpa Kategori'); ?>
                         </span>
                       </td>
-                      <td class="fw-semibold text-dark"><?= htmlspecialchars($row['nama']); ?></td>
-                      <td class="text-wrap" style="max-width: 200px;">
+                      <td class="fw-semibold text-dark p-3"><?= htmlspecialchars($row['nama']); ?></td>
+                      <td class="text-wrap p-3" style="max-width: 200px;">
                         <?php if(!empty($row['url'])): ?>
                           <a href="<?= htmlspecialchars($row['url']); ?>" target="_blank" class="text-decoration-none text-truncate d-inline-block" style="max-width: 100%;"><i class="bi bi-box-arrow-up-right me-1"></i> Buka Link</a>
                         <?php else: ?>
                           <span class="text-muted">-</span>
                         <?php endif; ?>
                       </td>
-                      <td><code><?= !empty($row['ip']) ? htmlspecialchars($row['ip']) : '-'; ?></code></td>
-                      <td><?= htmlspecialchars($row['username']); ?></td>
-                      <td>
-                        <!-- Form group mini dengan icon mata untuk intip password -->
+                      <td class="p-3"><code><?= !empty($row['ip']) ? htmlspecialchars($row['ip']) : '-'; ?></code></td>
+                      <td class="p-3"><?= htmlspecialchars($row['username']); ?></td>
+                      <td class="p-3">
                         <div class="input-group input-group-sm" style="width: 150px;">
                           <input type="password" class="form-control bg-light border-0" value="<?= htmlspecialchars($row['password']); ?>" readonly id="passInput<?= $row['id']; ?>">
                           <button class="btn btn-outline-secondary border-0" type="button" onclick="togglePassword(<?= $row['id']; ?>)">
@@ -440,28 +439,24 @@ if (isset($_GET['status'])) {
                           </button>
                         </div>
                       </td>
-                      <td>
+                      <td class="p-3">
                         <?php 
                           if ($row['tipe'] == 1) echo '<span class="badge bg-secondary">Server</span>';
                           elseif ($row['tipe'] == 2) echo '<span class="badge bg-dark">Network Device</span>';
                           else echo '<span class="badge bg-light text-dark border">Lainnya</span>';
                         ?>
                       </td>
-                      <td class="text-wrap text-muted fs-7" style="max-width: 150px;">
+                      <td class="text-wrap text-muted fs-7 p-3" style="max-width: 150px;">
                         <?= !empty($row['catatan']) ? htmlspecialchars($row['catatan']) : '-'; ?>
                       </td>
-                      <td class="text-center">
-                        <!-- Grouping tombol aksi agar sejajar rapi horizontal -->
+                      <td class="text-center p-3">
                         <div class="d-inline-flex gap-1">
-                          <!-- Tombol Edit -->
                           <button class="btn btn-warning btn-sm fw-medium" data-bs-toggle="modal" data-bs-target="#modalEdit<?= $row['id']; ?>">
                             <i class="bi bi-pencil-square"></i> Edit
                           </button>
-                          <!-- Tombol Hapus -->
                           <a href="password_vault.php?action=delete&id=<?= $row['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus data kredensial ini?')">
                             <i class="bi bi-trash"></i> Hapus
                           </a>
-                          <!-- FIX TOMBOL BARU: Riwayat Perubahan Sandi -->
                           <button class="btn btn-outline-secondary btn-sm fw-medium" data-bs-toggle="modal" data-bs-target="#modalRiwayat<?= $row['id']; ?>" onclick="loadHistory(<?= $row['id']; ?>)">
                             <i class="bi bi-clock-history"></i> Riwayat
                           </button>
