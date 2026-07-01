@@ -176,11 +176,17 @@ try {
         <li class="nav-item">
           <a href="network_device.php" class="nav-link text-white p-2 rounded"><i class="bi bi-router me-2"></i> Network Device</a>
         </li>
+        <!-- VENDORS (Mobile) -->
         <li class="nav-item">
-          <a href="network_port.php" class="nav-link active bg-primary text-white p-2 rounded"><i class="bi bi-ethernet me-2"></i> Network Port</a>
+          <a href="vendors.php" class="nav-link <?= ($currentPage == 'vendors.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
+            <i class="bi bi-building me-2"></i> Vendors <!-- Tetap ikon gedung mitra bisnis -->
+          </a>
         </li>
+        <!-- USER PROFIL (Mobile) -->
         <li class="nav-item">
-          <a href="user.php" class="nav-link text-white p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
+          <a href="user.php" class="nav-link <?= ($currentPage == 'user.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
+            <i class="bi bi-person-fill me-2"></i> User Profil <!-- PERBAIKAN: Menggunakan ikon orang murni sesuai keinginan Anda -->
+          </a>
         </li>
       </ul>
     </div>
@@ -241,8 +247,17 @@ try {
           <li class="nav-item">
             <a href="network_port.php" class="nav-link active bg-primary text-white p-2 rounded"><i class="bi bi-ethernet me-2"></i> Network Port</a>
           </li>
+          <!-- VENDORS (Desktop) -->
           <li class="nav-item">
-            <a href="user.php" class="nav-link text-white p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
+            <a href="vendors.php" class="nav-link <?= ($currentPage == 'vendors.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
+              <i class="bi bi-building me-2"></i> Vendors
+            </a>
+          </li>
+          <!-- USER PROFIL (Desktop) -->
+          <li class="nav-item">
+            <a href="user.php" class="nav-link <?= ($currentPage == 'user.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
+              <i class="bi bi-person-fill me-2"></i> User Profil
+            </a>
           </li>
         </ul>
       </div>

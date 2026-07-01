@@ -1,52 +1,58 @@
 <?php
-// =========================================================================
-// LOGIKA BACKEND UTUH: asset_movements.php (PULIH TOTAL & KILAT)
-// =========================================================================
 require_once __DIR__ . '/auth.php';
 require_login();
 
-// 1. Konfigurasi Database Kredensial Anda
-$host     = "10.10.6.59";
+// 1. Konfigurasi Database
+$host = "10.10.6.59";
 $username = "root_host";
 $password = "password";
 $database = "magang_itakms";
 
+// Pagination sederhana untuk tabel
+$perPage = 50;
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$offset = ($page - 1) * $perPage;
+
 try {
-    $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8", $username, $password);
+    $conn = new PDO("mysql:host=$host;dbname=$database", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    // 2. Ambil parameter pencarian jika ada (Opsional untuk fitur Cari Vendor)
+    $search = isset($_GET['search']) ? trim($_GET['search']) : '';
     
-    // Mengambil kata kunci pencarian dari kolom teks filter di halaman depan
-    $search_keyword = isset($_GET['search_keyword']) ? trim($_GET['search_keyword']) : '';
-    $where_clause = "";
-    $params = [];
-
-    // Logika jika user mengetik sesuatu untuk mencari log data
-    if (!empty($search_keyword)) {
-        $where_clause = " WHERE a.nama LIKE :search 
-                          OR a.kode_asset LIKE :search 
-                          OR am.alasan LIKE :search";
-        $params[':search'] = "%$search_keyword%";
+    // 3. Menghitung total baris data untuk kebutuhan pagination
+    if (!empty($search)) {
+        $countSql = "SELECT COUNT(*) FROM vendors WHERE nama LIKE :search OR pic LIKE :search";
+        $countStmt = $conn->prepare($countSql);
+        $countStmt->execute([':search' => "%$search%"]);
+    } else {
+        $countSql = "SELECT COUNT(*) FROM vendors";
+        $countStmt = $conn->query($countSql);
     }
+    $totalRows = $countStmt->fetchColumn();
+    $totalPages = ceil($totalRows / $perPage);
 
-    // 2. QUERY UTAMA: DITAMBAHKAN GROUP BY am.id AGAR DATA TIDAK GANDA / DOUBLE
-    $query = "SELECT 
-                am.id, am.tanggal, am.alasan,
-                a.kode_asset, a.nama AS nama_asset,
-                r1.nama AS dari_ruangan, r2.nama AS ke_ruangan
-              FROM asset_movements am
-              LEFT JOIN assets a ON am.asset_id = a.id
-              LEFT JOIN rooms r1 ON am.room_from = r1.id
-              LEFT JOIN rooms r2 ON am.room_to = r2.id"
-              . $where_clause . 
-              " GROUP BY am.id 
-                ORDER BY am.id DESC LIMIT 100";
-
-    $stmt = $conn->prepare($query);
-    $stmt->execute($params);
-    $movements_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    // 4. Query utama mengambil data dari tabel vendors (dengan batasan LIMIT & OFFSET)
+    if (!empty($search)) {
+        $sql = "SELECT * FROM vendors WHERE nama LIKE :search OR pic LIKE :search ORDER BY id DESC LIMIT :limit OFFSET :offset";
+        $stmt = $conn->prepare($sql);
+        $stmt->bindValue(':search', "%$search%", PDO::PARAM_STR);
+    } else {
+        $sql = "SELECT * FROM vendors ORDER BY id DESC LIMIT :limit OFFSET :offset";
+        $stmt = $conn->prepare($sql);
+    }
+    
+    // Bind nilai limit dan offset sebagai integer untuk kepatuhan PDO Strict Mode
+    $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->execute();
+    
+    // Menampung hasil query ke dalam variabel array $vendors
+    $vendors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (PDOException $e) {
-    die("<div class='alert alert-danger m-3'>Koneksi database bermasalah: " . $e->getMessage() . "</div>");
+    // Menampilkan pesan error jika koneksi IP 10.10.6.59 atau query mengalami kendala
+    die("Koneksi atau Query Database Gagal: " . $e->getMessage());
 }
 ?>
 
@@ -123,7 +129,7 @@ try {
           <a href="manajemen_asset.php" class="nav-link text-white p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
         </li>
         <li class="nav-item">
-          <a href="asset_movements.php" class="nav-link  active bg-primary text-white p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
+          <a href="asset_movements.php" class="nav-link text-white p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
         </li>
         <li class="nav-item">
           <a href="server.php" class="nav-link text-white p-2 rounded"><i class="bi bi-hdd-network me-2"></i> Server</a>
@@ -136,7 +142,7 @@ try {
         </li>
         <!-- VENDORS (Mobile) -->
         <li class="nav-item">
-          <a href="vendors.php" class="nav-link <?= ($currentPage == 'vendors.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
+          <a href="vendors.php" class="nav-link active bg-primary <?= ($currentPage == 'vendors.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
             <i class="bi bi-building me-2"></i> Vendors <!-- Tetap ikon gedung mitra bisnis -->
           </a>
         </li>
@@ -194,7 +200,7 @@ try {
             <a href="manajemen_asset.php" class="nav-link text-white p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
           </li>
           <li class="nav-item">
-            <a href="asset_movements.php" class="nav-link active bg-primary text-white p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
+            <a href="asset_movements.php" class="nav-link text-white p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
           </li>
           <li class="nav-item">
             <a href="server.php" class="nav-link text-white p-2 rounded"><i class="bi bi-hdd-network me-2"></i> Server</a>
@@ -207,7 +213,7 @@ try {
           </li>
           <!-- VENDORS (Desktop) -->
           <li class="nav-item">
-            <a href="vendors.php" class="nav-link <?= ($currentPage == 'vendors.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
+            <a href="vendors.php" class="nav-link active bg-primary <?= ($currentPage == 'vendors.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
               <i class="bi bi-building me-2"></i> Vendors
             </a>
           </li>
@@ -232,103 +238,112 @@ try {
       </div>
     </nav>
 
-    <!-- AREA UTAMA KONTEN (Gunakan pembungkus ini agar susunan halaman tidak bergeser tertimpa sidebar) -->
-    <main class="col-md-8 ms-sm-auto col-lg-9 px-md-4 pt-4 offset-md-4 offset-lg-3">
+<!-- AREA UTAMA KONTEN (Gunakan pembungkus ini agar susunan halaman tidak bergeser) -->
+<main class="col-12 col-md-8 col-lg-9 ms-sm-auto ms-md-auto px-md-4 pt-4 offset-md-4 offset-lg-3">
 
-      <!-- Banner Judul Halaman (Tombol Kembali Sudah Dihapus) -->
-      <div class="d-flex justify-content-between align-items-center pt-2 pb-2 mb-3 border-bottom">
-        <div>
-          <h1 class="h3 fw-bold text-dark m-0">Log Riwayat Perpindahan Asset</h1>
-          <p class="text-muted small m-0">Memantau mutasi dan pergerakan lokasi inventaris perangkat ITAKMS.</p>
-        </div>
-      </div>
+  <!-- Header Halaman -->
+  <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <div>
+      <h1 class="h2 fs-4 fs-md-2 mb-1">Master Data Vendors</h1>
+      <p class="text-muted small d-none d-sm-block">Kelola daftar perusahaan penyedia layanan, suplier perangkat keras, dan kontak rekanan TI.</p>
+    </div>
 
-      <!-- Form Filter Pencarian -->
-      <form method="GET" action="asset_movements.php" class="bg-white p-3 rounded-3 shadow-sm mb-4 border border-light">
-        <div class="row g-2 align-items-end">
-          <div class="col-md-9">
-            <label class="form-label small fw-bold text-secondary mb-1" style="font-size:0.8rem;">Cari Riwayat Mutasi</label>
-            <input type="text" name="search_keyword" class="form-control form-control-sm rounded-2" placeholder="Ketik nama asset, kode asset, atau alasan..." value="<?= htmlspecialchars($search_keyword ?? '') ?>">
-          </div>
-          <div class="col-md-3 d-flex gap-1">
-            <button class="btn btn-sm btn-primary w-100 fw-bold rounded-2" type="submit"><i class="bi bi-search"></i> Cari Log</button>
-            <a href="asset_movements.php" class="btn btn-sm btn-outline-secondary w-100 rounded-2"><i class="bi bi-arrow-clockwise"></i> Reset</a>
-          </div>
-        </div>
-      </form>
+  <!-- Notifikasi Flash Status CRUD -->
+  <?php if(isset($_GET['status'])): ?>
+    <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm" role="alert">
+        <?php
+          if($_GET['status'] == 'success_add') echo '<i class="bi bi-check-circle-fill me-2"></i> Data vendor baru berhasil ditambahkan!';
+          if($_GET['status'] == 'success_update') echo '<i class="bi bi-check-circle-fill me-2"></i> Konfigurasi data vendor berhasil diperbarui!';
+          if($_GET['status'] == 'success_delete') echo '<i class="bi bi-trash-fill me-2"></i> Data vendor berhasil dihapus dari sistem!';
+        ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <?php endif; ?>
 
-      <!-- Tabel Riwayat Transparansi Pergerakan (Anti Melar) -->
-      <div class="card shadow-sm border-0 rounded-3 overflow-hidden">
-        <div class="table-responsive">
-          <table class="table table-hover table-striped align-middle mb-0" style="font-size: 0.88rem; table-layout: fixed; width: 100%;">
-            <thead class="table-dark">
+  <!-- Wadah Konten Utama / Tabel Card -->
+  <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4 bg-white p-3">
+    
+    <!-- Bagian Atas Tabel: Judul & Tombol Tambah -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+      <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-building-fill me-2 text-primary"></i> Rekanan Penyedia Barang</h5>
+      <button type="button" class="btn btn-primary btn-sm rounded-3 px-3 d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalAddVendor">
+          <i class="bi bi-plus-lg"></i> Tambah Vendor
+      </button>
+    </div>
+
+    <!-- Tabel Data Vendors (Responsif Mobile) -->
+    <div class="table-responsive w-100" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+      <table class="table table-hover align-middle mb-0 text-nowrap">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-3" style="width: 60px;">No</th>
+            <th>Nama Perusahaan</th>
+            <th>PIC Rekanan</th>
+            <th>No. Telepon</th>
+            <th>Alamat Email / Website</th>
+            <th>Status</th>
+            <th class="text-end pe-3" style="width: 120px;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php if (empty($vendors)): ?>
               <tr>
-                <th scope="col" class="text-center" style="width: 55px;">No</th>
-                <th scope="col" style="width: 130px;">Tanggal</th>
-                <th scope="col" style="width: 140px;">Kode Asset</th>
-                <th scope="col" style="width: 180px;">Nama Asset</th>
-                <th scope="col" class="text-center" style="width: 250px;">Alur Perpindahan</th>
-                <th scope="col" style="width: 320px;">Alasan Perpindahan</th>
+                <td colspan="7" class="text-center text-muted py-5" style="white-space: normal;">
+                  <i class="bi bi-building-exclamation display-5 d-block mb-2 text-secondary"></i>
+                  Belum ada data mitra vendor terdaftar dalam sistem.
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              <?php if (!empty($movements_data)): ?>
-                <?php $no = 1; foreach ($movements_data as $log): ?>
-                  <tr>
-                    <!-- Nomor -->
-                    <td class="text-center fw-bold text-muted"><?= $no++; ?></td>
-                    
-                    <!-- Tanggal Mutasi -->
-                    <td>
-                      <span class="badge bg-light text-dark border px-2 py-1">
-                        <i class="bi bi-calendar3 me-1 text-secondary"></i> <?= htmlspecialchars($log['tanggal']); ?>
-                      </span>
-                    </td>
-                    
-                    <!-- Identitas Perangkat -->
-                    <td class="fw-monospace text-primary small text-truncate" title="<?= htmlspecialchars($log['kode_asset'] ?? '-'); ?>">
-                      <?= htmlspecialchars($log['kode_asset'] ?? '-'); ?>
-                    </td>
-                    <td class="fw-bold text-dark text-truncate" title="<?= htmlspecialchars($log['nama_asset'] ?? 'Asset Terhapus'); ?>">
-                      <?= htmlspecialchars($log['nama_asset'] ?? 'Asset Terhapus'); ?>
-                    </td>
-                    
-                    <!-- Rute Alur Perpindahan Ruangan -->
-                    <td class="text-center">
-                      <span class="badge bg-secondary-subtle text-secondary border px-2 py-1 fw-semibold d-inline-block text-truncate" style="max-width: 90px;" title="<?= !empty($log['dari_ruangan']) ? htmlspecialchars($log['dari_ruangan']) : 'Awal'; ?>">
-                        <?= !empty($log['dari_ruangan']) ? htmlspecialchars($log['dari_ruangan']) : 'Awal'; ?>
-                      </span>
-                      <i class="bi bi-arrow-right text-primary mx-1 fw-bold"></i>
-                      <span class="badge bg-success-subtle text-success border px-2 py-1 fw-bold d-inline-block text-truncate" style="max-width: 90px;" title="<?= !empty($log['ke_ruangan']) ? htmlspecialchars($log['ke_ruangan']) : '-'; ?>">
-                        <?= !empty($log['ke_ruangan']) ? htmlspecialchars($log['ke_ruangan']) : '-'; ?>
-                      </span>
-                    </td>
-                    
-                    <!-- Alasan Perpindahan (Menggunakan Kotak Scroll Rapi) -->
-                    <td>
-                      <div class="text-muted small pe-1" style="max-height: 65px; overflow-y: auto; white-space: normal; line-height: 1.4; word-break: break-word;">
-                        <?= htmlspecialchars($log['alasan'] ?? 'Tanpa catatan alasan.'); ?>
-                      </div>
-                    </td>
-                  </tr>
-                <?php endforeach; ?>
-              <?php else: ?>
-                <!-- Kondisi Jika Data Kosong -->
-                <tr>
-                  <td colspan="6" class="text-center py-5 text-muted">
-                    <i class="bi bi-info-circle-fill me-1 text-secondary h5 d-block mb-2"></i>
-                    Belum ada rekaman riwayat log perpindahan asset yang ditemukan.
-                  </td>
-                </tr>
-              <?php endif; ?>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </main>
+          <?php else: $no = 1; foreach ($vendors as $v): ?>
+              <tr>
+                <td class="ps-3 fw-bold text-muted"><?= $no++; ?></td>
+                <td class="fw-semibold text-dark"><?= htmlspecialchars($v['nama'] ?? '-'); ?></td>
+                <td><i class="bi bi-person me-1 text-secondary"></i> <?= htmlspecialchars($v['pic'] ?? '-'); ?></td>
+                <td><code class="text-dark"><?= htmlspecialchars($v['telepon'] ?? '-'); ?></code></td>
+                <td>
+                  <div class="small text-dark mb-0"><?= htmlspecialchars($v['email'] ?? '-'); ?></div>
+                  <small class="text-muted"><?= htmlspecialchars($v['website'] ?? '-'); ?></small>
+                </td>
+                <td>
+                  <?php if(($v['status'] ?? 0) == 1): ?>
+                      <span class="badge bg-success-subtle text-success border border-success px-2.5 py-1.5 rounded-pill">Aktif</span>
+                  <?php else: ?>
+                      <span class="badge bg-danger-subtle text-danger border border-danger px-2.5 py-1.5 rounded-pill">Non-Aktif</span>
+                  <?php endif; ?>
+                </td>
+                <td class="text-end pe-3">
+                  <div class="btn-group btn-group-sm">
+                    <!-- Tombol Edit: Melempar data lengkap kolom ke atribut HTML modal -->
+                    <button type="button" class="btn btn-outline-warning border-0" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#modalEditVendor"
+                            data-id="<?= $v['id']; ?>"
+                            data-nama="<?= htmlspecialchars($v['nama'] ?? ''); ?>"
+                            data-pic="<?= htmlspecialchars($v['pic'] ?? ''); ?>"
+                            data-telepon="<?= htmlspecialchars($v['telepon'] ?? ''); ?>"
+                            data-email="<?= htmlspecialchars($v['email'] ?? ''); ?>"
+                            data-website="<?= htmlspecialchars($v['website'] ?? ''); ?>"
+                            data-status="<?= $v['status']; ?>"
+                            title="Ubah Data Vendor">
+                        <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <!-- Tombol Hapus -->
+                    <a href="proses_vendor.php?action=delete&id=<?= $v['id']; ?>" 
+                       class="btn btn-sm btn-outline-danger border-0" 
+                       onclick="return confirm('Apakah Anda yakin ingin menghapus data vendor ini?')" 
+                       title="Hapus Vendor">
+                        <i class="bi bi-trash3"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+          <?php endforeach; endif; ?>
+        </tbody>
+      </table>
+    </div> <!-- /.table-responsive -->
+  </div> <!-- /.card -->
 
-  </div> <!-- Penutup Row Grid Utama -->
-</div> <!-- Penutup Container-Fluid -->
+</main>
+
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
