@@ -68,19 +68,12 @@ try {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
         body { background-color: #f8f9fa; }
-        .sidebar { background-color: #212529; color: white; }
-        .sidebar a { color: #adb5bd; text-decoration: none; }
+        .sidebar { background-color: #212529; color: white; min-height: 100vh; position: sticky; top: 0; }
+        .sidebar a { color: #adb5bd; text-decoration: none; display: block; }
         .sidebar a:hover, .sidebar a.active { color: white; background-color: #343a40; }
 
-        /* KODE FIX: Menyembunyikan batang scrollbar untuk Chrome, Safari, dan Opera */
-        .hide-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        /* Menyembunyikan batang scrollbar untuk Firefox dan IE/Edge */
-        .hide-scrollbar {
-            -ms-overflow-style: none;  /* IE dan Edge */
-            scrollbar-width: none;  /* Firefox */
-        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body>
