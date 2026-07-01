@@ -251,9 +251,12 @@ try {
         <li class="nav-item">
           <a href="manajemen_asset.php" class="nav-link p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
         </li>
-        <!-- Posisi Log Perpindahan Di Atas User Profil -->
         <li class="nav-item">
           <a href="asset_movements.php" class="nav-link p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
+        </li>
+        <!-- Menu Server -->
+        <li class="nav-item">
+          <a href="server.php" class="nav-link p-2 rounded"><i class="bi bi-hdd-network me-2"></i> Server</a>
         </li>
         <!-- User Profil Aktif -->
         <li class="nav-item">
@@ -296,9 +299,12 @@ try {
         <li class="nav-item">
           <a href="manajemen_asset.php" class="nav-link p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
         </li>
-        <!-- Posisi Log Perpindahan Di Atas User Profil -->
         <li class="nav-item">
           <a href="asset_movements.php" class="nav-link p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
+        </li>
+        <!-- Menu Server -->
+        <li class="nav-item">
+          <a href="server.php" class="nav-link p-2 rounded"><i class="bi bi-hdd-network me-2"></i> Server</a>
         </li>
         <!-- User Profil Aktif -->
         <li class="nav-item">

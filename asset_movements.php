@@ -105,11 +105,13 @@ try {
         <li class="nav-item">
           <a href="manajemen_asset.php" class="nav-link p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
         </li>
-        <!-- REKOMENDASI AKTIF MOBILE -->
+        <!-- Log Perpindahan Aktif -->
         <li class="nav-item">
-          <a href="asset_movements.php" class="nav-link active bg-primary text-white p-2 rounded">
-            <i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan
-          </a>
+          <a href="asset_movements.php" class="nav-link active bg-primary text-white p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
+        </li>
+        <!-- Menu Server -->
+        <li class="nav-item">
+          <a href="server.php" class="nav-link p-2 rounded"><i class="bi bi-hdd-network me-2"></i> Server</a>
         </li>
         <li class="nav-item">
           <a href="user.php" class="nav-link p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
@@ -151,11 +153,13 @@ try {
         <li class="nav-item">
           <a href="manajemen_asset.php" class="nav-link p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
         </li>
-        <!-- REKOMENDASI AKTIF DESKTOP -->
+        <!-- Log Perpindahan Aktif -->
         <li class="nav-item">
-          <a href="asset_movements.php" class="nav-link active bg-primary text-white p-2 rounded">
-            <i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan
-          </a>
+          <a href="asset_movements.php" class="nav-link active bg-primary text-white p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
+        </li>
+        <!-- Menu Server -->
+        <li class="nav-item">
+          <a href="server.php" class="nav-link p-2 rounded"><i class="bi bi-hdd-network me-2"></i> Server</a>
         </li>
         <li class="nav-item">
           <a href="user.php" class="nav-link p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
