@@ -184,6 +184,12 @@ try {
             <i class="bi bi-building me-2"></i> Vendors <!-- Tetap ikon gedung mitra bisnis -->
           </a>
         </li>
+        <!-- MENU TIKETS -->
+        <li class="nav-item">
+          <a href="tickets.php" class="nav-link <?= ($currentPage == 'tickets.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
+            <i class="bi bi-ticket-perforated-fill me-2"></i> Tikets
+          </a>
+        </li>
         <!-- USER PROFIL (Mobile) -->
         <li class="nav-item">
           <a href="user.php" class="nav-link <?= ($currentPage == 'user.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
@@ -264,6 +270,12 @@ try {
         <li class="nav-item">
           <a href="password_vault.php" class="nav-link text-white p-2 rounded">
             <i class="bi bi-safe me-2"></i> Password Vault
+          </a>
+        </li>
+        <!-- MENU TIKETS -->
+        <li class="nav-item">
+          <a href="tickets.php" class="nav-link <?= ($currentPage == 'tickets.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
+            <i class="bi bi-ticket-perforated-fill me-2"></i> Tikets
           </a>
         </li>
           <!-- USER PROFIL (Desktop) -->
