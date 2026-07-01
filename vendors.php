@@ -258,7 +258,7 @@ try {
     </div>
   <?php endif; ?>
 
-  <!-- Wadah Konten Utama / Tabel Card -->
+<!-- Wadah Konten Utama / Tabel Card -->
   <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4 bg-white p-3">
     
     <!-- Bagian Atas Tabel: Judul & Tombol Tambah -->
@@ -281,14 +281,16 @@ try {
             <th>No. Telepon</th>
             <th>Alamat Email / Website</th>
             <th>Status</th>
-            <th class="text-center pe-3" style="width: 120px;">Aksi</th>
+            <th class="text-center" style="width: 100px;">Aksi</th>
+            <th class="text-center" style="width: 140px;">Vendor Contacts</th>
+            <th class="text-center pe-3" style="width: 120px;">Vendor API</th>
           </tr>
         </thead>
         <tbody>
           <?php if (empty($vendors)): ?>
               <tr>
-                <!-- Nilai colspan diubah menjadi 7 sesuai jumlah kolom th di atas -->
-                <td colspan="7" class="text-center text-muted py-5" style="white-space: normal;">
+                <!-- PERUBAHAN: Nilai colspan diubah menjadi 9 agar penuh menutup seluruh kolom baru -->
+                <td colspan="9" class="text-center text-muted py-5" style="white-space: normal;">
                   <i class="bi bi-building-exclamation display-4 d-block mb-3 text-secondary opacity-50"></i>
                   <span class="d-block fw-semibold text-dark mb-1">Belum Ada Data Vendor</span>
                   <span class="small text-muted">Klik tombol "+ Tambah Vendor" untuk memasukkan data rekanan pertama Anda.</span>
@@ -311,7 +313,9 @@ try {
                       <span class="badge bg-danger-subtle text-danger border border-danger px-2.5 py-1.5 rounded-pill">Non-Aktif</span>
                   <?php endif; ?>
                 </td>
-                <td class="text-center pe-3">
+                
+                <!-- KOLOM 7: Aksi Utama (Edit & Hapus) -->
+                <td class="text-center">
                   <div class="btn-group btn-group-sm">
                     <!-- Tombol Edit Data -->
                     <button type="button" class="btn btn-outline-warning border-0" 
@@ -336,6 +340,21 @@ try {
                     </a>
                   </div>
                 </td>
+
+                <!-- PERUBAHAN: KOLOM 8: Tombol Akses Vendor Contacts -->
+                <td class="text-center">
+                  <a href="vendor_contacts.php?vendor_id=<?= $v['id']; ?>" class="btn btn-sm btn-primary rounded-3 px-3 shadow-sm d-inline-flex align-items-center gap-1">
+                    <i class="bi bi-person-lines-fill"></i> Kontak
+                  </a>
+                </td>
+
+                <!-- PERUBAHAN: KOLOM 9: Tombol Akses Vendor API -->
+                <td class="text-center pe-3">
+                  <a href="vendor_apis.php?vendor_id=<?= $v['id']; ?>" class="btn btn-sm text-white rounded-3 px-3 shadow-sm d-inline-flex align-items-center gap-1" style="background-color: #6f42c1;">
+                    <i class="bi bi-code-slash"></i> API
+                  </a>
+                </td>
+
               </tr>
           <?php endforeach; endif; ?>
         </tbody>
