@@ -113,7 +113,7 @@ try {
       <ul class="nav flex-column gap-2">
         <!-- Dashboard Aktif di Mobile -->
         <li class="nav-item">
-          <a href="dashboard.php" class="nav-link active bg-primary text-white p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
+          <a href="dashboard.php" class="nav-link text-white p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
         </li>
         <li class="nav-item">
           <a href="roles.php" class="nav-link text-white p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Manajemen Roles</a>
@@ -133,7 +133,7 @@ try {
           <a href="asset_movements.php" class="nav-link text-white p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
         </li>
         <li class="nav-item">
-          <a href="server.php" class="nav-link text-white p-2 rounded"><i class="bi bi-hdd-network me-2"></i> Server</a>
+          <a href="server.php" class="nav-link active bg-primary text-white p-2 rounded"><i class="bi bi-hdd-network me-2"></i> Server</a>
         </li>
         <li class="nav-item">
           <a href="network_device.php" class="nav-link text-white p-2 rounded"><i class="bi bi-router me-2"></i> Network Device</a>
@@ -175,7 +175,7 @@ try {
         <ul class="nav flex-column gap-2">
           <!-- Dashboard Aktif di Desktop -->
           <li class="nav-item">
-            <a href="dashboard.php" class="nav-link active bg-primary text-white p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
+            <a href="dashboard.php" class="nav-link text-white p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
           </li>
           <li class="nav-item">
             <a href="roles.php" class="nav-link text-white p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Manajemen Roles</a>
@@ -195,7 +195,7 @@ try {
             <a href="asset_movements.php" class="nav-link text-white p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
           </li>
           <li class="nav-item">
-            <a href="server.php" class="nav-link text-white p-2 rounded"><i class="bi bi-hdd-network me-2"></i> Server</a>
+            <a href="server.php" class="nav-link  active bg-primary text-white p-2 rounded"><i class="bi bi-hdd-network me-2"></i> Server</a>
           </li>
           <li class="nav-item">
             <a href="network_device.php" class="nav-link text-white p-2 rounded"><i class="bi bi-router me-2"></i> Network Device</a>
@@ -224,9 +224,6 @@ try {
     <!-- AREA UTAMA KONTEN (Gunakan pembungkus ini agar susunan halaman tidak bergeser tertimpa sidebar) -->
     <main class="col-md-8 ms-sm-auto col-lg-9 px-md-4 pt-4 offset-md-4 offset-lg-3">
 
-    <!-- MAIN KONTEN UTAMA -->
-    <main class="col-md-8 ms-sm-auto col-lg-9 px-md-4 pt-4">
-      
       <!-- HEADER HALAMAN -->
       <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2"><i class="bi bi-hdd-network me-2"></i> Manajemen Server</h1>

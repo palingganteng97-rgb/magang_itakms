@@ -106,7 +106,7 @@ try {
       <ul class="nav flex-column gap-2">
         <!-- Dashboard Aktif di Mobile -->
         <li class="nav-item">
-          <a href="dashboard.php" class="nav-link active bg-primary text-white p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
+          <a href="dashboard.php" class="nav-link text-white p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
         </li>
         <li class="nav-item">
           <a href="roles.php" class="nav-link text-white p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Manajemen Roles</a>
@@ -123,7 +123,7 @@ try {
           <a href="manajemen_asset.php" class="nav-link text-white p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
         </li>
         <li class="nav-item">
-          <a href="asset_movements.php" class="nav-link text-white p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
+          <a href="asset_movements.php" class="nav-link  active bg-primary text-white p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
         </li>
         <li class="nav-item">
           <a href="server.php" class="nav-link text-white p-2 rounded"><i class="bi bi-hdd-network me-2"></i> Server</a>
@@ -168,7 +168,7 @@ try {
         <ul class="nav flex-column gap-2">
           <!-- Dashboard Aktif di Desktop -->
           <li class="nav-item">
-            <a href="dashboard.php" class="nav-link active bg-primary text-white p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
+            <a href="dashboard.php" class="nav-link text-white p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
           </li>
           <li class="nav-item">
             <a href="roles.php" class="nav-link text-white p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Manajemen Roles</a>
@@ -185,7 +185,7 @@ try {
             <a href="manajemen_asset.php" class="nav-link text-white p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
           </li>
           <li class="nav-item">
-            <a href="asset_movements.php" class="nav-link text-white p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
+            <a href="asset_movements.php" class="nav-link active bg-primary text-white p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
           </li>
           <li class="nav-item">
             <a href="server.php" class="nav-link text-white p-2 rounded"><i class="bi bi-hdd-network me-2"></i> Server</a>

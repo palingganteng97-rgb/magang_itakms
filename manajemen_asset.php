@@ -205,25 +205,27 @@ try {
       </div>
     </nav>
 
-    <!-- AREA UTAMA KONTEN (Gunakan pembungkus ini agar susunan halaman tidak bergeser) -->
-    <main class="col-md-8 ms-sm-auto col-lg-9 px-md-4 pt-4 offset-md-4 offset-lg-3">
+<!-- AREA UTAMA KONTEN (Gunakan pembungkus ini agar susunan halaman tidak bergeser) -->
+    <!-- PERBAIKAN: Menggunakan col-12 agar lebar konten penuh 100% pada tampilan ponsel pintar -->
+    <main class="col-12 col-md-8 col-lg-9 ms-sm-auto ms-md-auto px-md-4 pt-4 offset-md-4 offset-lg-3">
 
     <!-- 1. Banner Header Halaman & Tombol Tab -->
+    <!-- PERBAIKAN: Mengatur gap dan susunan kolom agar rapi saat bertumpuk vertikal di HP -->
     <div class="row align-items-center mb-4 g-3">
         <div class="col-md-6">
-            <h1 class="h3 fw-bold text-dark m-0">Master Data Asset</h1>
-            <p class="text-muted small m-0">Kelola informasi merek, kategori, dan status operasional aset sistem ITAKMS.</p>
+            <h1 class="h3 fw-bold text-dark m-0 fs-4 fs-md-3">Master Data Asset</h1>
+            <p class="text-muted small m-0 d-none d-sm-block">Kelola informasi merek, kategori, dan status operasional aset sistem ITAKMS.</p>
         </div>
         <div class="col-md-6 text-md-end">
             <!-- Navigasi Tab Gaya Modern -->
-            <div class="nav nav-pills d-inline-flex gap-2 bg-white p-1 rounded-3 shadow-sm" id="masterDataTabs" role="tablist">
-                <button class="nav-link active rounded-3 px-3 py-2 fw-bold small" id="tab-brand" data-bs-toggle="tab" data-bs-target="#content-brand" type="button" role="tab">
+            <div class="nav nav-pills d-inline-flex flex-wrap gap-1 bg-white p-1 rounded-3 shadow-sm" id="masterDataTabs" role="tablist">
+                <button class="nav-link active rounded-3 px-2 py-1.5 px-md-3 py-md-2 fw-bold small" id="tab-brand" data-bs-toggle="tab" data-bs-target="#content-brand" type="button" role="tab">
                     <i class="bi bi-tag me-1"></i> Brands
                 </button>
-                <button class="nav-link rounded-3 px-3 py-2 fw-bold small" id="tab-category" data-bs-toggle="tab" data-bs-target="#content-category" type="button" role="tab">
+                <button class="nav-link rounded-3 px-2 py-1.5 px-md-3 py-md-2 fw-bold small" id="tab-category" data-bs-toggle="tab" data-bs-target="#content-category" type="button" role="tab">
                     <i class="bi bi-grid me-1"></i> Categories
                 </button>
-                <button class="nav-link rounded-3 px-3 py-2 fw-bold small" id="tab-status" data-bs-toggle="tab" data-bs-target="#content-status" type="button" role="tab">
+                <button class="nav-link rounded-3 px-2 py-1.5 px-md-3 py-md-2 fw-bold small" id="tab-status" data-bs-toggle="tab" data-bs-target="#content-status" type="button" role="tab">
                     <i class="bi bi-info-circle me-1"></i> Statuses
                 </button>
             </div>
@@ -238,14 +240,15 @@ try {
             <!-- PANEL TAB 1: ASSET BRANDS                  -->
             <!-- ========================================== -->
             <div class="tab-pane fade show active" id="content-brand" role="tabpanel">
-                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-tag-fill me-2 text-primary"></i> Daftar Komponen Merek</h5>
+                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h5 class="mb-0 text-dark fw-bold fs-6 fs-md-5"><i class="bi bi-tag-fill me-2 text-primary"></i> Daftar Komponen Merek</h5>
                     <button type="button" class="btn btn-primary btn-sm rounded-3 px-3 d-flex align-items-center gap-2" onclick="bukaModalPaksa('modalAddBrand')">
                         <i class="bi bi-plus-lg"></i> Tambah Brand
                     </button>
                 </div>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
+                <!-- PERBAIKAN: Menambahkan aturan lebar penuh dan overflow-x agar tabel brand bisa di-scroll horizontal -->
+                <div class="table-responsive w-100" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                    <table class="table table-hover align-middle mb-0 text-nowrap">
                         <thead class="table-light">
                             <tr>
                                 <th class="ps-4" style="width: 80px;">No</th>
@@ -256,7 +259,7 @@ try {
                         </thead>
                         <tbody>
                             <?php if (empty($brands)): ?>
-                                <tr><td colspan="4" class="text-center text-muted py-5">Belum ada data brand.</td></tr>
+                                <tr><td colspan="4" class="text-center text-muted py-5" style="white-space: normal;">Belum ada data brand.</td></tr>
                             <?php else: $no=1; foreach ($brands as $b): ?>
                                 <tr>
                                     <td class="ps-4 fw-bold text-muted"><?= $no++; ?></td>
@@ -284,17 +287,18 @@ try {
             </div>
 
             <!-- ========================================== -->
-            <!-- PANEL TAB 2: ASSET CATEGORIES              -->
+            <!-- PANEL TAB 2: ASSET CATEGORIES (SAMBUNGAN)  -->
             <!-- ========================================== -->
             <div class="tab-pane fade" id="content-category" role="tabpanel">
-                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-grid-fill me-2 text-success"></i> Daftar Kategori Asset</h5>
+                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h5 class="mb-0 text-dark fw-bold fs-6 fs-md-5"><i class="bi bi-grid-fill me-2 text-success"></i> Daftar Kategori Asset</h5>
                     <button type="button" class="btn btn-success btn-sm rounded-3 px-3 d-flex align-items-center gap-2" onclick="bukaModalPaksa('modalAddCategory')">
                         <i class="bi bi-plus-lg"></i> Tambah Kategori
                     </button>
                 </div>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
+                <!-- PERBAIKAN: Menambahkan aturan lebar penuh dan overflow-x agar tabel kategori bisa di-scroll horizontal -->
+                <div class="table-responsive w-100" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                    <table class="table table-hover align-middle mb-0 text-nowrap">
                         <thead class="table-light">
                             <tr>
                                 <th class="ps-4" style="width: 80px;">No</th>
@@ -305,7 +309,7 @@ try {
                         </thead>
                         <tbody>
                             <?php if (empty($categories)): ?>
-                                <tr><td colspan="4" class="text-center text-muted py-5">Belum ada data kategori.</td></tr>
+                                <tr><td colspan="4" class="text-center text-muted py-5" style="white-space: normal;">Belum ada data kategori.</td></tr>
                             <?php else: $no=1; foreach ($categories as $c): ?>
                                 <tr>
                                     <td class="ps-4 fw-bold text-muted"><?= $no++; ?></td>
@@ -320,6 +324,7 @@ try {
                                     </td>
                                     <td class="text-end pe-4">
                                         <div class="btn-group btn-group-sm">
+                                            <!-- BERHASIL DISAMBUNGKAN -->
                                             <button type="button" class="btn btn-outline-warning border-0" onclick="prosesEditCategory(<?= $c['id']; ?>, '<?= addslashes($c['nama']); ?>', '<?= addslashes($c['icon'] ?? ''); ?>', '<?= addslashes($c['warna'] ?? ''); ?>')">
                                                 <i class="bi bi-pencil-square"></i>
                                             </button>
@@ -334,42 +339,51 @@ try {
                     </table>
                 </div>
             </div>
+
             <!-- ========================================== -->
             <!-- PANEL TAB 3: ASSET STATUSES                -->
             <!-- ========================================== -->
             <div class="tab-pane fade" id="content-status" role="tabpanel">
-                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-info-circle-fill me-2 text-danger"></i> Parameter Status Kondisi</h5>
-                    <button type="button" class="btn btn-danger btn-sm rounded-3 px-3 d-flex align-items-center gap-2" onclick="bukaModalPaksa('modalAddStatus')">
+                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-info-circle-fill me-2 text-info"></i> Daftar Status Operasional</h5>
+                    <button type="button" class="btn btn-info btn-sm text-white rounded-3 px-3 d-flex align-items-center gap-2" onclick="bukaModalPaksa('modalAddStatus')">
                         <i class="bi bi-plus-lg"></i> Tambah Status
                     </button>
                 </div>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
+                <!-- PERBAIKAN RESPONSIVE MOBILE: Ditambahkan text-nowrap agar kolom stabil saat di-scroll -->
+                <div class="table-responsive w-100" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                    <table class="table table-hover align-middle mb-0 text-nowrap">
                         <thead class="table-light">
                             <tr>
                                 <th class="ps-4" style="width: 80px;">No</th>
-                                <th>Nama Status Label</th>
+                                <th>Nama Status</th>
+                                <th>Tipe Indikator</th>
                                 <th class="text-end pe-4" style="width: 150px;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if (empty($statuses)): ?>
-                                <tr><td colspan="3" class="text-center text-muted py-5">Belum ada data status.</td></tr>
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-5" style="white-space: normal;">
+                                        Belum ada data status operasional.
+                                    </td>
+                                </tr>
                             <?php else: $no=1; foreach ($statuses as $s): ?>
                                 <tr>
                                     <td class="ps-4 fw-bold text-muted"><?= $no++; ?></td>
-                                    <td class="fw-semibold text-dark">
-                                        <span class="badge bg-light border text-dark px-3 py-2 rounded-3">
-                                            <i class="bi bi-info-circle me-1 text-danger"></i> <?= htmlspecialchars($s['nama']); ?>
+                                    <td class="fw-semibold text-dark"><?= htmlspecialchars($s['nama']); ?></td>
+                                    <td>
+                                        <!-- Visualisasi badge tipe status berdasarkan warna komponen bootstrap -->
+                                        <span class="badge bg-<?= htmlspecialchars($s['tipe_badge'] ?? 'secondary'); ?>-subtle text-<?= htmlspecialchars($s['tipe_badge'] ?? 'secondary'); ?> border border-<?= htmlspecialchars($s['tipe_badge'] ?? 'secondary'); ?> px-3 py-2 rounded-pill">
+                                            <?= htmlspecialchars($s['label_indikator'] ?? 'Default'); ?>
                                         </span>
                                     </td>
                                     <td class="text-end pe-4">
                                         <div class="btn-group btn-group-sm">
-                                            <button type="button" class="btn btn-outline-warning border-0" onclick="prosesEditStatus(<?= $s['id']; ?>, '<?= addslashes($s['nama']); ?>')">
+                                            <button type="button" class="btn btn-outline-warning border-0" onclick="prosesEditStatus(<?= $s['id']; ?>, '<?= addslashes($s['nama']); ?>', '<?= addslashes($s['tipe_badge'] ?? ''); ?>')">
                                                 <i class="bi bi-pencil-square"></i>
                                             </button>
-                                            <button type="button" class="btn btn-outline-danger border-0" onclick="prosesHapusAssetCrud('delete_status', <?= $s['id']; ?>, 'Hapus status ini?')">
+                                            <button type="button" class="btn btn-outline-danger border-0" onclick="prosesHapusAssetCrud('delete_status', <?= $s['id']; ?>, 'Hapus status operasional ini?')">
                                                 <i class="bi bi-trash3"></i>
                                             </button>
                                         </div>
@@ -381,10 +395,10 @@ try {
                 </div>
             </div>
 
-        </div> <!-- /tab-content -->
-    </div> <!-- /card -->
-</main>
+        </div> <!-- /.tab-content -->
+    </div> <!-- /.card -->
 
+</main> <!-- /PERBAIKAN: Tag penutup area utama konten -->
 <!-- ========================================================================= -->
 <!-- TAHAP 5: MODAL POPUP INPUT DATA (TAMBAH DATA MASTER ASSET)                -->
 <!-- ========================================================================= -->

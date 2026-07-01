@@ -106,9 +106,19 @@ try {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
         body { background-color: #f8f9fa; }
-        .sidebar { min-height: 100vh; background-color: #212529; color: white; }
+        .sidebar { background-color: #212529; color: white; }
         .sidebar a { color: #adb5bd; text-decoration: none; }
         .sidebar a:hover, .sidebar a.active { color: white; background-color: #343a40; }
+
+        /* KODE FIX: Menyembunyikan batang scrollbar untuk Chrome, Safari, dan Opera */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        /* Menyembunyikan batang scrollbar untuk Firefox dan IE/Edge */
+        .hide-scrollbar {
+            -ms-overflow-style: none;  /* IE dan Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
     </style>
 </head>
 <body>
@@ -135,9 +145,10 @@ try {
   
   <!-- Body Offcanvas (Pembagian Layout Flex Vertikal) -->
   <div class="offcanvas-body p-0 d-flex flex-column" style="height: calc(100vh - 56px);">
-    <!-- Area Menu Tengah Mobile (Otomatis Membentuk Scrollbar Jika Menu Kepanjangan) -->
-    <div class="flex-grow-1 overflow-y-auto p-3">
+    <!-- Area Menu Tengah Mobile (Ditambahkan class hide-scrollbar) -->
+    <div class="flex-grow-1 overflow-y-auto p-3 hide-scrollbar">
       <ul class="nav flex-column gap-2">
+        <!-- Dashboard Aktif di Mobile -->
         <li class="nav-item">
           <a href="dashboard.php" class="nav-link text-white p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
         </li>
@@ -149,7 +160,6 @@ try {
             <i class="bi bi-diagram-3 me-2"></i> Manajemen Bangunan & Ruang
           </a>
         </li>
-        <!-- Assets Aktif di Mobile -->
         <li class="nav-item">
           <a href="assets.php" class="nav-link active bg-primary text-white p-2 rounded"><i class="bi bi-folder2-open me-2"></i> Assets</a>
         </li>
@@ -197,9 +207,10 @@ try {
       <!-- Judul Utama Dashboard Desktop (Tetap Diam) -->
       <h4 class="text-center mb-4 text-warning fw-bold pt-2"><i class="bi bi-speedometer2"></i> ITAKMS</h4>
       
-      <!-- Area Menu Tengah Desktop (Batas Tinggi Dikalkulasi Sesuai Sisa Ruang Layar) -->
-      <div class="flex-grow-1 overflow-y-auto pr-1" style="max-height: calc(100vh - 160px);">
+      <!-- Area Menu Tengah Desktop (Ditambahkan class hide-scrollbar dan menghapus padding kanan pr-1) -->
+      <div class="flex-grow-1 overflow-y-auto hide-scrollbar" style="max-height: calc(100vh - 160px);">
         <ul class="nav flex-column gap-2">
+          <!-- Dashboard Aktif di Desktop -->
           <li class="nav-item">
             <a href="dashboard.php" class="nav-link text-white p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
           </li>
@@ -211,7 +222,6 @@ try {
               <i class="bi bi-diagram-3 me-2"></i> Manajemen Bangunan & Ruang
             </a>
           </li>
-          <!-- Assets Aktif di Desktop -->
           <li class="nav-item">
             <a href="assets.php" class="nav-link active bg-primary text-white p-2 rounded"><i class="bi bi-folder2-open me-2"></i> Assets</a>
           </li>
