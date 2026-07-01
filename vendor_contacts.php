@@ -59,113 +59,109 @@ try {
 <div class="container-fluid">
   <div class="row">
 
-    <!-- AREA UTAMA KONTEN -->
-    <!-- PERUBAHAN PERMANEN: Mengubah menjadi col-12 dan menghapus ms-sm-auto agar konten mentok ke kiri -->
-    <main class="col-12 px-md-4 pt-4">
+<!-- AREA UTAMA KONTEN -->
+<!-- PERUBAHAN: Menambahkan overflow dan max-width aman untuk layout mobile -->
+<main class="col-12 px-2 px-md-4 pt-4" style="min-width: 0; overflow: hidden;">
 
-      <!-- Header Halaman -->
-      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <div>
-          <!-- Tombol kembali ke vendors.php -->
-          <div class="mb-2">
-            <a href="vendors.php" class="btn btn-sm btn-outline-secondary rounded-3 px-3 py-1 d-inline-flex align-items-center gap-2 small">
-              <i class="bi bi-arrow-left"></i> Kembali ke Vendor
-            </a>
-          </div>
-          <h1 class="h3 fw-bold text-dark mb-1">Data Kontak Person Vendor</h1>
-          <p class="text-muted small mb-0 d-none d-sm-block">Kelola sub-kontak spesifik, jabatan, dan nomor staf penghubung dari masing-masing perusahaan vendor.</p>
-        </div>
-        <button class="btn d-md-none text-dark p-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar">
-          <i class="bi bi-list fs-2"></i>
-        </button>
+  <!-- Header Halaman -->
+  <!-- PERUBAHAN: Menggunakan flex-column di mobile agar tombol menu mobile & teks bertumpuk rapi, serta flex-md-row di desktop -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center pt-3 pb-2 mb-3 border-bottom gap-2">
+    <div class="w-100">
+      <!-- Tombol kembali ke vendors.php -->
+      <div class="mb-2">
+        <a href="vendors.php" class="btn btn-sm btn-outline-secondary rounded-3 px-3 py-1 d-inline-flex align-items-center gap-2 small">
+          <i class="bi bi-arrow-left"></i> Kembali ke Vendor
+        </a>
       </div>
+    <div>
+      <h1 class="h4 h3-md fw-bold text-dark mb-1 text-break">Data Kontak Person Vendor</h1>
+      <p class="text-muted small mb-0 d-none d-sm-block">Kelola sub-kontak spesifik, jabatan, dan nomor staf penghubung dari masing-masing perusahaan vendor.</p>
+    </div>
 
-      <!-- Notifikasi Flash Status CRUD -->
-      <?php if(isset($_GET['status'])): ?>
-        <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm" role="alert">
-            <?php
-              if($_GET['status'] == 'success_add') echo '<i class="bi bi-check-circle-fill me-2"></i> Kontak vendor baru berhasil ditambahkan!';
-              if($_GET['status'] == 'success_update') echo '<i class="bi bi-check-circle-fill me-2"></i> Data kontak berhasil diperbarui!';
-              if($_GET['status'] == 'success_delete') echo '<i class="bi bi-trash-fill me-2"></i> Kontak berhasil dihapus!';
-            ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-      <?php endif; ?>
+  <!-- Notifikasi Flash Status CRUD -->
+  <?php if(isset($_GET['status'])): ?>
+    <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm mx-0" role="alert">
+        <?php
+          if($_GET['status'] == 'success_add') echo '<i class="bi bi-check-circle-fill me-2"></i> Kontak vendor baru berhasil ditambahkan!';
+          if($_GET['status'] == 'success_update') echo '<i class="bi bi-check-circle-fill me-2"></i> Data kontak berhasil diperbarui!';
+          if($_GET['status'] == 'success_delete') echo '<i class="bi bi-trash-fill me-2"></i> Kontak berhasil dihapus!';
+        ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <?php endif; ?>
 
-      <!-- Card Wadah Tabel -->
-      <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4 bg-white p-3">
-        
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-          <h5 class="mb-0 text-dark fw-bold d-flex align-items-center"><i class="bi bi-person-lines-fill me-2 text-success"></i> Daftar Personel Kontak</h5>
-          <button type="button" class="btn btn-success btn-sm rounded-3 px-3 d-flex align-items-center gap-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddContact">
-              <i class="bi bi-plus-lg"></i> Tambah Kontak
-          </button>
-        </div>
+  <!-- Card Wadah Tabel (PERUBAHAN: Padding p-2 di mobile agar tabel mendapat ruang lebih luas) -->
+  <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4 bg-white p-2 p-md-3">
+    
+    <!-- Bagian Atas Tabel: Judul & Tombol Tambah (Otomatis bungkus vertikal di HP) -->
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center flex-wrap gap-2 mb-3 mb-md-4">
+      <h5 class="mb-0 text-dark fw-bold d-flex align-items-center text-break" style="font-size: calc(1rem + 0.2vw);"><i class="bi bi-person-lines-fill me-2 text-success"></i> Daftar Personel Kontak</h5>
+      <button type="button" class="btn btn-success btn-sm rounded-3 px-3 py-2 py-sm-1 d-flex align-items-center justify-content-center gap-2 shadow-sm w-100 w-sm-auto" data-bs-toggle="modal" data-bs-target="#modalAddContact">
+          <i class="bi bi-plus-lg"></i> Tambah Kontak
+      </button>
+    </div>
 
-        <!-- Tabel Data Contacts -->
-        <div class="table-responsive w-100 rounded-3 border" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-          <table class="table table-striped table-hover align-middle mb-0 text-nowrap w-100">
-            <thead class="table-light border-bottom">
+    <!-- Tabel Data Contacts (Responsif Penuh Terkunci) -->
+    <div class="table-responsive w-100 rounded-3 border" style="overflow-x: auto; -webkit-overflow-scrolling: touch; display: block;">
+      <table class="table table-striped table-hover align-middle mb-0 text-nowrap w-100">
+        <thead class="table-light border-bottom">
+          <tr>
+            <th class="ps-3" style="width: 70px;">No</th>
+            <th>Perusahaan Vendor</th>
+            <th>Nama Lengkap</th>
+            <th>Jabatan</th>
+            <th>No. Telepon</th>
+            <th>Alamat Email</th>
+            <th class="text-center pe-3" style="width: 120px;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php if (empty($contacts)): ?>
               <tr>
-                <th class="ps-3" style="width: 70px;">No</th>
-                <th>Perusahaan Vendor</th>
-                <th>Nama Lengkap</th>
-                <th>Jabatan</th>
-                <th>No. Telepon</th>
-                <th>Alamat Email</th>
-                <th class="text-center pe-3" style="width: 120px;">Aksi</th>
+                <td colspan="7" class="text-center text-muted py-5" style="white-space: normal;">
+                  <i class="bi bi-person-x display-4 d-block mb-3 text-secondary opacity-50"></i>
+                  <span class="d-block fw-semibold text-dark mb-1">Belum Ada Kontak Terdaftar</span>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              <?php if (empty($contacts)): ?>
-                  <tr>
-                    <td colspan="7" class="text-center text-muted py-5" style="white-space: normal;">
-                      <i class="bi bi-person-x display-4 d-block mb-3 text-secondary opacity-50"></i>
-                      <span class="d-block fw-semibold text-dark mb-1">Belum Ada Kontak Terdaftar</span>
-                    </td>
-                  </tr>
-              <?php else: $no = 1; foreach ($contacts as $c): ?>
-                  <tr>
-                    <td class="ps-3 fw-bold text-muted"><?= $no++; ?></td>
-                    <td>
-                      <span class="badge bg-light text-primary border border-primary-subtle px-2.5 py-1.5 rounded-3 fw-bold">
-                        <i class="bi bi-building me-1"></i> <?= htmlspecialchars($c['nama_vendor'] ?? 'Tidak Diketahui'); ?>
-                      </span>
-                    </td>
-                    <td class="fw-bold text-dark"><?= htmlspecialchars($c['nama'] ?? '-'); ?></td>
-                    <td><span class="text-muted small fw-semibold"><?= htmlspecialchars($c['jabatan'] ?? '-'); ?></span></td>
-                    <td><code class="text-dark bg-light px-2 py-1 rounded border small"><?= htmlspecialchars($c['telepon'] ?? '-'); ?></code></td>
-                    <td><?= htmlspecialchars($c['email'] ?? '-'); ?></td>
-                    <td class="text-center pe-3">
-                      <div class="btn-group btn-group-sm">
-                        <button type="button" class="btn btn-outline-warning border-0" 
-                                data-bs-toggle="modal" 
-                                data-bs-target="#modalEditContact"
-                                data-id="<?= $c['id']; ?>"
-                                data-vendor_id="<?= $c['vendor_id']; ?>"
-                                data-nama="<?= htmlspecialchars($c['nama'] ?? ''); ?>"
-                                data-jabatan="<?= htmlspecialchars($c['jabatan'] ?? ''); ?>"
-                                data-telepon="<?= htmlspecialchars($c['telepon'] ?? ''); ?>"
-                                data-email="<?= htmlspecialchars($c['email'] ?? ''); ?>">
-                            <i class="bi bi-pencil-square"></i>
-                        </button>
-                        <a href="proses_vendor_contact.php?action=delete&id=<?= $c['id']; ?>" 
-                           class="btn btn-outline-danger border-0" 
-                           onclick="return confirm('Hapus kontak person ini?')">
-                            <i class="bi bi-trash3"></i>
-                        </a>
-                      </div>
-                    </td>
-                  </tr>
-              <?php endforeach; endif; ?>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </main>
-
-  </div> <!-- /.row -->
-</div> <!-- /.container-fluid -->
+          <?php else: $no = 1; foreach ($contacts as $c): ?>
+              <tr>
+                <td class="ps-3 fw-bold text-muted"><?= $no++; ?></td>
+                <td>
+                  <span class="badge bg-light text-primary border border-primary-subtle px-2.5 py-1.5 rounded-3 fw-bold">
+                    <i class="bi bi-building me-1"></i> <?= htmlspecialchars($c['nama_vendor'] ?? 'Tidak Diketahui'); ?>
+                  </span>
+                </td>
+                <td class="fw-bold text-dark"><?= htmlspecialchars($c['nama'] ?? '-'); ?></td>
+                <td><span class="text-muted small fw-semibold"><?= htmlspecialchars($c['jabatan'] ?? '-'); ?></span></td>
+                <td><code class="text-dark bg-light px-2 py-1 rounded border small"><?= htmlspecialchars($c['telepon'] ?? '-'); ?></code></td>
+                <td><?= htmlspecialchars($c['email'] ?? '-'); ?></td>
+                <td class="text-center pe-3">
+                  <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-outline-warning border-0" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#modalEditContact"
+                            data-id="<?= $c['id']; ?>"
+                            data-vendor_id="<?= $c['vendor_id']; ?>"
+                            data-nama="<?= htmlspecialchars($c['nama'] ?? ''); ?>"
+                            data-jabatan="<?= htmlspecialchars($c['jabatan'] ?? ''); ?>"
+                            data-telepon="<?= htmlspecialchars($c['telepon'] ?? ''); ?>"
+                            data-email="<?= htmlspecialchars($c['email'] ?? ''); ?>">
+                        <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <a href="proses_vendor_contact.php?action=delete&id=<?= $c['id']; ?>" 
+                       class="btn btn-outline-danger border-0" 
+                       onclick="return confirm('Hapus kontak person ini?')">
+                        <i class="bi bi-trash3"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+          <?php endforeach; endif; ?>
+        </tbody>
+      </table>
+    </div> <!-- /.table-responsive -->
+  </div> <!-- /.card -->
+</main>
 
 <!-- MODAL TAMBAH CONTACT -->
 <div class="modal fade" id="modalAddContact" tabindex="-1" aria-hidden="true">

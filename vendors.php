@@ -231,24 +231,23 @@ try {
       </div>
     </nav>
 
-<!-- AREA UTAMA KONTEN (Gunakan pembungkus ini agar susunan halaman tidak bergeser) -->
-<main class="col-12 col-md-8 col-lg-9 ms-sm-auto ms-md-auto px-md-4 pt-4 offset-md-4 offset-lg-3">
+<!-- AREA UTAMA KONTEN (Penyelarasan Grid Desktop Sesuai Ketebalan Ukuran Sidebar) -->
+<main class="col-12 col-md-8 col-lg-9 offset-md-4 offset-lg-3 px-2 px-md-4 pt-4" style="min-width: 0; overflow: hidden;">
 
-  <!-- Header Halaman -->
-  <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <!-- Header Halaman Utama (Diletakkan di luar card agar rapi) -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center pt-3 pb-2 mb-3 border-bottom gap-2">
     <div>
       <h1 class="h3 fw-bold text-dark mb-1">Master Data Vendors</h1>
       <p class="text-muted small mb-0 d-none d-sm-block">Kelola daftar perusahaan penyedia layanan, suplier perangkat keras, dan kontak rekanan TI.</p>
     </div>
-    <!-- Tombol Menu Khusus Tampilan Mobile -->
-    <button class="btn d-md-none text-dark p-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar">
+    <button class="btn d-md-none text-dark p-0 ms-auto ms-md-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar">
       <i class="bi bi-list fs-2"></i>
     </button>
   </div>
 
-  <!-- Notifikasi Flash Status CRUD -->
+  <!-- Notifikasi Flash Status CRUD (Diletakkan di atas Card Konten Utama) -->
   <?php if(isset($_GET['status'])): ?>
-    <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm" role="alert">
+    <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm mx-0 mb-3" role="alert">
         <?php
           if($_GET['status'] == 'success_add') echo '<i class="bi bi-check-circle-fill me-2"></i> Data vendor baru berhasil ditambahkan!';
           if($_GET['status'] == 'success_update') echo '<i class="bi bi-check-circle-fill me-2"></i> Konfigurasi data vendor berhasil diperbarui!';
@@ -258,19 +257,26 @@ try {
     </div>
   <?php endif; ?>
 
-<!-- Wadah Konten Utama / Tabel Card -->
-  <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4 bg-white p-3">
-    
-    <!-- Bagian Atas Tabel: Judul & Tombol Tambah -->
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-      <h5 class="mb-0 text-dark fw-bold d-flex align-items-center"><i class="bi bi-building-fill me-2 text-primary"></i> Rekanan Penyedia Barang</h5>
-      <button type="button" class="btn btn-primary btn-sm rounded-3 px-3 d-flex align-items-center gap-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddVendor">
-          <i class="bi bi-plus-lg"></i> Tambah Vendor
-      </button>
-    </div>
+<!-- Bagian Atas Tabel: Judul & Tombol Tambah -->
+<!-- PERUBAHAN: d-flex dengan d-md-flex memastikan distribusi ruang horizontal membagi elemen ke kiri dan kanan -->
+<div class="d-flex justify-content-between align-items-center gap-2 mb-3 mb-md-4">
+  
+  <!-- Sisi Kiri: Judul Halaman -->
+  <h5 class="mb-0 text-dark fw-bold d-flex align-items-center">
+    <i class="bi bi-building-fill me-2 text-primary"></i> Rekanan Penyedia Barang
+  </h5>
+  
+  <!-- Sisi Kanan: Tombol Tambah Vendor -->
+  <!-- PERUBAHAN FIX: Menggunakan w-auto agar tombol menciut pas di desktop, dan d-inline-flex untuk mengunci ukuran konten -->
+  <button type="button" class="btn btn-primary btn-sm rounded-3 px-3 py-2 py-sm-1.5 d-inline-flex align-items-center justify-content-center gap-2 shadow-sm w-auto" data-bs-toggle="modal" data-bs-target="#modalAddVendor">
+      <i class="bi bi-plus-lg"></i> Tambah Vendor
+  </button>
 
-    <!-- Tabel Data Vendors (Responsif Total & Terkunci w-100) -->
-    <div class="table-responsive w-100 rounded-3 border" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+</div>
+
+<!-- Tabel Data Vendors (Responsif Total & Terkunci w-100) -->
+    <!-- PERUBAHAN STRUKTUR: Mengamankan container tabel responsif agar mendengarkan perintah scroll dengan baik -->
+    <div class="table-responsive w-100 rounded-3 border" style="overflow-x: auto; -webkit-overflow-scrolling: touch; display: block;">
       <!-- Ditambahkan text-nowrap agar kolom teratur horizontal, w-100 agar memenuhi container -->
       <table class="table table-striped table-hover align-middle mb-0 text-nowrap w-100">
         <thead class="table-light border-bottom">
@@ -363,7 +369,10 @@ try {
     
   </div> <!-- /.card -->
 
-</main>
+</main> <!-- Penutup tag main Anda -->
+
+  </div> <!-- Penutup tag row bawaan template sidebar Anda -->
+</div> <!-- Penutup tag container-fluid bawaan template sidebar Anda -->
 
 <!-- ========================================== -->
 <!-- REVISI: MODAL TAMBAH VENDOR YANG RAPI     -->
