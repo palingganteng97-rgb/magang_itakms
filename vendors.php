@@ -244,9 +244,14 @@ try {
   <!-- Header Halaman -->
   <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <div>
-      <h1 class="h2 fs-4 fs-md-2 mb-1">Master Data Vendors</h1>
-      <p class="text-muted small d-none d-sm-block">Kelola daftar perusahaan penyedia layanan, suplier perangkat keras, dan kontak rekanan TI.</p>
+      <h1 class="h3 fw-bold text-dark mb-1">Master Data Vendors</h1>
+      <p class="text-muted small mb-0 d-none d-sm-block">Kelola daftar perusahaan penyedia layanan, suplier perangkat keras, dan kontak rekanan TI.</p>
     </div>
+    <!-- Tombol Menu Khusus Tampilan Mobile -->
+    <button class="btn d-md-none text-dark p-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar">
+      <i class="bi bi-list fs-2"></i>
+    </button>
+  </div>
 
   <!-- Notifikasi Flash Status CRUD -->
   <?php if(isset($_GET['status'])): ?>
@@ -264,44 +269,47 @@ try {
   <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4 bg-white p-3">
     
     <!-- Bagian Atas Tabel: Judul & Tombol Tambah -->
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-      <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-building-fill me-2 text-primary"></i> Rekanan Penyedia Barang</h5>
-      <button type="button" class="btn btn-primary btn-sm rounded-3 px-3 d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalAddVendor">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+      <h5 class="mb-0 text-dark fw-bold d-flex align-items-center"><i class="bi bi-building-fill me-2 text-primary"></i> Rekanan Penyedia Barang</h5>
+      <button type="button" class="btn btn-primary btn-sm rounded-3 px-3 d-flex align-items-center gap-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddVendor">
           <i class="bi bi-plus-lg"></i> Tambah Vendor
       </button>
     </div>
 
-    <!-- Tabel Data Vendors (Responsif Mobile) -->
-    <div class="table-responsive w-100" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-      <table class="table table-hover align-middle mb-0 text-nowrap">
-        <thead class="table-light">
+    <!-- Tabel Data Vendors (Responsif Total & Terkunci w-100) -->
+    <div class="table-responsive w-100 rounded-3 border" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+      <!-- Ditambahkan text-nowrap agar kolom teratur horizontal, w-100 agar memenuhi container -->
+      <table class="table table-striped table-hover align-middle mb-0 text-nowrap w-100">
+        <thead class="table-light border-bottom">
           <tr>
-            <th class="ps-3" style="width: 60px;">No</th>
+            <th class="ps-3" style="width: 70px;">No</th>
             <th>Nama Perusahaan</th>
             <th>PIC Rekanan</th>
             <th>No. Telepon</th>
             <th>Alamat Email / Website</th>
             <th>Status</th>
-            <th class="text-end pe-3" style="width: 120px;">Aksi</th>
+            <th class="text-center pe-3" style="width: 120px;">Aksi</th>
           </tr>
         </thead>
         <tbody>
           <?php if (empty($vendors)): ?>
               <tr>
+                <!-- Nilai colspan diubah menjadi 7 sesuai jumlah kolom th di atas -->
                 <td colspan="7" class="text-center text-muted py-5" style="white-space: normal;">
-                  <i class="bi bi-building-exclamation display-5 d-block mb-2 text-secondary"></i>
-                  Belum ada data mitra vendor terdaftar dalam sistem.
+                  <i class="bi bi-building-exclamation display-4 d-block mb-3 text-secondary opacity-50"></i>
+                  <span class="d-block fw-semibold text-dark mb-1">Belum Ada Data Vendor</span>
+                  <span class="small text-muted">Klik tombol "+ Tambah Vendor" untuk memasukkan data rekanan pertama Anda.</span>
                 </td>
               </tr>
-          <?php else: $no = 1; foreach ($vendors as $v): ?>
+          <?php else: $no = 1 + $offset; foreach ($vendors as $v): ?>
               <tr>
                 <td class="ps-3 fw-bold text-muted"><?= $no++; ?></td>
-                <td class="fw-semibold text-dark"><?= htmlspecialchars($v['nama'] ?? '-'); ?></td>
+                <td class="fw-bold text-dark"><?= htmlspecialchars($v['nama'] ?? '-'); ?></td>
                 <td><i class="bi bi-person me-1 text-secondary"></i> <?= htmlspecialchars($v['pic'] ?? '-'); ?></td>
-                <td><code class="text-dark"><?= htmlspecialchars($v['telepon'] ?? '-'); ?></code></td>
+                <td><code class="text-dark bg-light px-2 py-1 rounded border small"><?= htmlspecialchars($v['telepon'] ?? '-'); ?></code></td>
                 <td>
-                  <div class="small text-dark mb-0"><?= htmlspecialchars($v['email'] ?? '-'); ?></div>
-                  <small class="text-muted"><?= htmlspecialchars($v['website'] ?? '-'); ?></small>
+                  <div class="fw-semibold text-dark mb-0 small"><?= htmlspecialchars($v['email'] ?? '-'); ?></div>
+                  <small class="text-muted text-decoration-underline"><?= htmlspecialchars($v['website'] ?? '-'); ?></small>
                 </td>
                 <td>
                   <?php if(($v['status'] ?? 0) == 1): ?>
@@ -310,9 +318,9 @@ try {
                       <span class="badge bg-danger-subtle text-danger border border-danger px-2.5 py-1.5 rounded-pill">Non-Aktif</span>
                   <?php endif; ?>
                 </td>
-                <td class="text-end pe-3">
+                <td class="text-center pe-3">
                   <div class="btn-group btn-group-sm">
-                    <!-- Tombol Edit: Melempar data lengkap kolom ke atribut HTML modal -->
+                    <!-- Tombol Edit Data -->
                     <button type="button" class="btn btn-outline-warning border-0" 
                             data-bs-toggle="modal" 
                             data-bs-target="#modalEditVendor"
@@ -326,9 +334,9 @@ try {
                             title="Ubah Data Vendor">
                         <i class="bi bi-pencil-square"></i>
                     </button>
-                    <!-- Tombol Hapus -->
+                    <!-- Tombol Hapus Data -->
                     <a href="proses_vendor.php?action=delete&id=<?= $v['id']; ?>" 
-                       class="btn btn-sm btn-outline-danger border-0" 
+                       class="btn btn-outline-danger border-0" 
                        onclick="return confirm('Apakah Anda yakin ingin menghapus data vendor ini?')" 
                        title="Hapus Vendor">
                         <i class="bi bi-trash3"></i>
@@ -340,10 +348,212 @@ try {
         </tbody>
       </table>
     </div> <!-- /.table-responsive -->
+    
   </div> <!-- /.card -->
 
 </main>
 
+<!-- ========================================== -->
+<!-- REVISI: MODAL TAMBAH VENDOR YANG RAPI     -->
+<!-- ========================================== -->
+<div class="modal fade" id="modalAddVendor" tabindex="-1" aria-labelledby="modalAddVendorLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered"> <!-- Menggunakan modal-lg agar lebih lebar ke samping -->
+    <div class="modal-content rounded-4 border-0 shadow overflow-hidden">
+      
+      <div class="modal-header bg-primary text-white py-3 px-4 border-0">
+        <h5 class="modal-title fw-bold fs-5" id="modalAddVendorLabel">
+          <i class="bi bi-building-add me-2 text-warning"></i> Tambah Vendor Baru
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      
+      <form action="proses_vendor.php" method="POST">
+        <input type="hidden" name="action" value="add_vendor">
+        
+        <div class="modal-body p-4">
+          <!-- BARIS 1: Nama Vendor & PIC -->
+          <div class="row g-3 mb-3">
+            <div class="col-12 col-sm-6">
+              <label class="form-label fw-bold small text-secondary mb-1">Nama Perusahaan / Vendor <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-building"></i></span>
+                <input type="text" name="nama" class="form-control rounded-end-3 bg-light-subtle" placeholder="Contoh: PT. Telekomunikasi Indonesia" required>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6">
+              <label class="form-label fw-bold small text-secondary mb-1">PIC Rekanan (Contact Person)</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-person"></i></span>
+                <input type="text" name="pic" class="form-control rounded-end-3 bg-light-subtle" placeholder="Contoh: Ahmad Subarjo">
+              </div>
+            </div>
+          </div>
+          
+          <!-- BARIS 2: No. Telepon & Email -->
+          <div class="row g-3 mb-3">
+            <div class="col-12 col-sm-6">
+              <label class="form-label fw-bold small text-secondary mb-1">No. Telepon / WhatsApp</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-telephone"></i></span>
+                <input type="text" name="telepon" class="form-control rounded-end-3 bg-light-subtle" placeholder="Contoh: 08123456789">
+              </div>
+            </div>
+            <div class="col-12 col-sm-6">
+              <label class="form-label fw-bold small text-secondary mb-1">Alamat Email</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-envelope"></i></span>
+                <input type="email" name="email" class="form-control rounded-end-3 bg-light-subtle" placeholder="Contoh: support@vendor.com">
+              </div>
+            </div>
+          </div>
+          
+          <!-- BARIS 3: Website & Status Operasional -->
+          <div class="row g-3 mb-0">
+            <div class="col-12 col-sm-6">
+              <label class="form-label fw-bold small text-secondary mb-1">Alamat Website URL</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-globe"></i></span>
+                <input type="text" name="website" class="form-control rounded-end-3 bg-light-subtle" placeholder="Contoh: https://vendor.com">
+              </div>
+            </div>
+            <div class="col-12 col-sm-6">
+              <label class="form-label fw-bold small text-secondary mb-1">Status Operasional</label>
+              <select name="status" class="form-select rounded-3 bg-light-subtle">
+                <option value="1" selected>Aktif</option>
+                <option value="0">Non-Aktif</option>
+              </select>
+            </div>
+          </div>
+          
+        </div>
+        
+        <div class="modal-footer bg-light px-4 py-3 border-top border-light-subtle">
+          <button type="button" class="btn btn-light border rounded-3 px-3 btn-sm fw-semibold" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary rounded-3 px-4 btn-sm fw-bold shadow-sm"><i class="bi bi-save me-1"></i> Simpan Vendor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- 2. MODAL EDIT VENDOR                       -->
+<!-- ========================================== -->
+<div class="modal fade" id="modalEditVendor" tabindex="-1" aria-labelledby="modalEditVendorLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered"> <!-- Menggunakan modal-lg agar seimbang -->
+    <div class="modal-content rounded-4 border-0 shadow overflow-hidden">
+      
+      <div class="modal-header bg-warning text-dark py-3 px-4 border-0">
+        <h5 class="modal-title fw-bold fs-5" id="modalEditVendorLabel">
+          <i class="bi bi-pencil-square me-2"></i> Ubah Data Vendor
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="dark" aria-label="Close"></button>
+      </div>
+      
+      <form action="proses_vendor.php" method="POST">
+        <input type="hidden" name="action" value="edit_vendor">
+        <input type="hidden" name="id" id="edit_id">
+        
+        <div class="modal-body p-4">
+          <!-- BARIS 1: Nama Vendor & PIC -->
+          <div class="row g-3 mb-3">
+            <div class="col-12 col-sm-6">
+              <label class="form-label fw-bold small text-secondary mb-1">Nama Perusahaan / Vendor <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-building"></i></span>
+                <input type="text" name="nama" id="edit_nama" class="form-control rounded-end-3 bg-light-subtle" required>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6">
+              <label class="form-label fw-bold small text-secondary mb-1">PIC Rekanan (Contact Person)</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-person"></i></span>
+                <input type="text" name="pic" id="edit_pic" class="form-control rounded-end-3 bg-light-subtle">
+              </div>
+            </div>
+          </div>
+          
+          <!-- BARIS 2: No. Telepon & Email -->
+          <div class="row g-3 mb-3">
+            <div class="col-12 col-sm-6">
+              <label class="form-label fw-bold small text-secondary mb-1">No. Telepon / WhatsApp</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-telephone"></i></span>
+                <input type="text" name="telepon" id="edit_telepon" class="form-control rounded-end-3 bg-light-subtle">
+              </div>
+            </div>
+            <div class="col-12 col-sm-6">
+              <label class="form-label fw-bold small text-secondary mb-1">Alamat Email</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-envelope"></i></span>
+                <input type="email" name="email" id="edit_email" class="form-control rounded-end-3 bg-light-subtle">
+              </div>
+            </div>
+          </div>
+          
+          <!-- BARIS 3: Website & Status Operasional -->
+          <div class="row g-3 mb-0">
+            <div class="col-12 col-sm-6">
+              <label class="form-label fw-bold small text-secondary mb-1">Alamat Website URL</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-globe"></i></span>
+                <input type="text" name="website" id="edit_website" class="form-control rounded-end-3 bg-light-subtle">
+              </div>
+            </div>
+            <div class="col-12 col-sm-6">
+              <label class="form-label fw-bold small text-secondary mb-1">Status Operasional</label>
+              <select name="status" id="edit_status" class="form-select rounded-3 bg-light-subtle">
+                <option value="1">Aktif</option>
+                <option value="0">Non-Aktif</option>
+              </select>
+            </div>
+          </div>
+          
+        </div>
+        
+        <div class="modal-footer bg-light px-4 py-3 border-top border-light-subtle">
+          <button type="button" class="btn btn-light border rounded-3 px-3 btn-sm fw-semibold" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-warning rounded-3 px-4 btn-sm fw-bold text-dark shadow-sm"><i class="bi bi-arrow-clockwise me-1"></i> Perbarui Data</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- 3. SCRIPT JAVASCRIPT AUTOMATION MAPPER     -->
+<!-- ========================================== -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // Tangkap elemen modal edit bootstrap
+    const modalEditVendor = document.getElementById('modalEditVendor');
+    
+    if (modalEditVendor) {
+        modalEditVendor.addEventListener('show.bs.modal', function (event) {
+            // Tombol pemicu yang baru saja diklik oleh pengguna
+            const button = event.relatedTarget;
+            
+            // Ekstrak nilai dari atribut data-* target HTML di baris tabel
+            const id = button.getAttribute('data-id');
+            const nama = button.getAttribute('data-nama');
+            const pic = button.getAttribute('data-pic');
+            const telepon = button.getAttribute('data-telepon');
+            const email = button.getAttribute('data-email');
+            const website = button.getAttribute('data-website');
+            const status = button.getAttribute('data-status');
+            
+            // Masukkan data hasil ekstrak ke elemen form input modal edit
+            document.getElementById('edit_id').value = id;
+            document.getElementById('edit_nama').value = nama;
+            document.getElementById('edit_pic').value = pic;
+            document.getElementById('edit_telepon').value = telepon;
+            document.getElementById('edit_email').value = email;
+            document.getElementById('edit_website').value = website;
+            document.getElementById('edit_status').value = status;
+        });
+    }
+});
+</script>
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
