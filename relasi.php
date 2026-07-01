@@ -101,20 +101,26 @@ try {
     </div>
 </nav>
 
-<!-- SIDEBAR MOBILE (OFFCANVAS) KHUSUS UNTUK RELASI.PHP -->
+<!-- ========================================== -->
+<!-- 1. SIDEBAR MOBILE (OFFCANVAS)              -->
+<!-- ========================================== -->
 <div class="offcanvas offcanvas-start text-bg-dark" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
-  <div class="offcanvas-header">
-    <h5 class="offcanvas-title" id="mobileSidebarLabel"><i class="bi bi-speedometer2"></i> ITAKMS</h5>
+  <!-- Header Mobile (Tetap Diam di Atas) -->
+  <div class="offcanvas-header border-bottom border-secondary">
+    <h5 class="offcanvas-title" id="mobileSidebarLabel"><i class="bi bi-speedometer2 text-warning me-2"></i> ITAKMS</h5>
     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
   </div>
-  <div class="offcanvas-body p-0">
-    <nav class="sidebar p-3 d-flex flex-column" style="min-height: calc(100vh - 56px);">
+  
+  <!-- Body Offcanvas (Pembagian Layout Flex Vertikal) -->
+  <div class="offcanvas-body p-0 d-flex flex-column" style="height: calc(100vh - 56px);">
+    <!-- Area Menu Tengah Mobile (Otomatis Membentuk Scrollbar Jika Menu Kepanjangan) -->
+    <div class="flex-grow-1 overflow-y-auto p-3">
       <ul class="nav flex-column gap-2">
         <li class="nav-item">
-          <a href="dashboard.php" class="nav-link p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
+          <a href="dashboard.php" class="nav-link text-white p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
         </li>
         <li class="nav-item">
-          <a href="roles.php" class="nav-link p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Manajemen Roles</a>
+          <a href="roles.php" class="nav-link text-white p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Manajemen Roles</a>
         </li>
         <!-- Manajemen Bangunan & Ruang Aktif di Mobile -->
         <li class="nav-item">
@@ -123,85 +129,93 @@ try {
           </a>
         </li>
         <li class="nav-item">
-          <a href="assets.php" class="nav-link p-2 rounded"><i class="bi bi-folder2-open me-2"></i> Assets</a>
+          <a href="assets.php" class="nav-link text-white p-2 rounded"><i class="bi bi-folder2-open me-2"></i> Assets</a>
         </li>
         <li class="nav-item">
-          <a href="manajemen_asset.php" class="nav-link p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
+          <a href="manajemen_asset.php" class="nav-link text-white p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
         </li>
         <li class="nav-item">
-          <a href="asset_movements.php" class="nav-link p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
+          <a href="asset_movements.php" class="nav-link text-white p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
         </li>
         <li class="nav-item">
-          <a href="server.php" class="nav-link p-2 rounded"><i class="bi bi-hdd-network me-2"></i> Server</a>
-        </li>
-        <!-- Menu Network Device (Mobile) -->
-        <li class="nav-item">
-          <a href="network_device.php" class="nav-link p-2 rounded"><i class="bi bi-router me-2"></i> Network Device</a>
-        </li>
-        <!-- Menu Network Port (Mobile) -->
-        <li class="nav-item">
-          <a href="network_port.php" class="nav-link p-2 rounded"><i class="bi bi-ethernet me-2"></i> Network Port</a>
+          <a href="server.php" class="nav-link text-white p-2 rounded"><i class="bi bi-hdd-network me-2"></i> Server</a>
         </li>
         <li class="nav-item">
-          <a href="user.php" class="nav-link p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
+          <a href="network_device.php" class="nav-link text-white p-2 rounded"><i class="bi bi-router me-2"></i> Network Device</a>
+        </li>
+        <li class="nav-item">
+          <a href="network_port.php" class="nav-link text-white p-2 rounded"><i class="bi bi-ethernet me-2"></i> Network Port</a>
+        </li>
+        <li class="nav-item">
+          <a href="user.php" class="nav-link text-white p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
         </li>
       </ul>
-      <div class="mt-auto pt-3">
-        <ul class="nav flex-column gap-2">
-          <li class="nav-item">
-            <a href="logout.php" class="nav-link p-2 rounded" style="color:#dc3545 !important;">
-              <i class="bi bi-box-arrow-right me-2" style="color:#dc3545 !important;"></i> Logout
-            </a>
-          </li>
-        </ul>
-      </div>
-    </nav>
+    </div>
+    
+    <!-- Tombol Logout Mobile (Mengunci di Posisi Dasar Bawah) -->
+    <div class="mt-auto p-3 border-top border-secondary bg-dark w-100">
+      <ul class="nav flex-column gap-2">
+        <li class="nav-item">
+          <a href="logout.php" class="nav-link p-2 rounded" style="color:#dc3545 !important;">
+            <i class="bi bi-box-arrow-right me-2" style="color:#dc3545 !important;"></i> Logout
+          </a>
+        </li>
+      </ul>
+    </div>
   </div>
 </div>
 
-<!-- SIDEBAR DESKTOP KHUSUS UNTUK RELASI.PHP -->
+<!-- ========================================== -->
+<!-- 2. SIDEBAR DESKTOP                         -->
+<!-- ========================================== -->
 <div class="container-fluid">
   <div class="row">
-    <nav class="col-md-4 col-lg-3 d-none d-md-flex flex-column sidebar p-3 text-bg-dark" style="min-height: 100vh;">
-      <h4 class="text-center mb-4 text-warning"><i class="bi bi-speedometer2"></i> ITAKMS</h4>
-      <ul class="nav flex-column gap-2">
-        <li class="nav-item">
-          <a href="dashboard.php" class="nav-link p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
-        </li>
-        <li class="nav-item">
-          <a href="roles.php" class="nav-link p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Manajemen Roles</a>
-        </li>
-        <!-- Manajemen Bangunan & Ruang Aktif di Desktop -->
-        <li class="nav-item">
-          <a href="relasi.php" class="nav-link active bg-primary text-white p-2 rounded text-nowrap" style="overflow: hidden; text-overflow: ellipsis;" title="Manajemen Bangunan & Ruang">
-            <i class="bi bi-diagram-3 me-2"></i> Manajemen Bangunan & Ruang
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="assets.php" class="nav-link p-2 rounded"><i class="bi bi-folder2-open me-2"></i> Assets</a>
-        </li>
-        <li class="nav-item">
-          <a href="manajemen_asset.php" class="nav-link p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
-        </li>
-        <li class="nav-item">
-          <a href="asset_movements.php" class="nav-link p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
-        </li>
-        <li class="nav-item">
-          <a href="server.php" class="nav-link p-2 rounded"><i class="bi bi-hdd-network me-2"></i> Server</a>
-        </li>
-        <!-- Menu Network Device (Desktop) -->
-        <li class="nav-item">
-          <a href="network_device.php" class="nav-link p-2 rounded"><i class="bi bi-router me-2"></i> Network Device</a>
-        </li>
-        <!-- Menu Network Port (Desktop) -->
-        <li class="nav-item">
-          <a href="network_port.php" class="nav-link p-2 rounded"><i class="bi bi-ethernet me-2"></i> Network Port</a>
-        </li>
-        <li class="nav-item">
-          <a href="user.php" class="nav-link p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
-        </li>
-      </ul>
-      <div class="mt-auto pt-3 border-top border-secondary w-100">
+    <!-- Sidebar Desktop dengan Tinggi Layar Terkunci Permanen 100vh & Posisi Statis Fixed -->
+    <nav class="col-md-4 col-lg-3 d-none d-md-flex flex-column sidebar p-3 text-bg-dark" style="min-height: 100vh; max-height: 100vh; position: fixed; z-index: 1000;">
+      <!-- Judul Utama Dashboard Desktop (Tetap Diam) -->
+      <h4 class="text-center mb-4 text-warning fw-bold pt-2"><i class="bi bi-speedometer2"></i> ITAKMS</h4>
+      
+      <!-- Area Menu Tengah Desktop (Batas Tinggi Dikalkulasi Sesuai Sisa Ruang Layar) -->
+      <div class="flex-grow-1 overflow-y-auto pr-1" style="max-height: calc(100vh - 160px);">
+        <ul class="nav flex-column gap-2">
+          <li class="nav-item">
+            <a href="dashboard.php" class="nav-link text-white p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a href="roles.php" class="nav-link text-white p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Manajemen Roles</a>
+          </li>
+          <!-- Manajemen Bangunan & Ruang Aktif di Desktop -->
+          <li class="nav-item">
+            <a href="relasi.php" class="nav-link active bg-primary text-white p-2 rounded text-nowrap" style="overflow: hidden; text-overflow: ellipsis;" title="Manajemen Bangunan & Ruang">
+              <i class="bi bi-diagram-3 me-2"></i> Manajemen Bangunan & Ruang
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="assets.php" class="nav-link text-white p-2 rounded"><i class="bi bi-folder2-open me-2"></i> Assets</a>
+          </li>
+          <li class="nav-item">
+            <a href="manajemen_asset.php" class="nav-link text-white p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
+          </li>
+          <li class="nav-item">
+            <a href="asset_movements.php" class="nav-link text-white p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
+          </li>
+          <li class="nav-item">
+            <a href="server.php" class="nav-link text-white p-2 rounded"><i class="bi bi-hdd-network me-2"></i> Server</a>
+          </li>
+          <li class="nav-item">
+            <a href="network_device.php" class="nav-link text-white p-2 rounded"><i class="bi bi-router me-2"></i> Network Device</a>
+          </li>
+          <li class="nav-item">
+            <a href="network_port.php" class="nav-link text-white p-2 rounded"><i class="bi bi-ethernet me-2"></i> Network Port</a>
+          </li>
+          <li class="nav-item">
+            <a href="user.php" class="nav-link text-white p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
+          </li>
+        </ul>
+      </div>
+      
+      <!-- Tombol Logout Desktop (Mengunci Mengikuti Batas Layar Bawah) -->
+      <div class="mt-auto pt-3 border-top border-secondary w-100 bg-dark">
         <ul class="nav flex-column gap-2">
           <li class="nav-item">
             <a href="logout.php" class="nav-link p-2 rounded" style="color:#dc3545 !important;">
@@ -212,9 +226,9 @@ try {
       </div>
     </nav>
 
-    <!-- MAIN KONTEN UTAMA -->
-<main class="col-md-8 col-lg-9 ms-sm-auto p-4 bg-light" style="min-height: 100vh;">
-    
+    <!-- AREA UTAMA KONTEN (Gunakan pembungkus ini agar susunan halaman tidak bergeser tertimpa sidebar) -->
+    <main class="col-md-8 ms-sm-auto col-lg-9 px-md-4 pt-4 offset-md-4 offset-lg-3">
+
     <!-- HEADER HALAMAN -->
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
         <h2 class="h3 mb-0 text-gray-800 fw-bold">Manajemen Bangunan & Ruang</h2>

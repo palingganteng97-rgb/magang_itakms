@@ -123,23 +123,29 @@ try {
     </div>
 </nav>
 
-<!-- SIDEBAR MOBILE (OFFCANVAS) KHUSUS UNTUK ASSETS.PHP -->
+<!-- ========================================== -->
+<!-- 1. SIDEBAR MOBILE (OFFCANVAS)              -->
+<!-- ========================================== -->
 <div class="offcanvas offcanvas-start text-bg-dark" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
-  <div class="offcanvas-header">
-    <h5 class="offcanvas-title" id="mobileSidebarLabel"><i class="bi bi-speedometer2"></i> ITAKMS</h5>
+  <!-- Header Mobile (Tetap Diam di Atas) -->
+  <div class="offcanvas-header border-bottom border-secondary">
+    <h5 class="offcanvas-title" id="mobileSidebarLabel"><i class="bi bi-speedometer2 text-warning me-2"></i> ITAKMS</h5>
     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
   </div>
-  <div class="offcanvas-body p-0">
-    <nav class="sidebar p-3 d-flex flex-column" style="min-height: calc(100vh - 56px);">
+  
+  <!-- Body Offcanvas (Pembagian Layout Flex Vertikal) -->
+  <div class="offcanvas-body p-0 d-flex flex-column" style="height: calc(100vh - 56px);">
+    <!-- Area Menu Tengah Mobile (Otomatis Membentuk Scrollbar Jika Menu Kepanjangan) -->
+    <div class="flex-grow-1 overflow-y-auto p-3">
       <ul class="nav flex-column gap-2">
         <li class="nav-item">
-          <a href="dashboard.php" class="nav-link p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
+          <a href="dashboard.php" class="nav-link text-white p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
         </li>
         <li class="nav-item">
-          <a href="roles.php" class="nav-link p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Manajemen Roles</a>
+          <a href="roles.php" class="nav-link text-white p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Manajemen Roles</a>
         </li>
         <li class="nav-item">
-          <a href="relasi.php" class="nav-link p-2 rounded text-nowrap" style="overflow: hidden; text-overflow: ellipsis;">
+          <a href="relasi.php" class="nav-link text-white p-2 rounded text-nowrap" style="overflow: hidden; text-overflow: ellipsis;">
             <i class="bi bi-diagram-3 me-2"></i> Manajemen Bangunan & Ruang
           </a>
         </li>
@@ -148,82 +154,90 @@ try {
           <a href="assets.php" class="nav-link active bg-primary text-white p-2 rounded"><i class="bi bi-folder2-open me-2"></i> Assets</a>
         </li>
         <li class="nav-item">
-          <a href="manajemen_asset.php" class="nav-link p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
+          <a href="manajemen_asset.php" class="nav-link text-white p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
         </li>
         <li class="nav-item">
-          <a href="asset_movements.php" class="nav-link p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
+          <a href="asset_movements.php" class="nav-link text-white p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
         </li>
         <li class="nav-item">
-          <a href="server.php" class="nav-link p-2 rounded"><i class="bi bi-hdd-network me-2"></i> Server</a>
-        </li>
-        <!-- Menu Network Device (Mobile) -->
-        <li class="nav-item">
-          <a href="network_device.php" class="nav-link p-2 rounded"><i class="bi bi-router me-2"></i> Network Device</a>
-        </li>
-        <!-- Menu Network Port (Mobile) -->
-        <li class="nav-item">
-          <a href="network_port.php" class="nav-link p-2 rounded"><i class="bi bi-ethernet me-2"></i> Network Port</a>
+          <a href="server.php" class="nav-link text-white p-2 rounded"><i class="bi bi-hdd-network me-2"></i> Server</a>
         </li>
         <li class="nav-item">
-          <a href="user.php" class="nav-link p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
+          <a href="network_device.php" class="nav-link text-white p-2 rounded"><i class="bi bi-router me-2"></i> Network Device</a>
+        </li>
+        <li class="nav-item">
+          <a href="network_port.php" class="nav-link text-white p-2 rounded"><i class="bi bi-ethernet me-2"></i> Network Port</a>
+        </li>
+        <li class="nav-item">
+          <a href="user.php" class="nav-link text-white p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
         </li>
       </ul>
-      <div class="mt-auto pt-3">
-        <ul class="nav flex-column gap-2">
-          <li class="nav-item">
-            <a href="logout.php" class="nav-link p-2 rounded" style="color:#dc3545 !important;">
-              <i class="bi bi-box-arrow-right me-2" style="color:#dc3545 !important;"></i> Logout
-            </a>
-          </li>
-        </ul>
-      </div>
-    </nav>
+    </div>
+    
+    <!-- Tombol Logout Mobile (Mengunci di Posisi Dasar Bawah) -->
+    <div class="mt-auto p-3 border-top border-secondary bg-dark w-100">
+      <ul class="nav flex-column gap-2">
+        <li class="nav-item">
+          <a href="logout.php" class="nav-link p-2 rounded" style="color:#dc3545 !important;">
+            <i class="bi bi-box-arrow-right me-2" style="color:#dc3545 !important;"></i> Logout
+          </a>
+        </li>
+      </ul>
+    </div>
   </div>
 </div>
 
-<!-- SIDEBAR DESKTOP KHUSUS UNTUK ASSETS.PHP -->
+<!-- ========================================== -->
+<!-- 2. SIDEBAR DESKTOP                         -->
+<!-- ========================================== -->
 <div class="container-fluid">
   <div class="row">
-    <nav class="col-md-4 col-lg-3 d-none d-md-flex flex-column sidebar p-3 text-bg-dark" style="min-height: 100vh;">
-      <h4 class="text-center mb-4 text-warning"><i class="bi bi-speedometer2"></i> ITAKMS</h4>
-      <ul class="nav flex-column gap-2">
-        <li class="nav-item">
-          <a href="dashboard.php" class="nav-link p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
-        </li>
-        <li class="nav-item">
-          <a href="roles.php" class="nav-link p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Manajemen Roles</a>
-        </li>
-        <li class="nav-item">
-          <a href="relasi.php" class="nav-link p-2 rounded text-nowrap" style="overflow: hidden; text-overflow: ellipsis;" title="Manajemen Bangunan & Ruang">
-            <i class="bi bi-diagram-3 me-2"></i> Manajemen Bangunan & Ruang
-          </a>
-        </li>
-        <!-- Assets Aktif di Desktop -->
-        <li class="nav-item">
-          <a href="assets.php" class="nav-link active bg-primary text-white p-2 rounded"><i class="bi bi-folder2-open me-2"></i> Assets</a>
-        </li>
-        <li class="nav-item">
-          <a href="manajemen_asset.php" class="nav-link p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
-        </li>
-        <li class="nav-item">
-          <a href="asset_movements.php" class="nav-link p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
-        </li>
-        <li class="nav-item">
-          <a href="server.php" class="nav-link p-2 rounded"><i class="bi bi-hdd-network me-2"></i> Server</a>
-        </li>
-        <!-- Menu Network Device (Desktop) -->
-        <li class="nav-item">
-          <a href="network_device.php" class="nav-link p-2 rounded"><i class="bi bi-router me-2"></i> Network Device</a>
-        </li>
-        <!-- Menu Network Port (Desktop) -->
-        <li class="nav-item">
-          <a href="network_port.php" class="nav-link p-2 rounded"><i class="bi bi-ethernet me-2"></i> Network Port</a>
-        </li>
-        <li class="nav-item">
-          <a href="user.php" class="nav-link p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
-        </li>
-      </ul>
-      <div class="mt-auto pt-3 border-top border-secondary w-100">
+    <!-- Sidebar Desktop dengan Tinggi Layar Terkunci Permanen 100vh & Posisi Statis Fixed -->
+    <nav class="col-md-4 col-lg-3 d-none d-md-flex flex-column sidebar p-3 text-bg-dark" style="min-height: 100vh; max-height: 100vh; position: fixed; z-index: 1000;">
+      <!-- Judul Utama Dashboard Desktop (Tetap Diam) -->
+      <h4 class="text-center mb-4 text-warning fw-bold pt-2"><i class="bi bi-speedometer2"></i> ITAKMS</h4>
+      
+      <!-- Area Menu Tengah Desktop (Batas Tinggi Dikalkulasi Sesuai Sisa Ruang Layar) -->
+      <div class="flex-grow-1 overflow-y-auto pr-1" style="max-height: calc(100vh - 160px);">
+        <ul class="nav flex-column gap-2">
+          <li class="nav-item">
+            <a href="dashboard.php" class="nav-link text-white p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a href="roles.php" class="nav-link text-white p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Manajemen Roles</a>
+          </li>
+          <li class="nav-item">
+            <a href="relasi.php" class="nav-link text-white p-2 rounded text-nowrap" style="overflow: hidden; text-overflow: ellipsis;" title="Manajemen Bangunan & Ruang">
+              <i class="bi bi-diagram-3 me-2"></i> Manajemen Bangunan & Ruang
+            </a>
+          </li>
+          <!-- Assets Aktif di Desktop -->
+          <li class="nav-item">
+            <a href="assets.php" class="nav-link active bg-primary text-white p-2 rounded"><i class="bi bi-folder2-open me-2"></i> Assets</a>
+          </li>
+          <li class="nav-item">
+            <a href="manajemen_asset.php" class="nav-link text-white p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
+          </li>
+          <li class="nav-item">
+            <a href="asset_movements.php" class="nav-link text-white p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
+          </li>
+          <li class="nav-item">
+            <a href="server.php" class="nav-link text-white p-2 rounded"><i class="bi bi-hdd-network me-2"></i> Server</a>
+          </li>
+          <li class="nav-item">
+            <a href="network_device.php" class="nav-link text-white p-2 rounded"><i class="bi bi-router me-2"></i> Network Device</a>
+          </li>
+          <li class="nav-item">
+            <a href="network_port.php" class="nav-link text-white p-2 rounded"><i class="bi bi-ethernet me-2"></i> Network Port</a>
+          </li>
+          <li class="nav-item">
+            <a href="user.php" class="nav-link text-white p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
+          </li>
+        </ul>
+      </div>
+      
+      <!-- Tombol Logout Desktop (Mengunci Mengikuti Batas Layar Bawah) -->
+      <div class="mt-auto pt-3 border-top border-secondary w-100 bg-dark">
         <ul class="nav flex-column gap-2">
           <li class="nav-item">
             <a href="logout.php" class="nav-link p-2 rounded" style="color:#dc3545 !important;">
@@ -234,65 +248,65 @@ try {
       </div>
     </nav>
 
-<!-- 2. Area Konten Utama (Sisi Kanan) -->
-<main class="col-md-8 col-lg-9 p-4">
-  
-  <!-- Judul & Tombol -->
-  <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Daftar Assets</h1>
-    <div class="btn-toolbar mb-2 mb-md-0">
-      <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addAssetModal">
-        <i class="bi bi-plus-lg me-1"></i> Tambah Asset
-      </button>
+    <!-- AREA UTAMA KONTEN (Gunakan pembungkus ini agar susunan halaman tidak bergeser tertimpa sidebar) -->
+    <main class="col-md-8 ms-sm-auto col-lg-9 px-md-4 pt-4 offset-md-4 offset-lg-3">
+
+    <!-- Judul & Tombol -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+      <h1 class="h2">Daftar Assets</h1>
+      <div class="btn-toolbar mb-2 mb-md-0">
+        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addAssetModal">
+          <i class="bi bi-plus-lg me-1"></i> Tambah Asset
+        </button>
+      </div>
     </div>
-  </div>
 
-    <!-- Antarmuka Filter & Pencarian Multikolom Baru (FIX TATA LETAK LEBAR) -->
-  <form method="GET" action="assets.php" class="bg-white p-3 rounded shadow-sm mb-4 border">
-    <div class="row g-2 align-items-end">
-      
-      <div class="col-xl-2 col-md-4">
-        <label class="form-label small fw-bold text-secondary mb-1" style="font-size:0.8rem;">Filter Brand</label>
-        <select name="filter_brand" class="form-select form-select-sm">
-          <option value="">Semua Brand</option>
-          <?php if(!empty($list_brand)): foreach ($list_brand as $brd): ?>
-            <option value="<?= $brd['id']; ?>" <?= ($filter_brand ?? '') == $brd['id'] ? 'selected' : '' ?>><?= htmlspecialchars($brd['nama']); ?></option>
-          <?php endforeach; endif; ?>
-        </select>
+      <!-- Antarmuka Filter & Pencarian Multikolom Baru (FIX TATA LETAK LEBAR) -->
+    <form method="GET" action="assets.php" class="bg-white p-3 rounded shadow-sm mb-4 border">
+      <div class="row g-2 align-items-end">
+        
+        <div class="col-xl-2 col-md-4">
+          <label class="form-label small fw-bold text-secondary mb-1" style="font-size:0.8rem;">Filter Brand</label>
+          <select name="filter_brand" class="form-select form-select-sm">
+            <option value="">Semua Brand</option>
+            <?php if(!empty($list_brand)): foreach ($list_brand as $brd): ?>
+              <option value="<?= $brd['id']; ?>" <?= ($filter_brand ?? '') == $brd['id'] ? 'selected' : '' ?>><?= htmlspecialchars($brd['nama']); ?></option>
+            <?php endforeach; endif; ?>
+          </select>
+        </div>
+
+        <div class="col-xl-2 col-md-4">
+          <label class="form-label small fw-bold text-secondary mb-1" style="font-size:0.8rem;">Filter Room</label>
+          <select name="filter_room" class="form-select form-select-sm">
+            <option value="">Semua Ruangan</option>
+            <?php if(!empty($list_ruangan)): foreach ($list_ruangan as $rm): ?>
+              <option value="<?= $rm['id']; ?>" <?= ($filter_room ?? '') == $rm['id'] ? 'selected' : '' ?>><?= htmlspecialchars($rm['nama']); ?></option>
+            <?php endforeach; endif; ?>
+          </select>
+        </div>
+
+        <div class="col-xl-2 col-md-4">
+          <label class="form-label small fw-bold text-secondary mb-1" style="font-size:0.8rem;">Filter Status</label>
+          <select name="filter_status" class="form-select form-select-sm">
+            <option value="">Semua Status</option>
+            <?php if(!empty($list_status)): foreach ($list_status as $st): ?>
+              <option value="<?= $st['id']; ?>" <?= ($filter_status ?? '') == $st['id'] ? 'selected' : '' ?>><?= htmlspecialchars($st['nama']); ?></option>
+            <?php endforeach; endif; ?>
+          </select>
+        </div>
+
+        <div class="col-xl-4 col-md-8">
+          <label class="form-label small fw-bold text-secondary mb-1" style="font-size:0.8rem;">Cari Kode / Nama</label>
+          <input type="text" name="search_keyword" class="form-control form-control-sm" placeholder="Ketik kode asset atau nama..." value="<?= htmlspecialchars($search_keyword ?? '') ?>">
+        </div>
+
+        <div class="col-xl-2 col-md-4 d-flex gap-1">
+          <button class="btn btn-sm btn-primary w-100" type="submit"><i class="bi bi-filter"></i> Filter</button>
+          <a href="assets.php" class="btn btn-sm btn-outline-secondary w-100" title="Reset Filter"><i class="bi bi-arrow-clockwise"></i> Reset</a>
+        </div>
+
       </div>
-
-      <div class="col-xl-2 col-md-4">
-        <label class="form-label small fw-bold text-secondary mb-1" style="font-size:0.8rem;">Filter Room</label>
-        <select name="filter_room" class="form-select form-select-sm">
-          <option value="">Semua Ruangan</option>
-          <?php if(!empty($list_ruangan)): foreach ($list_ruangan as $rm): ?>
-            <option value="<?= $rm['id']; ?>" <?= ($filter_room ?? '') == $rm['id'] ? 'selected' : '' ?>><?= htmlspecialchars($rm['nama']); ?></option>
-          <?php endforeach; endif; ?>
-        </select>
-      </div>
-
-      <div class="col-xl-2 col-md-4">
-        <label class="form-label small fw-bold text-secondary mb-1" style="font-size:0.8rem;">Filter Status</label>
-        <select name="filter_status" class="form-select form-select-sm">
-          <option value="">Semua Status</option>
-          <?php if(!empty($list_status)): foreach ($list_status as $st): ?>
-            <option value="<?= $st['id']; ?>" <?= ($filter_status ?? '') == $st['id'] ? 'selected' : '' ?>><?= htmlspecialchars($st['nama']); ?></option>
-          <?php endforeach; endif; ?>
-        </select>
-      </div>
-
-      <div class="col-xl-4 col-md-8">
-        <label class="form-label small fw-bold text-secondary mb-1" style="font-size:0.8rem;">Cari Kode / Nama</label>
-        <input type="text" name="search_keyword" class="form-control form-control-sm" placeholder="Ketik kode asset atau nama..." value="<?= htmlspecialchars($search_keyword ?? '') ?>">
-      </div>
-
-      <div class="col-xl-2 col-md-4 d-flex gap-1">
-        <button class="btn btn-sm btn-primary w-100" type="submit"><i class="bi bi-filter"></i> Filter</button>
-        <a href="assets.php" class="btn btn-sm btn-outline-secondary w-100" title="Reset Filter"><i class="bi bi-arrow-clockwise"></i> Reset</a>
-      </div>
-
-    </div>
-  </form>
+    </form>
 
 <!-- Tabel Data -->
 <div class="card shadow-sm border-0">
