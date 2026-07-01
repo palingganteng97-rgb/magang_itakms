@@ -286,9 +286,20 @@ try {
             <i class="bi bi-building me-2"></i> Vendors <!-- Tetap ikon gedung mitra bisnis -->
           </a>
         </li>
+        <!-- Tambahkan di bawah menu Network Port atau di posisi yang Anda inginkan -->
+        <li class="nav-item">
+          <a href="password_categories.php" class="nav-link text-white p-2 rounded">
+            <i class="bi bi-grid-fill me-2"></i> Password Categories
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="password_vault.php" class="nav-link text-white p-2 rounded">
+            <i class="bi bi-safe me-2"></i> Password Vault
+          </a>
+        </li>
         <!-- USER PROFIL (Mobile) -->
         <li class="nav-item">
-          <a href="user.php" class="nav-link <?= ($currentPage == 'user.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
+          <a href="user.php" class="nav-link active bg-primary <?= ($currentPage == 'user.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
             <i class="bi bi-person-fill me-2"></i> User Profil <!-- PERBAIKAN: Menggunakan ikon orang murni sesuai keinginan Anda -->
           </a>
         </li>
@@ -351,21 +362,31 @@ try {
           <li class="nav-item">
             <a href="network_port.php" class="nav-link text-white p-2 rounded"><i class="bi bi-ethernet me-2"></i> Network Port</a>
           </li>
-<!-- KELOMPOK MENU VENDORS -->
-<li class="nav-item">
-  <!-- PERBAIKAN: Mengganti ikon menjadi bi-building (Gedung/Perusahaan Mitra) -->
-  <a href="vendors.php" class="nav-link text-white p-2 rounded">
-    <i class="bi bi-building me-2"></i> Vendors
-  </a>
-</li>
-
-<!-- KELOMPOK MENU USER PROFIL -->
-<li class="nav-item">
-  <!-- PERBAIKAN: Mengganti ikon menjadi bi-person-badge (Kartu Nama/Identitas Akun) -->
-  <a href="user.php" class="nav-link active bg-primary text-white p-2 rounded">
-    <i class="bi bi-person-badge me-2"></i> User Profil
-  </a>
-</li>
+          <!-- VENDORS (Desktop) -->
+          <li class="nav-item">
+            <a href="vendors.php" class="nav-link <?= ($currentPage == 'vendors.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
+              <i class="bi bi-building me-2"></i> Vendors
+            </a>
+          </li>
+          <!-- Tambahkan di bawah menu Network Port atau di posisi yang Anda inginkan -->
+        <li class="nav-item">
+          <a href="password_categories.php" class="nav-link text-white p-2 rounded">
+            <i class="bi bi-grid-fill me-2"></i> Password Categories
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="password_vault.php" class="nav-link text-white p-2 rounded">
+            <i class="bi bi-safe me-2"></i> Password Vault
+          </a>
+        </li>
+          <!-- USER PROFIL (Desktop) -->
+          <li class="nav-item">
+            <a href="user.php" class="nav-link active bg-primary <?= ($currentPage == 'user.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
+              <i class="bi bi-person-fill me-2"></i> User Profil
+            </a>
+          </li>
+        </ul>
+      </div>
         </ul>
       </div>
       

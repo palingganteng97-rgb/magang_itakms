@@ -128,6 +128,17 @@ try {
             <i class="bi bi-building me-2"></i> Vendors <!-- Tetap ikon gedung mitra bisnis -->
           </a>
         </li>
+        <!-- Tambahkan di bawah menu Network Port atau di posisi yang Anda inginkan -->
+        <li class="nav-item">
+          <a href="password_categories.php" class="nav-link text-white p-2 rounded">
+            <i class="bi bi-grid-fill me-2"></i> Password Categories
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="password_vault.php" class="nav-link text-white p-2 rounded">
+            <i class="bi bi-safe me-2"></i> Password Vault
+          </a>
+        </li>
         <!-- USER PROFIL (Mobile) -->
         <li class="nav-item">
           <a href="user.php" class="nav-link <?= ($currentPage == 'user.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
@@ -197,6 +208,17 @@ try {
           <li class="nav-item">
             <a href="vendors.php" class="nav-link <?= ($currentPage == 'vendors.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
               <i class="bi bi-building me-2"></i> Vendors
+            </a>
+          </li>
+          <!-- Tambahkan di bawah menu Network Port atau di posisi yang Anda inginkan -->
+          <li class="nav-item">
+            <a href="password_categories.php" class="nav-link text-white p-2 rounded">
+              <i class="bi bi-grid-fill me-2"></i> Password Categories
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="password_vault.php" class="nav-link text-white p-2 rounded">
+              <i class="bi bi-safe me-2"></i> Password Vault
             </a>
           </li>
           <!-- USER PROFIL (Desktop) -->
