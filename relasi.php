@@ -116,7 +116,7 @@ try {
         <li class="nav-item">
           <a href="roles.php" class="nav-link p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Manajemen Roles</a>
         </li>
-        <!-- Manajemen Bangunan & Ruang Aktif -->
+        <!-- Manajemen Bangunan & Ruang Aktif di Mobile -->
         <li class="nav-item">
           <a href="relasi.php" class="nav-link active bg-primary text-white p-2 rounded text-nowrap" style="overflow: hidden; text-overflow: ellipsis;">
             <i class="bi bi-diagram-3 me-2"></i> Manajemen Bangunan & Ruang
@@ -131,9 +131,16 @@ try {
         <li class="nav-item">
           <a href="asset_movements.php" class="nav-link p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
         </li>
-        <!-- Menu Server -->
         <li class="nav-item">
           <a href="server.php" class="nav-link p-2 rounded"><i class="bi bi-hdd-network me-2"></i> Server</a>
+        </li>
+        <!-- Menu Network Device (Mobile) -->
+        <li class="nav-item">
+          <a href="network_device.php" class="nav-link p-2 rounded"><i class="bi bi-router me-2"></i> Network Device</a>
+        </li>
+        <!-- Menu Network Port (Mobile) -->
+        <li class="nav-item">
+          <a href="network_port.php" class="nav-link p-2 rounded"><i class="bi bi-ethernet me-2"></i> Network Port</a>
         </li>
         <li class="nav-item">
           <a href="user.php" class="nav-link p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
@@ -164,7 +171,7 @@ try {
         <li class="nav-item">
           <a href="roles.php" class="nav-link p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Manajemen Roles</a>
         </li>
-        <!-- Manajemen Bangunan & Ruang Aktif -->
+        <!-- Manajemen Bangunan & Ruang Aktif di Desktop -->
         <li class="nav-item">
           <a href="relasi.php" class="nav-link active bg-primary text-white p-2 rounded text-nowrap" style="overflow: hidden; text-overflow: ellipsis;" title="Manajemen Bangunan & Ruang">
             <i class="bi bi-diagram-3 me-2"></i> Manajemen Bangunan & Ruang
@@ -179,9 +186,16 @@ try {
         <li class="nav-item">
           <a href="asset_movements.php" class="nav-link p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
         </li>
-        <!-- Menu Server -->
         <li class="nav-item">
           <a href="server.php" class="nav-link p-2 rounded"><i class="bi bi-hdd-network me-2"></i> Server</a>
+        </li>
+        <!-- Menu Network Device (Desktop) -->
+        <li class="nav-item">
+          <a href="network_device.php" class="nav-link p-2 rounded"><i class="bi bi-router me-2"></i> Network Device</a>
+        </li>
+        <!-- Menu Network Port (Desktop) -->
+        <li class="nav-item">
+          <a href="network_port.php" class="nav-link p-2 rounded"><i class="bi bi-ethernet me-2"></i> Network Port</a>
         </li>
         <li class="nav-item">
           <a href="user.php" class="nav-link p-2 rounded"><i class="bi bi-person-lines-fill me-2"></i> User Profil</a>
