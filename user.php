@@ -309,6 +309,18 @@ try {
             <i class="bi bi-wrench-adjustable-circle me-2"></i> Maintenance
         </a>
         </li>
+        <!-- KNOWLEDGE CATEGORIES (Tampil di semua device) --> 
+        <li class="nav-item"> 
+            <a href="knowledge_categories.php" class="nav-link <?= ($currentPage == 'knowledge_categories.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded"> 
+                <i class="bi bi-tags-fill me-2"></i> <span>Knowledge Categories</span>
+            </a> 
+        </li> 
+        <!-- KNOWLEDGE ARTICLES (Tampil di semua device) --> 
+        <li class="nav-item"> 
+            <a href="knowledge_articles.php" class="nav-link <?= ($currentPage == 'knowledge_articles.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded"> 
+                <i class="bi bi-file-earmark-text-fill me-2"></i> <span>Knowledge Articles</span>
+            </a> 
+        </li> 
         <!-- USER PROFIL (Mobile) -->
         <li class="nav-item">
           <a href="user.php" class="nav-link active bg-primary <?= ($currentPage == 'user.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
@@ -403,6 +415,18 @@ try {
             <i class="bi bi-wrench-adjustable-circle me-2"></i> Maintenance
           </a>
         </li>
+        <!-- KNOWLEDGE CATEGORIES (Tampil di semua device) --> 
+        <li class="nav-item"> 
+            <a href="knowledge_categories.php" class="nav-link <?= ($currentPage == 'knowledge_categories.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded"> 
+                <i class="bi bi-tags-fill me-2"></i> <span>Knowledge Categories</span>
+            </a> 
+        </li> 
+        <!-- KNOWLEDGE ARTICLES (Tampil di semua device) --> 
+        <li class="nav-item"> 
+            <a href="knowledge_articles.php" class="nav-link <?= ($currentPage == 'knowledge_articles.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded"> 
+                <i class="bi bi-file-earmark-text-fill me-2"></i> <span>Knowledge Articles</span>
+            </a> 
+        </li> 
           <!-- USER PROFIL (Desktop) -->
           <li class="nav-item">
             <a href="user.php" class="nav-link active bg-primary <?= ($currentPage == 'user.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
