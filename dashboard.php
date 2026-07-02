@@ -300,8 +300,6 @@ try {
                 <div class="d-flex align-items-center gap-2">
                     <span class="badge bg-secondary p-2">Sesi Admin</span>
                 </div>
-
-
             </div>
 
             <!-- STATISTIC CARDS (Ringkasan Data) -->
