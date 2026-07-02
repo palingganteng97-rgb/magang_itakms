@@ -26,8 +26,13 @@ try {
     $totalTickets = $stmtCount->fetchColumn();
     $totalPages = ceil($totalTickets / $perPage);
 
-    // READ: Query data tiket (menggunakan ID langsung untuk menghindari error kolumn name)
-    $query = "SELECT t.* FROM tickets t ORDER BY t.created_at DESC LIMIT :limit OFFSET :offset";
+    // PERBAIKAN UTAMA: Menggunakan LEFT JOIN ke tabel users untuk mengambil kolom nama asli pelapor
+    $query = "SELECT t.*, u.nama AS nama_pelapor 
+              FROM tickets t 
+              LEFT JOIN users u ON t.pelapor = u.id 
+              ORDER BY t.created_at DESC 
+              LIMIT :limit OFFSET :offset";
+              
     $stmt = $conn->prepare($query);
     $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
@@ -346,7 +351,7 @@ try {
     <!-- PERBAIKAN UTAMA: Memastikan pembungkus table-responsive terpasang sempurna -->
     <div class="card-body p-0 table-responsive">
       <!-- PERBAIKAN: Menambahkan class 'table-bordered' untuk memberikan garis pembatas penuh antar kolom dan baris -->
-      <table class="table table-hover table-striped table-bordered align-middle m-0" style="min-width: 800px;">
+      <table class="table table-hover table-striped table-bordered align-middle m-0" style="min-width: 850px;">
         <thead class="table-light text-nowrap">
           <tr class="text-secondary border-bottom border-secondary-subtle">
             <th class="ps-4 py-3" style="width: 100px;">Nomor</th>
@@ -356,7 +361,7 @@ try {
             <th class="py-3">Status</th>
             <th class="py-3">Pelapor</th>
             <th class="py-3">Teknisi</th>
-            <th class="text-center pe-4 py-3" style="width: 130px;">Aksi</th>
+            <th class="text-center pe-4 py-3" style="width: 180px;">Aksi</th>
           </tr>
         </thead>
         <tbody class="text-nowrap">
@@ -385,12 +390,19 @@ try {
                     else echo '<span class="badge bg-secondary text-white fw-bold px-2 py-1">Closed</span>';
                   ?>
                 </td>
-                <td class="text-muted small"><?= htmlspecialchars($row['pelapor'] ?? '-'); ?></td>
+                <!-- PERUBAHAN: Menampilkan Nama Pelapor dengan style teks yang lebih jelas -->
+                <td class="text-dark fw-medium"><?= htmlspecialchars($row['nama_pelapor'] ?? 'Tidak Diketahui'); ?></td>
                 <td><span class="text-dark fw-medium"><?= htmlspecialchars($row['teknisi'] ?? 'Belum Ditunjuk'); ?></span></td>
+                <!-- PERUBAHAN: Tombol Komen diarahkan ke file ticket_comments.php menggunakan tag anchor <a> -->
                 <td class="text-center pe-4">
-                  <button class="btn btn-sm btn-outline-primary px-3 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalEdit<?= $row['id']; ?>" title="Edit Status/Teknisi">
-                    <i class="bi bi-pencil-square me-1"></i> Detail
-                  </button>
+                  <div class="d-flex justify-content-center gap-2">
+                    <button class="btn btn-sm btn-outline-primary px-2 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalEdit<?= $row['id']; ?>" title="Edit Status/Teknisi">
+                      <i class="bi bi-pencil-square me-1"></i> Detail
+                    </button>
+                    <a href="ticket_comments.php?id=<?= $row['id']; ?>" class="btn btn-sm btn-outline-info px-2 fw-bold shadow-sm text-dark" title="Lihat/Tambah Komentar">
+                      <i class="bi bi-chat-left-dots me-1"></i> Komen
+                    </a>
+                  </div>
                 </td>
               </tr>
             <?php endforeach; ?>
