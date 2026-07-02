@@ -349,7 +349,7 @@ try {
         </ul>
       </div>
       
-      <!-- Tombol Logout Desktop (Mengunci Mengikuti Batas Layar Bawah) -->
+<!-- Tombol Logout Desktop (Mengunci Mengikuti Batas Layar Bawah) -->
       <div class="mt-auto pt-3 border-top border-secondary w-100 bg-dark">
         <ul class="nav flex-column gap-2">
           <li class="nav-item">
@@ -362,12 +362,12 @@ try {
     </nav>
 
 <!-- AREA UTAMA KONTEN (Gunakan pembungkus ini agar susunan halaman tidak bergeser tertimpa sidebar) -->
-    <!-- PERBAIKAN: Menambahkan kelas 'col-12' agar mengambil lebar penuh di layar mobile, dan menyesuaikan responsivitas margin start 'ms-md-auto' -->
     <main class="col-12 col-md-8 col-lg-9 ms-sm-auto ms-md-auto px-md-4 pt-4 offset-md-4 offset-lg-3">
 
-      <!-- Header Konten Utama -->
+      <!-- Header Konten Utama (PERBAIKAN: Ditambahkan tag penutup </div> di akhir baris judul) -->
       <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2 fs-4 fs-md-2">Dashboard Sistem - Network Ports</h1> <!-- PERBAIKAN: Ukuran font responsif agar judul tidak patah berantakan di HP -->
+        <h1 class="h2 fs-4 fs-md-2">Dashboard Sistem - Network Ports</h1>
+      </div> 
 
       <!-- Notifikasi Flash Status CRUD -->
       <?php if(isset($_GET['status'])): ?>
@@ -389,9 +389,7 @@ try {
       </div>
 
       <!-- Tabel Data Network Ports (R - Read) -->
-      <!-- PERBAIKAN: Memaksa w-100 (width 100%) dan mengunci fungsi overflow horizontal untuk scroll mobile -->
       <div class="table-responsive w-100 bg-white p-2 p-md-3 rounded shadow-sm border" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-        <!-- PERBAIKAN: Menambahkan kelas 'text-nowrap' agar teks data dan baris judul terkunci lurus secara horizontal -->
         <table class="table table-striped table-hover align-middle mb-0 text-nowrap">
           <thead class="table-dark">
             <tr>
@@ -406,7 +404,6 @@ try {
           <tbody>
             <?php if(empty($ports)): ?>
                 <tr>
-                  <!-- PERBAIKAN: Menghapus batasan text-nowrap khusus untuk teks pemberitahuan kosong agar tidak memanjang -->
                   <td colspan="6" class="text-center text-muted py-4" style="white-space: normal;">
                     <i class="bi bi-ethernet display-6 d-block mb-2 text-secondary"></i>
                     Belum ada data konfigurasi network port terdaftar.
@@ -432,7 +429,6 @@ try {
                     <?php endif; ?>
                   </td>
                   <td class="text-center">
-                    <!-- Tombol Aksi Edit (Menyalurkan Data ke Atribut HTML) -->
                     <button class="btn btn-sm btn-warning me-1" 
                             data-bs-toggle="modal" 
                             data-bs-target="#editPortModal"
@@ -444,7 +440,6 @@ try {
                             title="Ubah Data Port">
                       <i class="bi bi-pencil-square"></i>
                     </button>
-                    <!-- Tombol Aksi Hapus (D - Delete) -->
                     <a href="network_port.php?delete=<?= $port['id'] ?>" 
                        class="btn btn-sm btn-danger" 
                        onclick="return confirm('Apakah Anda yakin ingin menghapus konfigurasi port ini?')"
