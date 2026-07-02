@@ -84,9 +84,9 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ubah Artikel</title>
+    <title>Edit Artikel</title>
     
-    <!-- DESAIN VISUAL OFFLINE MANDIRI ANTI LEMOT -->
+    <!-- STYLING VISUAL OFFLINE MANDIRI (MENGAMANKAN LAYOUT MODERN TANPA LINK INTERNET KELUAR) -->
     <style>
         body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; color: #334155; }
         .container-box { max-width: 950px; margin: 2% auto; background: #ffffff; border-radius: 8px; border: 1px solid #e3e6f0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); overflow: hidden; }
@@ -94,15 +94,15 @@ try {
         .card-header-box h5 { margin: 0; font-size: 18px; font-weight: 700; color: #1e293b; }
         .card-body-box { padding: 25px; }
         
-        /* Pembagian 2 Kolom Sejajar */
+        /* Layout Flexbox 2 Kolom Sejajar */
         .flex-row-box { display: flex; gap: 25px; flex-wrap: wrap; }
         .col-kiri { flex: 1; min-width: 320px; display: flex; flex-direction: column; gap: 15px; }
         .col-kanan { flex: 1.4; min-width: 380px; display: flex; flex-direction: column; }
         
-        /* Pengaturan Formulir */
+        /* Pengaturan Elemen Formulir */
         .form-group-box { display: flex; flex-direction: column; gap: 6px; }
         .form-group-box label { font-weight: 600; color: #475569; font-size: 13px; }
-        .form-control-box { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 14px; outline: none; color: #334155; background-color: #fff; }
+        .form-control-box { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 14px; outline: none; color: #334155; background-color: #fff; transition: border-color 0.15s; }
         .form-control-box:focus { border-color: #4e73df; }
         
         /* Toolbar Format Gaya Microsoft Word */
@@ -111,16 +111,32 @@ try {
         .btn-w:hover { background-color: #f1f5f9; color: #0f172a; border-color: #94a3b8; }
         
         /* Area Mengetik Utama */
-        #editorArea { height: 195px; min-height: 195px; max-height: 195px; border: 1px solid #cbd5e1; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; background: #fff; padding: 12px; overflow-y: auto; outline: none; box-sizing: border-box; font-size: 14px; line-height: 1.5; color: #212529; }
-        #editorArea:focus { border-color: #4e73df; }
+        #editorArea { height: 195px; min-height: 195px; max-height: 195px; border: 1px solid #cbd5e1; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; background: #fff; padding: 12px; overflow: auto; outline: none; box-sizing: border-box; font-size: 14px; line-height: 1.5; color: #212529; }
+        #editorArea:focus { border-color: #4e73df; box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.1); }
         
-        /* Bagian Bawah Tombol Simpan */
+        /* KEMBALIKAN KE INLINE: Menyelaraskan CSS agar patuh pada kontrol script pemutus spasi */
+        #editorArea u {
+            display: inline !important;
+            text-decoration: underline !important;
+            text-decoration-color: #000000 !important;
+            text-underline-offset: 3px !important;
+            text-decoration-skip-ink: none !important;
+            color: #000000 !important;
+        }
+
+        #editorArea s, #editorArea del {
+            display: inline !important;
+            text-decoration: line-through !important;
+            color: #000000 !important;
+        }
+
+        /* Bagian Tombol Aksi Bawah */
         .footer-box { text-align: right; border-top: 1px solid #e3e6f0; padding-top: 15px; margin-top: 25px; }
         .btn-action { border: none; padding: 10px 24px; border-radius: 6px; font-weight: 600; font-size: 14px; cursor: pointer; text-decoration: none; display: inline-block; box-sizing: border-box; }
         .btn-batal { background-color: #64748b; color: white; margin-right: 8px; }
         .btn-batal:hover { background-color: #475569; }
-        .btn-simpan { background-color: #2563eb; color: white; }
-        .btn-simpan:hover { background-color: #1d4ed8; }
+        .btn-simpan { background-color: #1cc88a; color: white; }
+        .btn-simpan:hover { background-color: #17a673; }
     </style>
 </head>
 
@@ -203,62 +219,100 @@ try {
         </div>
     </div>
 
-        <!-- =========================================================================
-         SCRIPT JAVASCRIPT KONTROL EDITOR WORD & SENSOR AKTIF (EDIT ARTIKEL)
-         ========================================================================= -->
-    <script>
-        // 1. Fungsi eksekusi format teks bawaan mesin browser
-        function formatText(command) {
-            document.execCommand(command, false, null);
-            document.getElementById('editorArea').focus();
-            
-            // Periksa ulang semua status tombol setelah tombol ditekan
-            checkButtonStates();
-        }
+<!-- =========================================================================
+     SCRIPT JAVASCRIPT KONTROL EDITOR WORD & SENSOR AKTIF (EDIT ARTIKEL)
+     ========================================================================= -->
+<script>
+    // 1. Fungsi eksekusi format teks bawaan mesin browser
+    function formatText(command) {
+        document.execCommand(command, false, null);
+        document.getElementById('editorArea').focus();
+        
+        // Periksa ulang semua status tombol setelah tombol ditekan
+        checkButtonStates();
+    }
 
-        // 2. Fungsi interaktif pendeteksi status kursor dan text style aktif
-        function checkButtonStates() {
-            const buttons = {
-                'btn-bold': 'bold',
-                'btn-italic': 'italic',
-                'btn-underline': 'underline',
-                'btn-strike': 'strikeThrough',
-                'btn-ul': 'insertUnorderedList',
-                'btn-ol': 'insertOrderedList'
-            };
+    // 2. Fungsi interaktif pendeteksi status kursor dan text style aktif
+    function checkButtonStates() {
+        const buttons = {
+            'btn-bold': 'bold',
+            'btn-italic': 'italic',
+            'btn-underline': 'underline',
+            'btn-strike': 'strikeThrough',
+            'btn-ul': 'insertUnorderedList',
+            'btn-ol': 'insertOrderedList'
+        };
 
-            for (let id in buttons) {
-                let btn = document.getElementById(id);
-                if (btn) {
-                    // Mencek apakah kursor berada di teks yang sedang aktif (Bold/Italic/List)
-                    if (document.queryCommandState(buttons[id])) {
-                        btn.style.backgroundColor = '#e2e8f0'; // Menggelapkan background tombol
-                        btn.style.color = '#2563eb';           // Mengubah warna teks tombol jadi biru cerah
-                        btn.style.borderColor = '#94a3b8';     // Mempertegas bingkai border
-                    } else {
-                        btn.style.backgroundColor = '#ffffff'; // Kembali ke semula jika tidak aktif
-                        if (id === 'btn-bold') btn.style.color = '#334155';
-                        else btn.style.color = '#475569';
-                        btn.style.borderColor = '#cbd5e1';
-                    }
+        for (let id in buttons) {
+            let btn = document.getElementById(id);
+            if (btn) {
+                // Mencek apakah kursor berada di teks yang sedang aktif (Bold/Italic/List)
+                if (document.queryCommandState(buttons[id])) {
+                    btn.style.backgroundColor = '#e2e8f0'; // Menggelapkan background tombol
+                    btn.style.color = '#2563eb';           // Mengubah warna teks tombol jadi biru cerah
+                    btn.style.borderColor = '#94a3b8';     // Mempertegas bingkai border
+                } else {
+                    btn.style.backgroundColor = '#ffffff'; // Kembali ke semula jika tidak aktif
+                    if (id === 'btn-bold') btn.style.color = '#334155';
+                    else btn.style.color = '#475569';
+                    btn.style.borderColor = '#cbd5e1';
                 }
             }
         }
+    }
 
-        // Jalankan pelacak status tombol setiap kursor bergerak atau user mengetik tombol keyboard
-        document.getElementById('editorArea').addEventListener('keyup', checkButtonStates);
-        document.getElementById('editorArea').addEventListener('click', checkButtonStates);
+    // Jalankan pelacak status tombol setiap kursor bergerak atau user mengetik tombol keyboard
+    document.getElementById('editorArea').addEventListener('keyup', checkButtonStates);
+    document.getElementById('editorArea').addEventListener('click', checkButtonStates);
 
-        // Sebelum data dikirim ke PHP, salin isi dokumen HTML di dalam wadah ke input hidden 'isi'
-        document.getElementById('articleForm').addEventListener('submit', function() {
-            var content = document.getElementById('editorArea').innerHTML;
-            document.getElementById('hiddenIsi').value = content;
-        });
+    // Sebelum data dikirim ke PHP, salin isi dokumen HTML di dalam wadah ke input hidden 'isi'
+    document.getElementById('articleForm').addEventListener('submit', function() {
+        var content = document.getElementById('editorArea').innerHTML;
+        document.getElementById('hiddenIsi').value = content;
+    });
 
-        // Jalankan pengecekan pertama kali saat halaman dimuat agar tombol aktif menyesuaikan teks bawaan database
-        window.addEventListener('DOMContentLoaded', checkButtonStates);
-    </script>
-    
+    // Jalankan pengecekan pertama kali saat halaman dimuat agar tombol aktif menyesuaikan teks bawaan database
+    window.addEventListener('DOMContentLoaded', checkButtonStates);
+
+    // 5. PERBAIKAN TOTAL: Memaksa spasi ikut kereset keluar dari SEMUA tag format (U, S, DEL, STRIKE, FONT)
+    document.getElementById('editorArea').addEventListener('keydown', function(e) {
+        if (e.keyCode === 32) { // Jika mendeteksi tombol Spasi
+            let selection = window.getSelection();
+            if (!selection.rangeCount) return;
+            
+            let range = selection.getRangeAt(0);
+            let currentNode = range.startContainer;
+            let parentNode = currentNode.parentNode;
+            
+            // Daftar semua bentuk tag dekorasi yang dipicu browser untuk Underline dan Strikethrough
+            const targetTags = ['U', 'S', 'DEL', 'STRIKE', 'FONT'];
+            
+            // Lacak ke atas apakah kursor berada di dalam salah satu tag dekorasi tersebut
+            while (parentNode && parentNode.id !== 'editorArea') {
+                if (targetTags.includes(parentNode.tagName)) {
+                    e.preventDefault(); // Stop spasi bawaan browser yang merusak garis
+
+                    // Masukkan karakter spasi murni di luar tag dekorasi
+                    let cleanSpace = document.createTextNode('\u00A0');
+                    range.setEndAfter(parentNode);
+                    range.collapse(false);
+                    range.insertNode(cleanSpace);
+                    
+                    // Pindahkan kursor ke posisi setelah spasi agar ketikan normal kembali
+                    range.setStartAfter(cleanSpace);
+                    range.setEndAfter(cleanSpace);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    
+                    checkButtonStates();
+                    return;
+                }
+                parentNode = parentNode.parentNode;
+            }
+        }
+    });
+</script>
+
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

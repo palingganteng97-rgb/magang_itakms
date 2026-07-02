@@ -82,9 +82,25 @@ try {
         .btn-w:hover { background-color: #f1f5f9; color: #0f172a; border-color: #94a3b8; }
         
         /* Area Mengetik Utama */
-        #editorArea { height: 195px; min-height: 195px; max-height: 195px; border: 1px solid #cbd5e1; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; background: #fff; padding: 12px; overflow-auto: auto; outline: none; box-sizing: border-box; font-size: 14px; line-height: 1.5; color: #212529; }
+        #editorArea { height: 195px; min-height: 195px; max-height: 195px; border: 1px solid #cbd5e1; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; background: #fff; padding: 12px; overflow: auto; outline: none; box-sizing: border-box; font-size: 14px; line-height: 1.5; color: #212529; }
         #editorArea:focus { border-color: #4e73df; box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.1); }
         
+        /* KEMBALIKAN KE INLINE: Menyelaraskan CSS agar patuh pada kontrol script pemutus spasi */
+        #editorArea u {
+            display: inline !important;
+            text-decoration: underline !important;
+            text-decoration-color: #000000 !important;
+            text-underline-offset: 3px !important;
+            text-decoration-skip-ink: none !important;
+            color: #000000 !important;
+        }
+
+        #editorArea s, #editorArea del {
+            display: inline !important;
+            text-decoration: line-through !important;
+            color: #000000 !important;
+        }
+
         /* Bagian Tombol Aksi Bawah */
         .footer-box { text-align: right; border-top: 1px solid #e3e6f0; padding-top: 15px; margin-top: 25px; }
         .btn-action { border: none; padding: 10px 24px; border-radius: 6px; font-weight: 600; font-size: 14px; cursor: pointer; text-decoration: none; display: inline-block; box-sizing: border-box; }
@@ -181,19 +197,13 @@ try {
 <script>
     // 1. Fungsi Utama Penyetel Format Gaya Teks (Bebas Internet & Ringan)
     function formatText(command) {
-        // Mengeksekusi instruksi modifikasi teks langsung dari engine browser
         document.execCommand(command, false, null);
-        
-        // Mengembalikan fokus kursor ke dalam lembar ketikan utama
         document.getElementById('editorArea').focus();
-        
-        // Perbarui status warna tombol sesaat setelah ditekan
         checkButtonStates();
     }
 
     // 2. Fungsi Detektor Otomatis Status Kursor / Format Gaya yang Sedang Berjalan
     function checkButtonStates() {
-        // Memetakan ID Element Tombol dengan Fungsi Engine Browsernya
         const buttons = {
             'btn-bold': 'bold',
             'btn-italic': 'italic',
@@ -203,17 +213,15 @@ try {
             'btn-ol': 'insertOrderedList'
         };
 
-        // Melakukan scanning berkala ke seluruh tombol toolbar
         for (let id in buttons) {
             let btn = document.getElementById(id);
             if (btn) {
-                // queryCommandState bernilai 'true' jika posisi kursor menyentuh format terkait
                 if (document.queryCommandState(buttons[id])) {
-                    btn.style.backgroundColor = '#e2e8f0'; // Menggelapkan background wadah tombol
-                    btn.style.color = '#2563eb';           // Mengubah teks indikator menjadi biru cerah
-                    btn.style.borderColor = '#94a3b8';     // Memperjelas kontras garis pembatas
+                    btn.style.backgroundColor = '#e2e8f0'; 
+                    btn.style.color = '#2563eb';           
+                    btn.style.borderColor = '#94a3b8';     
                 } else {
-                    btn.style.backgroundColor = '#ffffff'; // Mengembalikan ke putih normal jika tidak aktif
+                    btn.style.backgroundColor = '#ffffff'; 
                     btn.style.color = '#475569';
                     btn.style.borderColor = '#cbd5e1';
                 }
@@ -227,13 +235,49 @@ try {
 
     // 4. Sinkronisasi Data Sebelum Dikirim ke Engine PHP Database
     document.getElementById('articleForm').addEventListener('submit', function() {
-        // Ambil struktur kode HTML kaya hasil format teks dari editorArea
         var content = document.getElementById('editorArea').innerHTML;
-        
-        // Pindahkan salinannya ke hidden input agar dapat diproses oleh $_POST['isi']
         document.getElementById('hiddenIsi').value = content;
     });
+
+    // 5. PERBAIKAN TOTAL: Memaksa spasi ikut kereset keluar dari SEMUA tag format (U, S, DEL, STRIKE)
+    document.getElementById('editorArea').addEventListener('keydown', function(e) {
+        if (e.keyCode === 32) { // Jika mendeteksi tombol Spasi
+            let selection = window.getSelection();
+            if (!selection.rangeCount) return;
+            
+            let range = selection.getRangeAt(0);
+            let currentNode = range.startContainer;
+            let parentNode = currentNode.parentNode;
+            
+            // Daftar semua tag dekorasi yang dipicu browser untuk Underline dan Strikethrough
+            const targetTags = ['U', 'S', 'DEL', 'STRIKE', 'FONT'];
+            
+            // Lacak ke atas apakah kursor berada di dalam salah satu tag dekorasi tersebut
+            while (parentNode && parentNode.id !== 'editorArea') {
+                if (targetTags.includes(parentNode.tagName)) {
+                    e.preventDefault(); // Stop spasi bawaan browser yang merusak garis
+
+                    // Masukkan karakter spasi murni di luar tag dekorasi
+                    let cleanSpace = document.createTextNode('\u00A0');
+                    range.setEndAfter(parentNode);
+                    range.collapse(false);
+                    range.insertNode(cleanSpace);
+                    
+                    // Pindahkan kursor ke posisi setelah spasi agar ketikan normal kembali
+                    range.setStartAfter(cleanSpace);
+                    range.setEndAfter(cleanSpace);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    
+                    checkButtonStates();
+                    return;
+                }
+                parentNode = parentNode.parentNode;
+            }
+        }
+    });
 </script>
+
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
