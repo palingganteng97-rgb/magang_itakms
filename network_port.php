@@ -176,6 +176,9 @@ try {
         <li class="nav-item">
           <a href="network_device.php" class="nav-link text-white p-2 rounded"><i class="bi bi-router me-2"></i> Network Device</a>
         </li>
+        <li class="nav-item">
+          <a href="network_port.php" class="nav-link active bg-primary text-white p-2 rounded"><i class="bi bi-ethernet me-2"></i> Network Port</a>
+        </li>
         <!-- VENDORS (Mobile) -->
         <li class="nav-item">
           <a href="vendors.php" class="nav-link <?= ($currentPage == 'vendors.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
@@ -198,6 +201,12 @@ try {
           <a href="tickets.php" class="nav-link <?= ($currentPage == 'tickets.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
             <i class="bi bi-ticket-perforated-fill me-2"></i> Tikets
           </a>
+        </li>
+        <!-- MAINTENANCE -->
+        <li class="nav-item">
+        <a href="maintenance.php" class="nav-link text-white p-2 rounded">
+            <i class="bi bi-wrench-adjustable-circle me-2"></i> Maintenance
+        </a>
         </li>
         <!-- USER PROFIL (Mobile) -->
         <li class="nav-item">
@@ -315,11 +324,6 @@ try {
       <!-- Header Konten Utama -->
       <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2 fs-4 fs-md-2">Dashboard Sistem - Network Ports</h1> <!-- PERBAIKAN: Ukuran font responsif agar judul tidak patah berantakan di HP -->
-        <!-- Tombol Menu Khusus Tampilan Mobile -->
-        <button class="btn d-md-none text-dark p-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar">
-          <i class="bi bi-list fs-2"></i>
-        </button>
-      </div>
 
       <!-- Notifikasi Flash Status CRUD -->
       <?php if(isset($_GET['status'])): ?>

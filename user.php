@@ -303,6 +303,12 @@ try {
             <i class="bi bi-ticket-perforated-fill me-2"></i> Tikets
           </a>
         </li>
+        <!-- MAINTENANCE -->
+        <li class="nav-item">
+        <a href="maintenance.php" class="nav-link text-white p-2 rounded">
+            <i class="bi bi-wrench-adjustable-circle me-2"></i> Maintenance
+        </a>
+        </li>
         <!-- USER PROFIL (Mobile) -->
         <li class="nav-item">
           <a href="user.php" class="nav-link active bg-primary <?= ($currentPage == 'user.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
@@ -335,7 +341,7 @@ try {
       <!-- Judul Utama Dashboard Desktop (Tetap Diam) -->
       <h4 class="text-center mb-4 text-warning fw-bold pt-2"><i class="bi bi-speedometer2"></i> ITAKMS</h4>
       
-      <!-- Area Menu Tengah Desktop (Ditambahkan class hide-scrollbar dan menghapus padding kanan pr-1) -->
+      <!-- Area Menu Tengah Desktop -->
       <div class="flex-grow-1 overflow-y-auto hide-scrollbar" style="max-height: calc(100vh - 160px);">
         <ul class="nav flex-column gap-2">
           <!-- Dashboard Aktif di Desktop -->
@@ -374,36 +380,34 @@ try {
               <i class="bi bi-building me-2"></i> Vendors
             </a>
           </li>
-          <!-- Tambahkan di bawah menu Network Port atau di posisi yang Anda inginkan -->
-        <li class="nav-item">
-          <a href="password_categories.php" class="nav-link text-white p-2 rounded">
-            <i class="bi bi-grid-fill me-2"></i> Password Categories
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="password_vault.php" class="nav-link text-white p-2 rounded">
-            <i class="bi bi-safe me-2"></i> Password Vault
-          </a>
-        </li>
-        <!-- MENU TIKETS -->
-        <li class="nav-item">
-          <a href="tickets.php" class="nav-link <?= ($currentPage == 'tickets.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
-            <i class="bi bi-ticket-perforated-fill me-2"></i> Tikets
-          </a>
-        </li>
+          <!-- PASSWORD CATEGORIES & VAULT -->
+          <li class="nav-item">
+            <a href="password_categories.php" class="nav-link text-white p-2 rounded">
+              <i class="bi bi-grid-fill me-2"></i> Password Categories
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="password_vault.php" class="nav-link text-white p-2 rounded">
+              <i class="bi bi-safe me-2"></i> Password Vault
+            </a>
+          </li>
+          <!-- MENU TIKETS -->
+          <li class="nav-item">
+            <a href="tickets.php" class="nav-link <?= ($currentPage == 'tickets.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
+              <i class="bi bi-ticket-perforated-fill me-2"></i> Tikets
+            </a>
+          </li>
           <!-- USER PROFIL (Desktop) -->
           <li class="nav-item">
-            <a href="user.php" class="nav-link active bg-primary <?= ($currentPage == 'user.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
+            <a href="user.php" class="nav-link <?= ($currentPage == 'user.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
               <i class="bi bi-person-fill me-2"></i> User Profil
             </a>
           </li>
         </ul>
       </div>
-        </ul>
-      </div>
       
-      <!-- Tombol Logout Desktop (Mengunci Mengikuti Batas Layar Bawah) -->
-      <div class="mt-auto pt-3 border-top border-secondary w-100 bg-dark">
+      <!-- Tombol Logout Desktop (Mengunci di Posisi Dasar Bawah) -->
+      <div class="mt-auto pt-3 border-top border-secondary w-100">
         <ul class="nav flex-column gap-2">
           <li class="nav-item">
             <a href="logout.php" class="nav-link p-2 rounded" style="color:#dc3545 !important;">
@@ -412,7 +416,7 @@ try {
           </li>
         </ul>
       </div>
-    </nav>
+    </nav> <!-- PENUTUP SIDEBAR DESKTOP -->
 
     <!-- AREA UTAMA KONTEN (Gunakan pembungkus ini agar susunan halaman tidak bergeser tertimpa sidebar) -->
     <main class="col-md-8 ms-sm-auto col-lg-9 px-md-4 pt-4 offset-md-4 offset-lg-3">

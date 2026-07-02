@@ -156,6 +156,12 @@ try {
             <i class="bi bi-ticket-perforated-fill me-2"></i> Tikets
           </a>
         </li>
+        <!-- MAINTENANCE -->
+        <li class="nav-item">
+        <a href="maintenance.php" class="nav-link text-white p-2 rounded">
+            <i class="bi bi-wrench-adjustable-circle me-2"></i> Maintenance
+        </a>
+        </li>
         <!-- USER PROFIL (Mobile) -->
         <li class="nav-item">
           <a href="user.php" class="nav-link <?= ($currentPage == 'user.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
@@ -274,9 +280,7 @@ try {
       <h1 class="h3 fw-bold text-dark mb-1">Master Data Vendors</h1>
       <p class="text-muted small mb-0 d-none d-sm-block">Kelola daftar perusahaan penyedia layanan, suplier perangkat keras, dan kontak rekanan TI.</p>
     </div>
-    <button class="btn d-md-none text-dark p-0 ms-auto ms-md-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar">
-      <i class="bi bi-list fs-2"></i>
-    </button>
+
   </div>
 
   <!-- Notifikasi Flash Status CRUD (Diletakkan di atas Card Konten Utama) -->
