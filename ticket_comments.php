@@ -179,24 +179,44 @@ $my_user_id = $current_user_id;
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     
     <style>
-        body { background-color: #f0f2f5; }
         .chat-container {
             background-color: #efeae2;
             height: 55vh;
             overflow-y: auto;
             padding: 20px;
             border-radius: 8px;
+            
+            /* GANTI/PERBARUI BAGIAN INI: Membalik tumpukan layout secara fisik */
+            display: flex !important;
+            flex-direction: column-reverse !important;
         }
+
         .chat-bubble-left {
-            background-color: #ffffff; color: #000000; padding: 8px 12px;
-            border-radius: 0px 12px 12px 12px; max-width: 75%;
-            box-shadow: 0 1px 0.5px rgba(0,0,0,0.13); margin-bottom: 12px; align-self: flex-start;
+        background-color: #ffffff; 
+        color: #000000; 
+        padding: 8px 12px;
+        border-radius: 0px 12px 12px 12px; 
+        max-width: 75%;
+        width: max-content; /* TAMBAHKAN INI: Agar kotak mengikuti panjang teks samping */
+        min-width: 80px;    /* TAMBAHKAN INI: Batas minimal lebar kotak */
+        box-shadow: 0 1px 0.5px rgba(0,0,0,0.13); 
+        margin-bottom: 12px; 
+        align-self: flex-start;
         }
+
         .chat-bubble-right {
-            background-color: #d9fdd3; color: #000000; padding: 8px 12px;
-            border-radius: 12px 0px 12px 12px; max-width: 75%;
-            box-shadow: 0 1px 0.5px rgba(0,0,0,0.13); margin-bottom: 12px; align-self: flex-end;
+        background-color: #d9fdd3; 
+        color: #000000; 
+        padding: 8px 12px;
+        border-radius: 12px 0px 12px 12px; 
+        max-width: 75%;
+        width: max-content; /* TAMBAHKAN INI: Agar kotak mengikuti panjang teks samping */
+        min-width: 80px;    /* TAMBAHKAN INI: Batas minimal lebar kotak */
+        box-shadow: 0 1px 0.5px rgba(0,0,0,0.13); 
+        margin-bottom: 12px; 
+        align-self: flex-end;
         }
+
         .chat-time { font-size: 0.72rem; color: #667781; text-align: right; margin-top: 4px; display: block; }
         .chat-sender { font-size: 0.82rem; font-weight: 700; color: #111b21; margin-bottom: 2px; display: block; }
         /* Style Gambar Miniatur Lampiran */
@@ -240,7 +260,6 @@ $my_user_id = $current_user_id;
                     <?php foreach ($comments as $msg): ?>
                         <?php $is_me = ($msg['user_id'] == $my_user_id); ?>
                         
-                        <!-- PERBAIKAN: Menghapus tombol trash bawaan dan menambahkan class 'my-chat-bubble' serta data-comment-id untuk deteksi klik kanan kustom -->
                         <div class="<?= $is_me ? 'chat-bubble-right my-chat-bubble' : 'chat-bubble-left'; ?>" 
                              data-comment-id="<?= $msg['id']; ?>" 
                              style="cursor: context-menu;">
@@ -390,23 +409,129 @@ $my_user_id = $current_user_id;
 </div>
 
 <script>
-    // 1. Logika Otomatis scroll ke bawah saat halaman dimuat
+    // Ambil variabel penting dari PHP agar bisa diakses oleh JavaScript
+    const ticketId = "<?= $ticket_id; ?>";
     const chatWindow = document.getElementById('chatWindow');
-    if (chatWindow) {
-        chatWindow.scrollTop = chatWindow.scrollHeight;
+    let lastChatCount = -1; // -1 memastikan fungsi render berjalan otomatis saat pertama kali dimuat
+
+    // =========================================================================
+    // 1. LOGIKA UTAMA: Real-time Sinkronisasi AJAX Polling (Tanpa Reload Halaman)
+    // =========================================================================
+    function loadChatsRealtime() {
+        if (!chatWindow) return;
+
+        fetch(`get_comments.php?id=${ticketId}`)
+            .then(response => response.json())
+            .then(res => {
+                if (res.status === 'success') {
+                    
+                    // Hanya perbarui layar jika ada chat baru masuk atau chat yang dihapus
+                    if (res.data.length !== lastChatCount) {
+                        
+                        // Kasus A: Jika riwayat chat kosong bersih
+                        if (res.data.length === 0) {
+                            chatWindow.innerHTML = `
+                                <div class="text-center my-auto text-muted py-5">
+                                    <i class="bi bi-chat-left-text fs-1 d-block mb-2 text-secondary-subtle"></i>
+                                    Belum ada riwayat percakapan pada tiket ini.
+                                </div>`;
+                            lastChatCount = 0;
+                            return;
+                        }
+
+                        // Kasus B: Bangun ulang struktur HTML balon chat secara dinamis
+                        let chatHtml = '';
+
+                        // PENTING: Membalik urutan array data chat agar sinkron dengan gaya CSS column-reverse
+                        res.data.reverse().forEach(msg => {
+                            const isMe = (msg.user_id == res.current_user_id);
+                            const bubbleClass = isMe ? 'chat-bubble-right my-chat-bubble' : 'chat-bubble-left';
+                            
+                            let senderHtml = '';
+                            if (!isMe) {
+                                const namaPengirim = msg.nama_komentator ? msg.nama_komentator : 'User';
+                                senderHtml = `<span class="chat-sender text-success">${escapeHtml(namaPengirim)}</span>`;
+                            }
+
+                            // Logika Tampilan File Lampiran Dinamis
+                            let attachmentHtml = '';
+                            if (msg.lampiran) {
+                                const ext = msg.lampiran.split('.').pop().toLowerCase();
+                                const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+
+                                if (imageExtensions.includes(ext)) {
+                                    attachmentHtml = `
+                                        <a href="uploads/${msg.lampiran}" target="_blank">
+                                            <img src="uploads/${msg.lampiran}" class="chat-img-preview border shadow-sm" alt="Lampiran">
+                                        </a>`;
+                                } else {
+                                    attachmentHtml = `
+                                        <div class="mb-2">
+                                            <a href="uploads/${msg.lampiran}" target="_blank" class="btn btn-sm btn-light border text-dark fw-semibold">
+                                                <i class="bi bi-file-earmark-arrow-down-fill text-primary"></i> Dokumen Lampiran (.${ext})
+                                            </a>
+                                        </div>`;
+                                }
+                            }
+
+                            // Logika Tampilan Isi Teks Chat
+                            let textHtml = '';
+                            if (msg.isi_chat) {
+                                const formattedText = escapeHtml(msg.isi_chat).replace(/\n/g, '<br>');
+                                textHtml = `<div class="chat-text text-wrap">${formattedText}</div>`;
+                            }
+
+                            // Logika Centang Dua WhatsApp (Hanya untuk pengirim)
+                            const checkIcon = isMe ? '<i class="bi bi-check2-all text-primary ms-1"></i>' : '';
+
+                            // Satukan struktur komponen balon chat
+                            chatHtml += `
+                                <div class="${bubbleClass}" data-comment-id="${msg.id}" style="cursor: context-menu;">
+                                    ${senderHtml}
+                                    ${attachmentHtml}
+                                    ${textHtml}
+                                    <span class="chat-time">
+                                        Terkirim ${checkIcon}
+                                    </span>
+                                </div>
+                            `;
+                        });
+
+                        // Terapkan perubahan kode HTML baru ke dalam jendela chat
+                        chatWindow.innerHTML = chatHtml;
+                        
+                        // KETERANGAN: Kode setTimeout manual untuk scroll dihapus karena browser otomatis mengunci posisi bawah berkat CSS column-reverse
+                        
+                        // Simpan total jumlah data chat terakhir untuk tracker penghemat performa
+                        lastChatCount = res.data.length;
+
+                        // PENTING: Inisialisasi ulang klik kanan agar balon chat baru yang dirender tetap responsif
+                        initCustomContextMenu();
+                    }
+                }
+            })
+            .catch(err => console.error("Gagal melakukan sinkronisasi chat otomatis:", err));
     }
 
-    // 2. Intersept file upload untuk membuka modal preview teks gambar (Ala WhatsApp)
+    // Fungsi pengaman serangan XSS (Sama seperti htmlspecialchars di PHP)
+    // PERBAIKAN MUTLAK: Mengatasi crash akibat syntax error penulisan escape karakter single quote (') bawaan kode Anda sebelumnya
+    function escapeHtml(string) {
+        return String(string).replace(/[&<>"']/g, function (s) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s];
+        });
+    }
+
+    // =========================================================================
+    // 2. LOGIKA PRATINJAU LAMPIRAN: Intersept File Upload (Ala WhatsApp)
+    // =========================================================================
     function updateFileIndicator() {
         const fileInputMain = document.getElementById('fileInput');
         const fileInputModal = document.getElementById('fileInputModal');
         const previewModal = new bootstrap.Modal(document.getElementById('modalPreviewLampiran'));
         
-        // Cek jika user benar-benar memilih file
         if (fileInputMain.files.length > 0) {
             const fileSelected = fileInputMain.files[0];
 
-            // A. Pindahkan file fisik dari form luar ke form di dalam modal kustom
             const dataTransfer = new DataTransfer();
             dataTransfer.items.add(fileSelected);
             fileInputModal.files = dataTransfer.files;
@@ -415,7 +540,6 @@ $my_user_id = $current_user_id;
             const docPreview = document.getElementById('fileDocPreviewModal');
             const docLabel = document.getElementById('lblDocNameModal');
 
-            // B. Deteksi format file: jika berupa gambar, render visualnya secara instan
             if (fileSelected.type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
@@ -425,85 +549,74 @@ $my_user_id = $current_user_id;
                 }
                 reader.readAsDataURL(fileSelected);
             } else {
-                // Jika berupa dokumen non-gambar (pdf, docx, rar), tampilkan ikon generic file
                 docLabel.innerText = fileSelected.name;
                 imgPreview.style.display = 'none';
                 docPreview.style.display = 'block';
             }
 
-            // C. Tampilkan modal pratinjau teks gambar ke layar user
             previewModal.show();
-            
-            // Kosongkan input luar agar tidak terjadi sisa sangkutan data berkas saat form dikirim
             fileInputMain.value = "";
         }
     }
 
-    // Fungsi pembatalan pengiriman lampiran (mengosongkan kembali form modal)
     function batalKirimLampiran() {
         document.getElementById('fileInputModal').value = "";
         document.getElementById('messageInputModal').value = "";
     }
 
-    // 3. LOGIKA UTAMA: Pengendali Klik Kanan Kustom Ala WhatsApp + Modal Hapus Bersih
-    document.addEventListener('DOMContentLoaded', function() {
+    // =========================================================================
+    // 3. FUNGSI DINAMIS: Pengendali Klik Kanan Kustom Ala WhatsApp + Modal Hapus
+    // =========================================================================
+    function initCustomContextMenu() {
         const contextMenu = document.getElementById('customContextMenu');
         const deleteLink = document.getElementById('menuDeleteLink');
         const editLink = document.getElementById('menuEditLink');
-        const ticketId = "<?= $ticket_id; ?>"; // Mengambil variabel ID tiket aktif dari PHP
 
-        // Tangkap semua elemen balon chat gelembung milik kita (kanan)
+        // Targetkan seluruh balon chat milik sendiri (.my-chat-bubble) yang ada di layar
         const myBubbles = document.querySelectorAll('.my-chat-bubble');
 
         myBubbles.forEach(bubble => {
-            bubble.addEventListener('contextmenu', function(e) {
-                e.preventDefault(); // Matikan menu klik kanan default bawaan Windows/Chrome
-
-                // Ambil ID Komentar unik dari atribut elemen yang diklik kanan
-                const commentId = this.getAttribute('data-comment-id');
-
-                // Mengarahkan ke fungsi edit interaktif di kolom bawah
-                if (editLink) {
-                    editLink.href = `javascript:bukaFiturEdit(${commentId});`;
-                }
-
-                // Ambil alih tombol hapus agar memunculkan Modal kustom WhatsApp tanpa checkbox
-                if (deleteLink) {
-                    deleteLink.onclick = function(event) {
-                        event.preventDefault();
-                        
-                        // Sembunyikan menu konteks dropdown klik kanan terlebih dahulu
-                        if (contextMenu) contextMenu.style.display = 'none';
-
-                        // Inisialisasi dan tampilkan Modal Hapus kustom baru
-                        const modalHapus = new bootstrap.Modal(document.getElementById('modalHapusPesan'));
-                        modalHapus.show();
-
-                        // PERBAIKAN UTAMA: Jalankan eksekusi hapus langsung kirim delete_file=1 secara otomatis
-                        document.getElementById('btnEksekusiHapus').onclick = function() {
-                            window.location.href = `ticket_comments.php?id=${ticketId}&action=delete&comment_id=${commentId}&delete_file=1`;
-                        };
-                    };
-                }
-
-                // Munculkan menu kustom tepat di titik kursor mouse berada saat diklik kanan
-                if (contextMenu) {
-                    contextMenu.style.display = 'block';
-                    contextMenu.style.left = e.pageX + 'px';
-                    contextMenu.style.top = e.pageY + 'px';
-                }
-            });
+            // Hapus listener lama jika ada sebelum memasang yang baru untuk mencegah penumpukan event
+            bubble.removeEventListener('contextmenu', handleBubbleContextMenu);
+            bubble.addEventListener('contextmenu', handleBubbleContextMenu);
         });
 
-        // Sembunyikan kembali menu kustom jika pengguna mengeklik di area mana saja luar menu
-        document.addEventListener('click', function(e) {
-            if (contextMenu && !contextMenu.contains(e.target)) {
-                contextMenu.style.display = 'none';
+        function handleBubbleContextMenu(e) {
+            e.preventDefault(); // Matikan menu klik kanan default browser
+
+            const commentId = this.getAttribute('data-comment-id');
+
+            if (editLink) {
+                editLink.href = `javascript:bukaFiturEdit(${commentId});`;
             }
-        });
-    });
 
+            if (deleteLink) {
+                deleteLink.onclick = function(event) {
+                    event.preventDefault();
+                    
+                    if (contextMenu) contextMenu.style.display = 'none';
+
+                    const modalHapus = new bootstrap.Modal(document.getElementById('modalHapusPesan'));
+                    modalHapus.show();
+
+                    document.getElementById('btnEksekusiHapus').onclick = function() {
+                        window.location.href = `ticket_comments.php?id=${ticketId}&action=delete&comment_id=${commentId}&delete_file=1`;
+                    };
+                };
+            }
+
+            if (contextMenu) {
+                contextMenu.style.display = 'block';
+                contextMenu.style.left = e.pageX + 'px';
+                contextMenu.style.top = e.pageY + 'px';
+                contextMenu.style.zIndex = 10000;
+            }
+        }
+    }
+
+        // =========================================================================
     // Fungsi memindahkan proses edit langsung ke kolom input bawah (Ala WhatsApp Asli)
+    // =========================================================================
     function bukaFiturEdit(id) {
         const bubbleElement = document.querySelector(`[data-comment-id="${id}"]`);
         if (bubbleElement) {
@@ -534,8 +647,27 @@ $my_user_id = $current_user_id;
             contextMenu.style.display = 'none';
         }
     }
-</script>
 
+    // =========================================================================
+    // 4. INISIALISASI HALAMAN & START ENGINE REALTIME
+    // =========================================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const contextMenu = document.getElementById('customContextMenu');
+
+        // Sembunyikan menu kustom jika pengguna mengeklik di area mana saja luar menu
+        document.addEventListener('click', function(e) {
+            if (contextMenu && !contextMenu.contains(e.target)) {
+                contextMenu.style.display = 'none';
+            }
+        });
+
+        // Jalankan sinkronisasi pesan pertama kali saat halaman dimuat
+        loadChatsRealtime();
+
+        // Jalankan polling otomatis ke database setiap 2000ms (2 detik) tanpa refresh halaman
+        setInterval(loadChatsRealtime, 2000);
+    });
+</script>
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
