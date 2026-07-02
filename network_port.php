@@ -296,6 +296,12 @@ try {
             <i class="bi bi-ticket-perforated-fill me-2"></i> Tikets
           </a>
         </li>
+        <!-- MAINTENANCE -->
+        <li class="nav-item">
+          <a href="maintenance.php" class="nav-link <?= ($currentPage == 'maintenance.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
+            <i class="bi bi-wrench-adjustable-circle me-2"></i> Maintenance
+          </a>
+        </li>
           <!-- USER PROFIL (Desktop) -->
           <li class="nav-item">
             <a href="user.php" class="nav-link <?= ($currentPage == 'user.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
