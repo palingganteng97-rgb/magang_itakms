@@ -2,7 +2,7 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
-// 1. Konfigurasi Database Utama (PDO)
+// 1. KONFIGURASI DATABASE UTAMA (PDO)
 $host = "10.10.6.59";
 $username = "root_host";
 $password = "password";
@@ -19,7 +19,7 @@ try {
 $currentPage = 'software_licenses.php';
 $message = "";
 
-// 2. PROSES CRUD (CREATE, UPDATE, DELETE) MENGGUNAKAN PREPARED STATEMENT PDO
+// 2. PROSES CRUD (CREATE, UPDATE, DELETE) MENGGUNAKAN PREPARED STATEMENT
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     try {
         if ($_POST['action'] === 'create') {
@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 }
 
-// 3. READ DATA MENGGUNAKAN PDO
+// 3. READ DATA DARI DATABASE
 try {
     $stmt = $conn->query("SELECT * FROM software_licenses ORDER BY id DESC");
     $licenses = $stmt->fetchAll();
