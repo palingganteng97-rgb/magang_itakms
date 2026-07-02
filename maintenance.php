@@ -322,38 +322,34 @@ try {
       </div>
     </nav>
 
-<!-- PERBAIKAN STRUKTUR UTAMA KONTEN -->
-<!-- Menghapus properti kaku dan memastikan lebar penuh 100% di mobile (col-12) dan col-md-8 di desktop -->
+<!-- AREA UTAMA UNTUK MAIN KONTEN -->
 <main class="col-12 col-md-8 col-lg-9 ms-md-auto p-3 p-md-4" style="overflow-x: hidden;">
     
-<!-- Judul Halaman & Tombol Tambah Log (SOLUSI FINAL PASTI SATU BARIS & SEJAJAR) -->
-<div class="row align-items-center pt-3 pb-2 mb-3 border-bottom g-3">
-    <!-- Kolom Kiri: Judul Halaman (Lebar otomatis mengikuti teks lurus di desktop) -->
-    <div class="col-12 col-md-auto flex-grow-1 text-start">
-        <!-- d-inline-flex memastikan ikon dan teks mengunci lurus sejajar tanpa terputus -->
-        <h1 class="h2 mb-0 fw-bold text-dark d-inline-flex align-items-center text-wrap text-md-nowrap">
-            <i class="bi bi-wrench-adjustable-circle text-primary me-2"></i>
-            <span>Log Pemeliharaan (Maintenance)</span>
-        </h1>
+    <!-- Judul Halaman & Tombol Tambah Log -->
+    <div class="row align-items-start align-items-md-center pt-3 pb-2 mb-3 border-bottom g-3">
+        <div class="col-12 col-md-auto flex-grow-1 text-start">
+            <h1 class="h2 mb-0 fw-bold text-dark text-wrap text-md-nowrap">
+                <i class="bi bi-wrench-adjustable-circle text-primary me-2"></i> Log Pemeliharaan (Maintenance)
+            </h1>
+        </div>
+        <div class="col-12 col-md-auto text-start text-md-end">
+            <button type="button" class="btn btn-primary fw-bold shadow-sm w-100 text-nowrap" data-bs-toggle="modal" data-bs-target="#modalMaintenance" style="max-width: 200px;">
+                <i class="bi bi-plus-lg me-1"></i> Tambah Log Baru
+            </button>
+        </div>
     </div>
-    
-    <!-- Kolom Kanan: Tombol Tambah (Menepi ke kanan di desktop, lebar penuh di mobile) -->
-    <div class="col-12 col-md-auto text-start text-md-end">
-        <button type="button" class="btn btn-primary fw-bold shadow-sm w-100 text-nowrap" data-bs-toggle="modal" data-bs-target="#modalMaintenance" style="max-width: 200px;">
-            <i class="bi bi-plus-lg me-1"></i> Tambah Log Baru
-        </button>
-    </div>
-</div>
 
-    <!-- Toast / Notifikasi Alert Balikan Status -->
+    <!-- PENTING: PASTIKAN BLOK NOTIFIKASI INI ADA DI SINI -->
     <?php if (isset($_GET['status'])): ?>
-        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
-            <i class="bi bi-check-circle-fill me-2"></i>
-            <?php
-                if ($_GET['status'] == 'success_add') echo 'Data log baru berhasil disimpan!';
-                elseif ($_GET['status'] == 'success_edit') echo 'Data log berhasil diperbarui!';
-                elseif ($_GET['status'] == 'success_delete') echo 'Data log berhasil dihapus!';
-            ?>
+        <div class="alert alert-success alert-dismissible fade show shadow-sm d-flex align-items-center mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+            <div>
+                <?php
+                    if ($_GET['status'] == 'success_add') echo 'Data log baru berhasil disimpan!';
+                    elseif ($_GET['status'] == 'success_edit') echo 'Data log berhasil diperbarui!';
+                    elseif ($_GET['status'] == 'success_delete') echo 'Data log berhasil dihapus!';
+                ?>
+            </div>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     <?php endif; ?>
