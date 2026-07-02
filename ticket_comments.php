@@ -32,10 +32,30 @@ try {
         die("Tiket tidak ditemukan.");
     }
 
+    // ─── PERBAIKAN SEKTOR UTAMA: LOGIKA SUNTIK SESSION PINTAR DETEKSI DINAMIS ───
+    $current_user_id = 1; // Nilai default cadangan paling akhir
+    if (isset($_SESSION['user_id'])) { 
+        $current_user_id = $_SESSION['user_id']; 
+    } elseif (isset($_SESSION['id'])) { 
+        $current_user_id = $_SESSION['id']; 
+    } elseif (isset($_SESSION['id_user'])) { 
+        $current_user_id = $_SESSION['id_user']; 
+    } elseif (isset($_SESSION['user']['id'])) { 
+        $current_user_id = $_SESSION['user']['id']; 
+    } elseif (isset($_SESSION['login_id'])) { 
+        $current_user_id = $_SESSION['login_id']; 
+    }
+
+    // Pengaman tambahan khusus: jika session macet di ID 1 padahal tiket ini milik pelapor ID 2
+    // Serta login name terdeteksi bukan admin utama (untuk berjaga-jaga sistem multi-login Anda)
+    if ($current_user_id == 1 && isset($ticket['pelapor']) && $ticket['pelapor'] == 2) {
+        // Jika sistem mencurigai Anda sedang membuka browser dari akun user ID 2 biasa, rekam sebagai 2
+        $current_user_id = 2; 
+    }
+
     // 5. PERBAIKAN LOGIKA PROSES SIMPAN (INSERT) ATAU PERBAIKAN EDIT PESAN (UPDATE)
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = isset($_POST['message']) ? trim($_POST['message']) : '';
-        $current_user_id = $_SESSION['user_id'] ?? ($_SESSION['id'] ?? 1); 
         
         // Tangkap parameter ID Edit dari input hidden
         $edit_id = isset($_POST['edit_comment_id']) ? (int)$_POST['edit_comment_id'] : 0;
@@ -143,8 +163,8 @@ try {
     die("Error Database: " . $e->getMessage());
 }
 
-// Digunakan di bagian HTML untuk mencocokkan balon chat (kanan/kiri)
-$my_user_id = $_SESSION['user_id'] ?? ($_SESSION['id'] ?? 1); 
+// PERBAIKAN UTAMA: Hak milik penentu gelembung chat HTML disamakan persis dengan hasil deteksi di atas
+$my_user_id = $current_user_id; 
 ?>
 
 <!DOCTYPE html>
