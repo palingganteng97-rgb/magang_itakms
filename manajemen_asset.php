@@ -166,6 +166,13 @@ try {
                 <i class="bi bi-file-earmark-text-fill me-2"></i> <span>Knowledge Articles</span>
             </a> 
         </li> 
+        <!-- SOFTWARE LICENSES (Khusus Mobile & Device Kecil) --> 
+        <li class="nav-item d-md-none"> 
+            <a href="software_licenses.php" class="nav-link <?= ($currentPage == 'software_licenses.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded d-flex align-items-center"> 
+                <i class="bi bi-key-fill me-2"></i> 
+                <span>Software Licenses</span> 
+            </a> 
+        </li> 
         <!-- USER PROFIL (Mobile) -->
         <li class="nav-item">
           <a href="user.php" class="nav-link <?= ($currentPage == 'user.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
@@ -188,98 +195,105 @@ try {
   </div>
 </div>
 
-    <!-- ========================================== -->
-    <!-- 2. SIDEBAR DESKTOP                         -->
-    <!-- ========================================== -->
-    <div class="container-fluid">
-    <div class="row">
-        <!-- Sidebar Desktop dengan Tinggi Layar Terkunci Permanen 100vh & Posisi Statis Fixed -->
-        <nav class="col-md-4 col-lg-3 d-none d-md-flex flex-column sidebar p-3 text-bg-dark" style="min-height: 100vh; max-height: 100vh; position: fixed; z-index: 1000;">
-        <!-- Judul Utama Dashboard Desktop (Tetap Diam) -->
-        <h4 class="text-center mb-4 text-warning fw-bold pt-2"><i class="bi bi-speedometer2"></i> ITAKMS</h4>
-        
-        <!-- Area Menu Tengah Desktop (Scrollbar Tersembunyi) -->
-        <div class="flex-grow-1 overflow-y-auto hide-scrollbar" style="max-height: calc(100vh - 160px);">
-            <ul class="nav flex-column gap-2">
-            <li class="nav-item">
-                <a href="dashboard.php" class="nav-link text-white p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
-            </li>
-            <li class="nav-item">
-                <a href="roles.php" class="nav-link text-white p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Manajemen Roles</a>
-            </li>
-            <li class="nav-item">
-                <a href="relasi.php" class="nav-link text-white p-2 rounded text-nowrap" style="overflow: hidden; text-overflow: ellipsis;" title="Manajemen Bangunan & Ruang">
-                <i class="bi bi-diagram-3 me-2"></i> Manajemen Bangunan & Ruang
+        <!-- ========================================== -->
+        <!-- 2. SIDEBAR DESKTOP                         -->
+        <!-- ========================================== -->
+        <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar Desktop dengan Tinggi Layar Terkunci Permanen 100vh & Posisi Statis Fixed -->
+            <nav class="col-md-4 col-lg-3 d-none d-md-flex flex-column sidebar p-3 text-bg-dark" style="min-height: 100vh; max-height: 100vh; position: fixed; z-index: 1000;">
+            <!-- Judul Utama Dashboard Desktop (Tetap Diam) -->
+            <h4 class="text-center mb-4 text-warning fw-bold pt-2"><i class="bi bi-speedometer2"></i> ITAKMS</h4>
+            
+            <!-- Area Menu Tengah Desktop (Scrollbar Tersembunyi) -->
+            <div class="flex-grow-1 overflow-y-auto hide-scrollbar" style="max-height: calc(100vh - 160px);">
+                <ul class="nav flex-column gap-2">
+                <li class="nav-item">
+                    <a href="dashboard.php" class="nav-link text-white p-2 rounded"><i class="bi bi-house-door me-2"></i> Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a href="roles.php" class="nav-link text-white p-2 rounded"><i class="bi bi-shield-lock me-2"></i> Manajemen Roles</a>
+                </li>
+                <li class="nav-item">
+                    <a href="relasi.php" class="nav-link text-white p-2 rounded text-nowrap" style="overflow: hidden; text-overflow: ellipsis;" title="Manajemen Bangunan & Ruang">
+                    <i class="bi bi-diagram-3 me-2"></i> Manajemen Bangunan & Ruang
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="assets.php" class="nav-link text-white p-2 rounded"><i class="bi bi-folder2-open me-2"></i> Assets</a>
+                </li>
+                <!-- Manajemen Asset Aktif di Desktop -->
+                <li class="nav-item">
+                    <a href="manajemen_asset.php" class="nav-link active bg-primary text-white p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
+                </li>
+                <li class="nav-item">
+                    <a href="asset_movements.php" class="nav-link text-white p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
+                </li>
+                <li class="nav-item">
+                    <a href="server.php" class="nav-link text-white p-2 rounded"><i class="bi bi-hdd-network me-2"></i> Server</a>
+                </li>
+                <li class="nav-item">
+                    <a href="network_device.php" class="nav-link text-white p-2 rounded"><i class="bi bi-router me-2"></i> Network Device</a>
+                </li>
+                <li class="nav-item">
+                    <a href="network_port.php" class="nav-link text-white p-2 rounded"><i class="bi bi-ethernet me-2"></i> Network Port</a>
+                </li>
+                <!-- VENDORS (Desktop) -->
+                <li class="nav-item">
+                    <a href="vendors.php" class="nav-link <?= ($currentPage == 'vendors.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
+                    <i class="bi bi-building me-2"></i> Vendors
+                    </a>
+                </li>
+                <!-- Tambahkan di bawah menu Network Port atau di posisi yang Anda inginkan -->
+                <li class="nav-item">
+                <a href="password_categories.php" class="nav-link text-white p-2 rounded">
+                    <i class="bi bi-grid-fill me-2"></i> Password Categories
                 </a>
-            </li>
-            <li class="nav-item">
-                <a href="assets.php" class="nav-link text-white p-2 rounded"><i class="bi bi-folder2-open me-2"></i> Assets</a>
-            </li>
-            <!-- Manajemen Asset Aktif di Desktop -->
-            <li class="nav-item">
-                <a href="manajemen_asset.php" class="nav-link active bg-primary text-white p-2 rounded"><i class="bi bi-boxes me-2"></i> Manajemen Asset</a>
-            </li>
-            <li class="nav-item">
-                <a href="asset_movements.php" class="nav-link text-white p-2 rounded"><i class="bi bi-arrow-left-right me-2"></i> Log Perpindahan</a>
-            </li>
-            <li class="nav-item">
-                <a href="server.php" class="nav-link text-white p-2 rounded"><i class="bi bi-hdd-network me-2"></i> Server</a>
-            </li>
-            <li class="nav-item">
-                <a href="network_device.php" class="nav-link text-white p-2 rounded"><i class="bi bi-router me-2"></i> Network Device</a>
-            </li>
-            <li class="nav-item">
-                <a href="network_port.php" class="nav-link text-white p-2 rounded"><i class="bi bi-ethernet me-2"></i> Network Port</a>
-            </li>
-            <!-- VENDORS (Desktop) -->
-            <li class="nav-item">
-                <a href="vendors.php" class="nav-link <?= ($currentPage == 'vendors.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
-                <i class="bi bi-building me-2"></i> Vendors
+                </li>
+                <li class="nav-item">
+                <a href="password_vault.php" class="nav-link text-white p-2 rounded">
+                    <i class="bi bi-safe me-2"></i> Password Vault
                 </a>
-            </li>
-            <!-- Tambahkan di bawah menu Network Port atau di posisi yang Anda inginkan -->
-            <li class="nav-item">
-            <a href="password_categories.php" class="nav-link text-white p-2 rounded">
-                <i class="bi bi-grid-fill me-2"></i> Password Categories
-            </a>
-            </li>
-            <li class="nav-item">
-            <a href="password_vault.php" class="nav-link text-white p-2 rounded">
-                <i class="bi bi-safe me-2"></i> Password Vault
-            </a>
-            </li>
-            <!-- MENU TIKETS -->
-            <li class="nav-item">
-            <a href="tickets.php" class="nav-link <?= ($currentPage == 'tickets.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
-                <i class="bi bi-ticket-perforated-fill me-2"></i> Tikets
-            </a>
-            </li>
-            <!-- MAINTENANCE -->
-            <li class="nav-item">
-            <a href="maintenance.php" class="nav-link <?= ($currentPage == 'maintenance.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
-                <i class="bi bi-wrench-adjustable-circle me-2"></i> Maintenance
-            </a>
-            </li>
-            <!-- KNOWLEDGE CATEGORIES (Tampil di semua device) --> 
-        <li class="nav-item"> 
-            <a href="knowledge_categories.php" class="nav-link <?= ($currentPage == 'knowledge_categories.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded"> 
-                <i class="bi bi-tags-fill me-2"></i> <span>Knowledge Categories</span>
-            </a> 
-        </li> 
-        <!-- KNOWLEDGE ARTICLES (Tampil di semua device) --> 
-        <li class="nav-item"> 
-            <a href="knowledge_articles.php" class="nav-link <?= ($currentPage == 'knowledge_articles.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded"> 
-                <i class="bi bi-file-earmark-text-fill me-2"></i> <span>Knowledge Articles</span>
-            </a> 
-        </li> 
-            <!-- USER PROFIL (Desktop) -->
-            <li class="nav-item">
-                <a href="user.php" class="nav-link <?= ($currentPage == 'user.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
-                <i class="bi bi-person-fill me-2"></i> User Profil
+                </li>
+                <!-- MENU TIKETS -->
+                <li class="nav-item">
+                <a href="tickets.php" class="nav-link <?= ($currentPage == 'tickets.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
+                    <i class="bi bi-ticket-perforated-fill me-2"></i> Tikets
                 </a>
-            </li>
-            </ul>
-        </div>
+                </li>
+                <!-- MAINTENANCE -->
+                <li class="nav-item">
+                <a href="maintenance.php" class="nav-link <?= ($currentPage == 'maintenance.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
+                    <i class="bi bi-wrench-adjustable-circle me-2"></i> Maintenance
+                </a>
+                </li>
+                <!-- KNOWLEDGE CATEGORIES (Tampil di semua device) --> 
+                <li class="nav-item"> 
+                    <a href="knowledge_categories.php" class="nav-link <?= ($currentPage == 'knowledge_categories.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded"> 
+                        <i class="bi bi-tags-fill me-2"></i> <span>Knowledge Categories</span>
+                    </a> 
+                </li> 
+                <!-- KNOWLEDGE ARTICLES (Tampil di semua device) --> 
+                <li class="nav-item"> 
+                    <a href="knowledge_articles.php" class="nav-link <?= ($currentPage == 'knowledge_articles.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded"> 
+                        <i class="bi bi-file-earmark-text-fill me-2"></i> <span>Knowledge Articles</span>
+                    </a> 
+                </li> 
+                <!-- SOFTWARE LICENSES (Langsung tampil di Desktop & Mobile) --> 
+                <li class="nav-item"> 
+                    <a href="software_licenses.php" class="nav-link <?= ($currentPage == 'software_licenses.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded d-flex align-items-center"> 
+                        <i class="bi bi-key-fill me-2"></i> 
+                        <span>Software Licenses</span> 
+                    </a> 
+                </li> 
+                <!-- USER PROFIL (Desktop) -->
+                <li class="nav-item">
+                    <a href="user.php" class="nav-link <?= ($currentPage == 'user.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
+                    <i class="bi bi-person-fill me-2"></i> User Profil
+                    </a>
+                </li>
+                </ul>
+            </div>
         
       <!-- Tombol Logout Desktop -->
       <div class="mt-auto pt-3 border-top border-secondary w-100 bg-dark">

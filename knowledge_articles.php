@@ -398,6 +398,13 @@ try {
                 <i class="bi bi-file-earmark-text-fill me-2"></i> <span>Knowledge Articles</span>
             </a> 
         </li> 
+        <!-- SOFTWARE LICENSES (Khusus Mobile & Device Kecil) --> 
+        <li class="nav-item d-md-none"> 
+            <a href="software_licenses.php" class="nav-link <?= ($currentPage == 'software_licenses.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded d-flex align-items-center"> 
+                <i class="bi bi-key-fill me-2"></i> 
+                <span>Software Licenses</span> 
+            </a> 
+        </li> 
         <!-- USER PROFIL (Mobile) -->
         <li class="nav-item">
           <a href="user.php" class="nav-link <?= ($currentPage == 'user.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded">
@@ -502,6 +509,13 @@ try {
         <li class="nav-item"> 
             <a href="knowledge_articles.php" class="nav-link active bg-primary <?= ($currentPage == 'knowledge_articles.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded"> 
                 <i class="bi bi-file-earmark-text-fill me-2"></i> <span>Knowledge Articles</span>
+            </a> 
+        </li> 
+        <!-- SOFTWARE LICENSES (Langsung tampil di Desktop & Mobile) --> 
+        <li class="nav-item"> 
+            <a href="software_licenses.php" class="nav-link <?= ($currentPage == 'software_licenses.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded d-flex align-items-center"> 
+                <i class="bi bi-key-fill me-2"></i> 
+                <span>Software Licenses</span> 
             </a> 
         </li> 
           <!-- USER PROFIL (Desktop) -->
