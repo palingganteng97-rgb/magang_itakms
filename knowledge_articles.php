@@ -164,7 +164,7 @@ try {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    
+
     <style>
         body { background-color: #f8f9fa; }
         .sidebar { background-color: #212529; color: white; }
@@ -525,12 +525,13 @@ try {
       </div>
     </nav>
 
-    <!-- AREA UTAMA KONTEN -->
+<!-- AREA UTAMA KONTEN -->
 <main class="col-md-8 ms-sm-auto col-lg-9 px-md-4 pt-4 offset-md-4 offset-lg-3">
     <!-- Header Konten -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
         <h2 style="margin: 0; color: #333; font-size: 28px; font-weight: 600;">Knowledge Articles</h2>
-        <button class="btn btn-primary" onclick="openAddModal()">+ Tambah Artikel Baru</button> 
+        <!-- FIX: Mengarah langsung ke berkas halaman mandiri tambah_artikel.php -->
+        <a href="tambah_artikel.php" class="btn btn-primary">+ Tambah Artikel Baru</a> 
     </div>
 
     <!-- Kotak Filter & Pencarian -->
@@ -547,244 +548,146 @@ try {
         </form>
     </div>
 
-    <!-- Wrapper Tabel dengan Batas Pemisah Struktural -->
-    <div style="background-color: #fff; border-radius: 8px; border: 1px solid #e3e6f0; overflow: hidden; box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.05);">
-        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-            <thead>
-                <tr style="background-color: #f8f9fc; border-bottom: 2px solid #e3e6f0;">
-                    <th style="padding: 15px 20px; color: #4e73df; font-weight: 700; width: 60px;">ID</th>
-                    <th style="padding: 15px 20px; color: #4e73df; font-weight: 700; width: 150px;">Kategori</th>
-                    <th style="padding: 15px 20px; color: #4e73df; font-weight: 700; width: 250px;">Judul</th>
-                    <th style="padding: 15px 20px; color: #4e73df; font-weight: 700;">Isi Konten</th>
-                    <th style="padding: 15px 20px; color: #4e73df; font-weight: 700; width: 150px;">Lampiran</th>
-                    <th style="padding: 15px 20px; color: #4e73df; font-weight: 700; width: 100px;">Status</th>
-                    <th style="padding: 15px 20px; color: #4e73df; font-weight: 700; width: 140px; text-align: center;">Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (!empty($articles) && count($articles) > 0): ?>
-                    <?php foreach ($articles as $row): ?>
-                        <tr style="border-bottom: 1px solid #e3e6f0; transition: background 0.15s;" onmouseover="this.style.backgroundColor='#f8f9fc'" onmouseout="this.style.backgroundColor='transparent'">
-                            <td style="padding: 15px 20px; color: #6e707e;"><?php echo $row['id']; ?></td>
-                            
-                            <!-- FIX KODE: Menampilkan Nama Kategori Hasil Left Join Dari Database -->
-                            <td style="padding: 15px 20px; color: #6e707e;">
-                                <?php if (!empty($row['category_name'])): ?>
-                                    <span style="background-color: #eaecf4; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; color: #4e73df; display: inline-block;">
-                                        <?php echo htmlspecialchars($row['category_name']); ?>
-                                    </span>
-                                <?php else: ?>
-                                    <span style="color: #b7b9cc; font-style: italic;">Tanpa Kategori</span>
-                                <?php endif; ?>
-                            </td>
+<!-- UBAH DI BARIS PERTAMA: Tambahkan overflow-x: auto; -->
+<div style="background-color: #fff; border-radius: 8px; border: 1px solid #e3e6f0; overflow: hidden; overflow-x: auto; box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.05);"> 
+    <!-- Elemen <table> tetap sama seperti sebelumnya -->
+    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+        <thead>
+            <tr style="background-color: #f8f9fc; border-bottom: 2px solid #e3e6f0;">
+                <th style="padding: 15px 20px; color: #4e73df; font-weight: 700; width: 60px;">ID</th>
+                <!-- Lebar Kategori disesuaikan agar teks tidak turun -->
+                <th style="padding: 15px 20px; color: #4e73df; font-weight: 700; width: 180px; white-space: nowrap;">Kategori</th>
+                <!-- Lebar Judul disesuaikan agar lebih luas -->
+                <th style="padding: 15px 20px; color: #4e73df; font-weight: 700; width: 300px;">Judul</th>
+                <th style="padding: 15px 20px; color: #4e73df; font-weight: 700;">Isi Konten</th>
+                <th style="padding: 15px 20px; color: #4e73df; font-weight: 700; width: 150px;">Lampiran</th>
+                <th style="padding: 15px 20px; color: #4e73df; font-weight: 700; width: 100px;">Status</th>
+                <th style="padding: 15px 20px; color: #4e73df; font-weight: 700; width: 200px; text-align: center;">Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if (!empty($articles) && count($articles) > 0): ?>
+                <?php foreach ($articles as $row): ?>
+                    <tr style="border-bottom: 1px solid #e3e6f0; transition: background 0.15s;" onmouseover="this.style.backgroundColor='#f8f9fc'" onmouseout="this.style.backgroundColor='transparent'">
+                        <td style="padding: 15px 20px; color: #6e707e;"><?php echo $row['id']; ?></td>
+                        
+                        <!-- PERBAIKAN 1: Tambah white-space: nowrap agar kategori memanjang ke kanan -->
+                        <td style="padding: 15px 20px; color: #6e707e; white-space: nowrap;">
+                            <?php if (!empty($row['category_name'])): ?>
+                                <span style="background-color: #eaecf4; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; color: #4e73df; display: inline-block;">
+                                    <?php echo htmlspecialchars($row['category_name']); ?>
+                                </span>
+                            <?php else: ?>
+                                <span style="color: #b7b9cc; font-style: italic;">Tanpa Kategori</span>
+                            <?php endif; ?>
+                        </td>
 
-                            <td style="padding: 15px 20px; font-weight: 600; color: #2e59d9;">
-                                <?php echo htmlspecialchars($row['judul'] ?? ''); ?>
-                            </td>
-                            <td style="padding: 15px 20px; color: #6e707e; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                <?php echo htmlspecialchars(strip_tags($row['isi'] ?? '')); ?>
-                            </td>
-                            <td style="padding: 15px 20px;">
-                                <?php if (!empty($row['lampiran'])): ?>
-                                    <a href="uploads/<?php echo htmlspecialchars($row['lampiran']); ?>" target="_blank" style="color: #36b9cc; text-decoration: none; font-weight: 500;">
-                                        📁 Lihat Berkas
-                                    </a>
-                                <?php else: ?>
-                                    <span style="color: #b7b9cc; font-style: italic;">Tidak ada</span>
-                                <?php endif; ?>
-                            </td>
-                            <td style="padding: 15px 20px;">
-                                <?php if (($row['status'] ?? 1) == 1): ?>
-                                    <span style="background-color: #1cc88a; color: white; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-block;">Aktif</span>
-                                <?php else: ?>
-                                    <span style="background-color: #858796; color: white; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-block;">Draf</span>
-                                <?php endif; ?>
-                            </td>
-                            <td style="padding: 15px 20px; text-align: center; white-space: nowrap;">
-                                <button type="button" class="btn" style="color: #f6c23e; background: none; border: none; font-weight: 600; padding: 0; margin-right: 12px; cursor: pointer;" 
-                                        onclick='openEditModal(<?php echo json_encode($row, JSON_HEX_APOS | JSON_HEX_QUOT); ?>)'>
-                                    Edit
-                                </button>
-                                <button type="button" class="btn" style="color: #e74a3b; background: none; border: none; font-weight: 600; padding: 0; cursor: pointer;" 
-                                        onclick="openDeleteModal(<?php echo $row['id']; ?>)">
-                                    Hapus
-                                </button>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <tr>
-                        <td colspan="7" style="padding: 30px; text-align: center; color: #858796; font-style: italic;">
-                            Tidak ada data artikel yang ditemukan.
+                        <!-- PERBAIKAN 2: Tambah white-space: nowrap agar judul memanjang ke kanan -->
+                        <td style="padding: 15px 20px; font-weight: 600; color: #2e59d9; white-space: nowrap;">
+                            <?php echo htmlspecialchars($row['judul'] ?? ''); ?>
+                        </td>
+                        <td style="padding: 15px 20px; color: #6e707e; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            <?php echo htmlspecialchars(strip_tags($row['isi'] ?? '')); ?>
+                        </td>
+                        <td style="padding: 15px 20px;">
+                            <?php if (!empty($row['lampiran'])): ?>
+                                <a href="uploads/<?php echo htmlspecialchars($row['lampiran']); ?>" target="_blank" style="color: #36b9cc; text-decoration: none; font-weight: 500;">
+                                    📁 Lihat Berkas
+                                </a>
+                            <?php else: ?>
+                                <span style="color: #b7b9cc; font-style: italic;">Tidak ada</span>
+                            <?php endif; ?>
+                        </td>
+                        <td style="padding: 15px 20px;">
+                            <?php if (($row['status'] ?? 1) == 1): ?>
+                                <span style="background-color: #1cc88a; color: white; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-block;">Aktif</span>
+                            <?php else: ?>
+                                <span style="background-color: #858796; color: white; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-block;">Draf</span>
+                            <?php endif; ?>
+                        </td>
+                        <td style="padding: 15px 20px; text-align: center; white-space: nowrap;">
+                            <!-- Tombol Detail yang memicu JavaScript Modal -->
+                            <button type="button" style="color: #36b9cc; background: none; border: none; font-weight: 600; margin-right: 12px; padding: 0; cursor: pointer; display: inline-block; vertical-align: baseline;" 
+                                    onclick="openDetailModal(<?php echo htmlspecialchars(json_encode($row)); ?>)">
+                                Detail
+                            </button>
+                            
+                            <a href="edit_artikel.php?id=<?php echo $row['id']; ?>" style="color: #f6c23e; text-decoration: none; font-weight: 600; margin-right: 12px; display: inline-block;">
+                                Edit
+                            </a>
+                            
+                            <button type="button" class="btn" style="color: #e74a3b; background: none; border: none; font-weight: 600; padding: 0; cursor: pointer; vertical-align: baseline;" 
+                                    onclick="openDeleteModal(<?php echo $row['id']; ?>)">
+                                Hapus
+                            </button>
                         </td>
                     </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
-        
-        <!-- Paginasi di Bagian Bawah Tabel -->
-        <?php if (isset($totalPages) && $totalPages > 1): ?>
-            <div style="background-color: #f8f9fc; padding: 15px 20px; border-top: 1px solid #e3e6f0; display: flex; justify-content: space-between; align-items: center;">
-                <div style="color: #858796; font-size: 13px;">
-                    Menampilkan halaman <?php echo $page; ?> dari <?php echo $totalPages; ?>
-                </div>
-                <div style="display: flex; gap: 5px;">
-                    <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                        <a href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search ?? ''); ?>" 
-                           style="padding: 6px 12px; border: 1px solid #d1d3e2; border-radius: 4px; text-decoration: none; font-size: 13px; font-weight: 600; transition: all 0.2s;
-                                  <?php echo ($page == $i) ? 'background-color: #4e73df; color: white; border-color: #4e73df;' : 'background-color: #fff; color: #4e73df;'; ?>">
-                            <?php echo $i; ?>
-                        </a>
-                    <?php endfor; ?>
-                </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <tr>
+                    <td colspan="7" style="padding: 30px; text-align: center; color: #858796; font-style: italic;">
+                        Tidak ada data artikel yang ditemukan.
+                    </td>
+                </tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
+    
+    <!-- Paginasi di Bagian Bawah Tabel -->
+    <?php if (isset($totalPages) && $totalPages > 1): ?>
+        <div style="background-color: #f8f9fc; padding: 15px 20px; border-top: 1px solid #e3e6f0; display: flex; justify-content: space-between; align-items: center;">
+            <div style="color: #858796; font-size: 13px;">
+                Menampilkan halaman <?php echo $page; ?> dari <?php echo $totalPages; ?>
             </div>
-        <?php endif; ?>
-    </div>
+            <div style="display: flex; gap: 5px;">
+                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                    <a href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search ?? ''); ?>" 
+                       style="padding: 6px 12px; border: 1px solid #d1d3e2; border-radius: 4px; text-decoration: none; font-size: 13px; font-weight: 600; transition: all 0.2s;
+                              <?php echo ($page == $i) ? 'background-color: #4e73df; color: white; border-color: #4e73df;' : 'background-color: #fff; color: #4e73df;'; ?>">
+                        <?php echo $i; ?>
+                    </a>
+                <?php endfor; ?>
+            </div>
+        </div>
+    <?php endif; ?>
+</div>
 </main>
 
-<!-- =========================================================================
-     STRUKTUR MODAL TAMBAH DATA (DROPDOWN KATEGORI & TANPA SCROLL)
-     ========================================================================= -->
-<div id="modalAdd" class="modal-custom">
-    <div class="modal-content-custom">
+<!-- ELEMEN MODAL DETAIL (Ditempatkan di luar pembungkus tabel) -->
+<div id="detailModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+    <div style="background-color: #fff; border-radius: 8px; width: 100%; max-width: 600px; box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15); overflow: hidden; margin: 20px; display: flex; flex-direction: column; max-height: 85vh;">
         <!-- Header Modal -->
-        <div class="modal-header-custom">
-            <h3 style="margin: 0; color: #1e293b; font-size: 18px; font-weight: 600;">Tambah Artikel Baru</h3>
-            <span class="close-btn-custom" onclick="closeAddModal()">&times;</span>
+        <div style="background-color: #f8f9fc; padding: 15px 20px; border-bottom: 1px solid #e3e6f0; display: flex; justify-content: space-between; align-items: center;">
+            <h5 style="margin: 0; color: #4e73df; font-weight: 700; font-size: 16px;">Detail Artikel</h5>
+            <span style="color: #aaaaaa; font-size: 24px; font-weight: bold; cursor: pointer; line-height: 1;" onclick="closeDetailModal()">&times;</span>
         </div>
-        
-        <!-- Formulir Input dengan Flexbox 2 Kolom -->
-        <form method="POST" action="" enctype="multipart/form-data" style="margin: 0;">
-            <input type="hidden" name="action" value="create">
-            
-            <div style="display: flex; gap: 20px; align-items: stretch;">
-                
-                <!-- KOLOM KIRI (Input Atribut & Dropdown Kategori) -->
-                <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
-                    <div class="form-group-custom">
-                        <label>Pilih Kategori</label>
-                        <!-- Mengganti input number menjadi select option dinamis -->
-                        <select name="category_id" class="form-control-custom">
-                            <option value="">-- Tanpa Kategori --</option>
-                            <?php if (!empty($all_categories)): ?>
-                                <?php foreach ($all_categories as $cat): ?>
-                                    <option value="<?php echo $cat['id']; ?>">
-                                        <?php echo htmlspecialchars($cat['name'] ?? $cat['nama'] ?? $cat['judul'] ?? $cat['id']); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group-custom">
-                        <label>Judul Artikel *</label>
-                        <input type="text" name="judul" class="form-control-custom" required placeholder="Masukkan judul artikel...">
-                    </div>
-                    
-                    <div class="form-group-custom">
-                        <label>File Lampiran</label>
-                        <input type="file" name="lampiran" class="form-control-custom" style="padding: 5px 10px; height: 38px;">
-                    </div>
-                    
-                    <div class="form-group-custom">
-                        <label>Status Publikasi</label>
-                        <select name="status" class="form-control-custom">
-                            <option value="1">Aktif</option>
-                            <option value="0">Draf</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- KOLOM KANAN (Khusus Area Teks Utama) -->
-                <div style="flex: 1.2; display: flex; flex-direction: column;">
-                    <div class="form-group-custom" style="height: 100%; display: flex; flex-direction: column; margin-bottom: 0;">
-                        <label>Isi Artikel *</label>
-                        <textarea name="isi" class="form-control-custom" required placeholder="Tuliskan isi atau konten artikel..." style="flex: 1; height: 202px; min-height: 202px; max-height: 202px; resize: none;"></textarea>
-                    </div>
-                </div>
-
+        <!-- Isi Konten Modal -->
+        <div style="padding: 20px; overflow-y: auto; color: #6e707e; font-size: 14px; line-height: 1.6;">
+            <div style="margin-bottom: 15px;">
+                <strong style="color: #4e73df; display: block; margin-bottom: 5px;">Judul Artikel:</strong>
+                <span id="modalJudul" style="font-weight: 600; color: #2e59d9; font-size: 15px;"></span>
             </div>
-            
-            <!-- Tombol Aksi di Bagian Bawah -->
-            <div class="modal-footer-custom">
-                <button type="button" class="btn-secondary-custom" onclick="closeAddModal()">Batal</button>
-                <button type="submit" class="btn-success-custom">Simpan Artikel</button>
+            <div style="margin-bottom: 15px;">
+                <strong style="color: #4e73df; display: block; margin-bottom: 5px;">Kategori:</strong>
+                <span id="modalKategori"></span>
             </div>
-        </form>
-    </div>
-</div>
-
-<!-- =========================================================================
-     STRUKTUR MODAL EDIT DATA (DROPDOWN KATEGORI & TANPA SCROLL)
-     ========================================================================= -->
-<div id="modalEdit" class="modal-custom">
-    <div class="modal-content-custom">
-        <!-- Header Modal -->
-        <div class="modal-header-custom">
-            <h3 style="margin: 0; color: #1e293b; font-size: 18px; font-weight: 600;">Ubah Data Artikel</h3>
-            <span class="close-btn-custom" onclick="closeEditModal()">&times;</span>
+            <div style="margin-bottom: 15px;">
+                <strong style="color: #4e73df; display: block; margin-bottom: 5px;">Status:</strong>
+                <span id="modalStatus"></span>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <strong style="color: #4e73df; display: block; margin-bottom: 5px;">Isi Konten:</strong>
+                <div id="modalIsi" style="background: #f8f9fc; padding: 15px; border-radius: 6px; border: 1px solid #e3e6f0; white-space: pre-line; max-height: 250px; overflow-y: auto;"></div>
+            </div>
+            <div>
+                <strong style="color: #4e73df; display: block; margin-bottom: 5px;">Lampiran:</strong>
+                <div id="modalLampiran"></div>
+            </div>
         </div>
-        
-        <!-- Formulir Input dengan Flexbox 2 Kolom -->
-        <form method="POST" action="" enctype="multipart/form-data" style="margin: 0;">
-            <input type="hidden" name="action" value="update">
-            <input type="hidden" name="id" id="edit_id">
-            
-            <div style="display: flex; gap: 20px; align-items: stretch;">
-                
-                <!-- KOLOM KIRI (Input Atribut & Dropdown Kategori) -->
-                <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
-                    <div class="form-group-custom">
-                        <label>Pilih Kategori</label>
-                        <!-- Ditambahkan id="edit_category_id" untuk kecocokan binding data-JS -->
-                        <select name="category_id" id="edit_category_id" class="form-control-custom">
-                            <option value="">-- Tanpa Kategori --</option>
-                            <?php if (!empty($all_categories)): ?>
-                                <?php foreach ($all_categories as $cat): ?>
-                                    <option value="<?php echo $cat['id']; ?>">
-                                        <?php echo htmlspecialchars($cat['name'] ?? $cat['nama'] ?? $cat['judul'] ?? $cat['id']); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group-custom">
-                        <label>Judul Artikel *</label>
-                        <input type="text" name="judul" id="edit_judul" class="form-control-custom" required placeholder="Masukkan judul artikel...">
-                    </div>
-                    
-                    <div class="form-group-custom">
-                        <label>Ganti File Lampiran <span style="font-size:11px; color:#64748b;">(Kosongkan jika tidak diubah)</span></label>
-                        <input type="file" name="lampiran" class="form-control-custom" style="padding: 5px 10px; height: 38px;">
-                        <div id="edit_lampiran_info" style="font-size: 11px; margin-top: 4px; color: #0891b2; font-weight: 500;"></div>
-                    </div>
-                    
-                    <div class="form-group-custom">
-                        <label>Status Publikasi</label>
-                        <select name="status" id="edit_status" class="form-control-custom">
-                            <option value="1">Aktif</option>
-                            <option value="0">Draf</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- KOLOM KANAN (Khusus Area Teks Utama) -->
-                <div style="flex: 1.2; display: flex; flex-direction: column;">
-                    <div class="form-group-custom" style="height: 100%; display: flex; flex-direction: column; margin-bottom: 0;">
-                        <label>Isi Artikel *</label>
-                        <textarea name="isi" id="edit_isi" class="form-control-custom" required placeholder="Tuliskan isi atau konten artikel..." style="flex: 1; height: 202px; min-height: 202px; max-height: 202px; resize: none;"></textarea>
-                    </div>
-                </div>
-
-            </div>
-            
-            <!-- Tombol Aksi di Bagian Bawah -->
-            <div class="modal-footer-custom">
-                <button type="button" class="btn-secondary-custom" onclick="closeEditModal()">Batal</button>
-                <button type="submit" class="btn-primary-custom">Simpan Perubahan</button>
-            </div>
-        </form>
+        <!-- Footer Modal -->
+        <div style="background-color: #f8f9fc; padding: 15px 20px; border-top: 1px solid #e3e6f0; text-align: right;">
+            <button type="button" style="background-color: #858796; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer;" onclick="closeDetailModal()">Tutup</button>
+        </div>
     </div>
 </div>
 
@@ -823,74 +726,87 @@ try {
 
 
 <!-- =========================================================================
-     KONTROL MODAL FIX (HAPUS BERFUNGSI DENGAN REFRESH GET & FIX BINDING SELECT)
+     KONTROL MODAL FIX (MODAL HAPUS & MODAL DETAIL)
      ========================================================================= -->
 <script>
-    // Variabel global untuk menyimpan ID yang akan dihapus sementara
+    // ----------------------------------------------------
+    // VARIABEL GLOBAL & KONTROL MODAL HAPUS
+    // ----------------------------------------------------
     let activeDeleteId = null;
 
-    // Kontrol Modal Tambah
-    function openAddModal() {
-        document.getElementById('modalAdd').style.display = 'block';
-    }
-    function closeAddModal() {
-        document.getElementById('modalAdd').style.display = 'none';
-    }
-
-    // Kontrol Modal Edit
-    function openEditModal(data) {
-        // Melakukan data-binding otomatis ke field input modal edit
-        document.getElementById('edit_id').value = data.id;
-        
-        // FIX: Jika category_id bernilai null/0, set ke "" agar dropdown memilih "-- Tanpa Kategori --"
-        document.getElementById('edit_category_id').value = (data.category_id && data.category_id !== "0") ? data.category_id : "";
-        
-        document.getElementById('edit_judul').value = data.judul;
-        document.getElementById('edit_isi').value = data.isi;
-        document.getElementById('edit_status').value = data.status;
-        
-        const fileInfo = document.getElementById('edit_lampiran_info');
-        if (fileInfo) {
-            if (data.lampiran) {
-                fileInfo.innerHTML = "📁 Berkas saat ini: <strong>" + data.lampiran + "</strong>";
-            } else {
-                fileInfo.innerHTML = "";
-            }
-        }
-        document.getElementById('modalEdit').style.display = 'block';
-    }
-    function closeEditModal() {
-        document.getElementById('modalEdit').style.display = 'none';
-    }
-
-    // Kontrol Modal Hapus Kustom
     function openDeleteModal(id) {
-        // Simpan ID yang dipilih ke variabel global
         activeDeleteId = id;
         document.getElementById('modalDelete').style.display = 'block';
     }
+    
     function closeDeleteModal() {
         document.getElementById('modalDelete').style.display = 'none';
         activeDeleteId = null;
     }
     
-    // Fungsi Eksekusi Utama saat Tombol Merah "Ya, Hapus" diklik
     function executeDelete() {
         if (activeDeleteId) {
-            // Memicu reload halaman dengan mengirimkan parameter query string ?delete=ID ke PHP Anda
             window.location.href = "knowledge_articles.php?delete=" + activeDeleteId;
         }
     }
 
-    // Event Listener Tutup Modal Saat Klik Area Luar Kotak Putih
-    window.addEventListener('click', function(event) {
-        var modalAdd = document.getElementById('modalAdd');
-        var modalEdit = document.getElementById('modalEdit');
-        var modalDelete = document.getElementById('modalDelete');
+    // ----------------------------------------------------
+    // KONTROL MODAL DETAIL ARTIKEL BARU
+    // ----------------------------------------------------
+    function openDetailModal(data) {
+        // Isi data teks judul ke elemen modal
+        document.getElementById('modalJudul').innerText = data.judul || '-';
+        
+        // Render Badge Kategori
+        const kategoriEl = document.getElementById('modalKategori');
+        if (data.category_name) {
+            kategoriEl.innerHTML = `<span style="background-color: #eaecf4; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; color: #4e73df;">${data.category_name}</span>`;
+        } else {
+            kategoriEl.innerHTML = `<span style="color: #b7b9cc; font-style: italic;">Tanpa Kategori</span>`;
+        }
+        
+        // Render Badge Status
+        const statusEl = document.getElementById('modalStatus');
+        if (data.status == 1) {
+            statusEl.innerHTML = `<span style="background-color: #1cc88a; color: white; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 700;">Aktif</span>`;
+        } else {
+            statusEl.innerHTML = `<span style="background-color: #858796; color: white; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 700;">Draf</span>`;
+        }
+        
+        // Isi Konten Utama Artikel
+        document.getElementById('modalIsi').innerHTML = data.isi || '-';
+        
+        // Render Tautan Lampiran Berkas
+        const lampiranEl = document.getElementById('modalLampiran');
+        if (data.lampiran) {
+            lampiranEl.innerHTML = `<a href="uploads/${data.lampiran}" target="_blank" style="color: #36b9cc; text-decoration: none; font-weight: 500;">📁 Lihat Berkas (${data.lampiran})</a>`;
+        } else {
+            lampiranEl.innerHTML = `<span style="color: #b7b9cc; font-style: italic;">Tidak ada lampiran</span>`;
+        }
+        
+        // Tampilkan Modal Detail menggunakan flex centering
+        document.getElementById('detailModal').style.display = 'flex';
+    }
 
-        if (event.target == modalAdd) { modalAdd.style.display = 'none'; }
-        if (event.target == modalEdit) { modalEdit.style.display = 'none'; }
-        if (event.target == modalDelete) { closeDeleteModal(); }
+    function closeDetailModal() {
+        document.getElementById('detailModal').style.display = 'none';
+    }
+
+    // ----------------------------------------------------
+    // GLOBAL EVENT LISTENER (TUTUP SAAT KLIK LUAR AREA)
+    // ----------------------------------------------------
+    window.addEventListener('click', function(event) {
+        // Deteksi penutupan Modal Hapus
+        var modalDelete = document.getElementById('modalDelete');
+        if (event.target == modalDelete) { 
+            closeDeleteModal(); 
+        }
+
+        // Deteksi penutupan Modal Detail
+        var modalDetail = document.getElementById('detailModal');
+        if (event.target == modalDetail) {
+            closeDetailModal();
+        }
     });
 </script>
 
