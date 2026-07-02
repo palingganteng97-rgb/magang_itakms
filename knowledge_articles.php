@@ -589,15 +589,18 @@ try {
                         <td style="padding: 15px 20px; color: #6e707e; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                             <?php echo htmlspecialchars(strip_tags($row['isi'] ?? '')); ?>
                         </td>
-                        <td style="padding: 15px 20px;">
+                        
+                        <!-- PERBAIKAN LAMPIRAN: Dikunci barisnya dan disejajarkan secara vertikal -->
+                        <td style="padding: 15px 20px; white-space: nowrap;">
                             <?php if (!empty($row['lampiran'])): ?>
-                                <a href="uploads/<?php echo htmlspecialchars($row['lampiran']); ?>" target="_blank" style="color: #36b9cc; text-decoration: none; font-weight: 500;">
-                                    📁 Lihat Berkas
+                                <a href="uploads/<?php echo htmlspecialchars($row['lampiran']); ?>" target="_blank" style="color: #36b9cc; text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; vertical-align: middle;">
+                                    <span style="font-size: 16px; line-height: 1;">📁</span> Lihat Berkas
                                 </a>
                             <?php else: ?>
                                 <span style="color: #b7b9cc; font-style: italic;">Tidak ada</span>
                             <?php endif; ?>
                         </td>
+                        
                         <td style="padding: 15px 20px;">
                             <?php if (($row['status'] ?? 1) == 1): ?>
                                 <span style="background-color: #1cc88a; color: white; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-block;">Aktif</span>
@@ -606,11 +609,10 @@ try {
                             <?php endif; ?>
                         </td>
                         <td style="padding: 15px 20px; text-align: center; white-space: nowrap;">
-                            <!-- Tombol Detail yang memicu JavaScript Modal -->
-                            <button type="button" style="color: #36b9cc; background: none; border: none; font-weight: 600; margin-right: 12px; padding: 0; cursor: pointer; display: inline-block; vertical-align: baseline;" 
-                                    onclick="openDetailModal(<?php echo htmlspecialchars(json_encode($row)); ?>)">
+                            <!-- PERBAIKAN: Mengubah button modal menjadi tautan link ke halaman detail -->
+                            <a href="detail_artikel.php?id=<?php echo $row['id']; ?>" style="color: #36b9cc; text-decoration: none; font-weight: 600; margin-right: 12px; display: inline-block;">
                                 Detail
-                            </button>
+                            </a>
                             
                             <a href="edit_artikel.php?id=<?php echo $row['id']; ?>" style="color: #f6c23e; text-decoration: none; font-weight: 600; margin-right: 12px; display: inline-block;">
                                 Edit
@@ -632,7 +634,8 @@ try {
             <?php endif; ?>
         </tbody>
     </table>
-    
+</div>
+
     <!-- Paginasi di Bagian Bawah Tabel -->
     <?php if (isset($totalPages) && $totalPages > 1): ?>
         <div style="background-color: #f8f9fc; padding: 15px 20px; border-top: 1px solid #e3e6f0; display: flex; justify-content: space-between; align-items: center;">
@@ -652,44 +655,6 @@ try {
     <?php endif; ?>
 </div>
 </main>
-
-<!-- ELEMEN MODAL DETAIL (Ditempatkan di luar pembungkus tabel) -->
-<div id="detailModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
-    <div style="background-color: #fff; border-radius: 8px; width: 100%; max-width: 600px; box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15); overflow: hidden; margin: 20px; display: flex; flex-direction: column; max-height: 85vh;">
-        <!-- Header Modal -->
-        <div style="background-color: #f8f9fc; padding: 15px 20px; border-bottom: 1px solid #e3e6f0; display: flex; justify-content: space-between; align-items: center;">
-            <h5 style="margin: 0; color: #4e73df; font-weight: 700; font-size: 16px;">Detail Artikel</h5>
-            <span style="color: #aaaaaa; font-size: 24px; font-weight: bold; cursor: pointer; line-height: 1;" onclick="closeDetailModal()">&times;</span>
-        </div>
-        <!-- Isi Konten Modal -->
-        <div style="padding: 20px; overflow-y: auto; color: #6e707e; font-size: 14px; line-height: 1.6;">
-            <div style="margin-bottom: 15px;">
-                <strong style="color: #4e73df; display: block; margin-bottom: 5px;">Judul Artikel:</strong>
-                <span id="modalJudul" style="font-weight: 600; color: #2e59d9; font-size: 15px;"></span>
-            </div>
-            <div style="margin-bottom: 15px;">
-                <strong style="color: #4e73df; display: block; margin-bottom: 5px;">Kategori:</strong>
-                <span id="modalKategori"></span>
-            </div>
-            <div style="margin-bottom: 15px;">
-                <strong style="color: #4e73df; display: block; margin-bottom: 5px;">Status:</strong>
-                <span id="modalStatus"></span>
-            </div>
-            <div style="margin-bottom: 15px;">
-                <strong style="color: #4e73df; display: block; margin-bottom: 5px;">Isi Konten:</strong>
-                <div id="modalIsi" style="background: #f8f9fc; padding: 15px; border-radius: 6px; border: 1px solid #e3e6f0; white-space: pre-line; max-height: 250px; overflow-y: auto;"></div>
-            </div>
-            <div>
-                <strong style="color: #4e73df; display: block; margin-bottom: 5px;">Lampiran:</strong>
-                <div id="modalLampiran"></div>
-            </div>
-        </div>
-        <!-- Footer Modal -->
-        <div style="background-color: #f8f9fc; padding: 15px 20px; border-top: 1px solid #e3e6f0; text-align: right;">
-            <button type="button" style="background-color: #858796; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer;" onclick="closeDetailModal()">Tutup</button>
-        </div>
-    </div>
-</div>
 
     <!-- =========================================================================
          STRUKTUR MODAL HAPUS DATA (MURNI TAMPILAN)
