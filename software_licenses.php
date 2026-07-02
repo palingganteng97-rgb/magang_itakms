@@ -2,6 +2,11 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
+// Pastikan session aktif untuk menampung flash message
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // 1. KONFIGURASI DATABASE UTAMA (PDO)
 $host = "10.10.6.59";
 $username = "root_host";
@@ -17,9 +22,8 @@ try {
 }
 
 $currentPage = 'software_licenses.php';
-$message = "";
 
-// 2. PROSES CRUD (CREATE, UPDATE, DELETE) MENGGUNAKAN PREPARED STATEMENT
+// 2. PROSES CRUD (CREATE, UPDATE, DELETE)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     try {
         if ($_POST['action'] === 'create') {
@@ -34,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 ':digunakan' => intval($_POST['digunakan']),
                 ':status' => intval($_POST['status'])
             ]);
-            $message = "success_Tambah data berhasil!";
+            $_SESSION['crud_message'] = "success_Tambah data berhasil!";
         }
 
         if ($_POST['action'] === 'update') {
@@ -51,20 +55,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 ':digunakan' => intval($_POST['digunakan']),
                 ':status' => intval($_POST['status'])
             ]);
-            $message = "success_Ubah data berhasil!";
+            $_SESSION['crud_message'] = "success_Ubah data berhasil!";
         }
 
         if ($_POST['action'] === 'delete') {
             $stmt = $conn->prepare("DELETE FROM software_licenses WHERE id = :id");
             $stmt->execute([':id' => intval($_POST['id'])]);
-            $message = "danger_Data berhasil dihapus!";
+            $_SESSION['crud_message'] = "danger_Data berhasil dihapus!";
         }
+        
+        // REDIRECT setelah sukses untuk membersihkan data POST browser
+        header("Location: software_licenses.php");
+        exit();
+
     } catch (\PDOException $e) {
-        $message = "danger_Gagal memproses data: " . $e->getMessage();
+        $_SESSION['crud_message'] = "danger_Gagal memproses data: " . $e->getMessage();
+        header("Location: software_licenses.php");
+        exit();
     }
 }
 
-// 3. READ DATA DARI DATABASE
+// 3. READ DATA
 try {
     $stmt = $conn->query("SELECT * FROM software_licenses ORDER BY id DESC");
     $licenses = $stmt->fetchAll();
