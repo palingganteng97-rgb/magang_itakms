@@ -346,6 +346,13 @@ try {
       <li class="nav-item"> 
         <a href="backup_jobs.php" class="nav-link <?= checkActiveMenu('backup_jobs.php', $currentFile) ?> rounded-end d-flex align-items-center"><i class="bi bi-database-fill-gear me-3"></i> Backup Jobs</a> 
       </li>
+
+      <li class="nav-item"> 
+        <a href="daily_checklist.php" class="nav-link <?= checkActiveMenu('daily_checklist.php', $currentFile) ?> rounded-end d-flex align-items-center">
+            <i class="bi bi-card-checklist me-3"></i> Daily Checklist
+        </a> 
+      </li>
+
       <li class="nav-item">
         <a href="user.php" class="nav-link <?= checkActiveMenu('user.php', $currentFile) ?> rounded-end d-flex align-items-center"><i class="bi bi-person-fill me-3"></i> User Profil</a>
       </li>
