@@ -270,6 +270,18 @@ if (isset($_GET['status'])) {
                 <i class="bi bi-file-earmark-text-fill me-2"></i> <span>Knowledge Articles</span>
             </a> 
         </li> 
+        <!-- SOPS (Menu Baru - Tampil Mobile & Desktop) --> 
+        <li class="nav-item"> 
+            <a href="sops.php" class="nav-link <?= ($currentPage == 'sops.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded d-flex align-items-center"> 
+                <i class="bi bi-journal-text me-2"></i> <span>SOPS</span>
+            </a> 
+        </li> 
+        <!-- SOP CATEGORIES (Menu Baru - Tampil Mobile & Desktop) --> 
+        <li class="nav-item"> 
+            <a href="sop_categories.php" class="nav-link <?= ($currentPage == 'sop_categories.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded d-flex align-items-center"> 
+                <i class="bi bi-tags me-2"></i> <span>SOP Categories</span>
+            </a> 
+        </li> 
         <!-- SOFTWARE LICENSES (Khusus Mobile & Device Kecil) --> 
         <li class="nav-item d-md-none"> 
             <a href="software_licenses.php" class="nav-link <?= ($currentPage == 'software_licenses.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded d-flex align-items-center"> 
@@ -381,6 +393,18 @@ if (isset($_GET['status'])) {
         <li class="nav-item"> 
             <a href="knowledge_articles.php" class="nav-link <?= ($currentPage == 'knowledge_articles.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded"> 
                 <i class="bi bi-file-earmark-text-fill me-2"></i> <span>Knowledge Articles</span>
+            </a> 
+        </li> 
+        <!-- SOPS (Menu Baru - Tampil Mobile & Desktop) --> 
+        <li class="nav-item"> 
+            <a href="sops.php" class="nav-link <?= ($currentPage == 'sops.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded d-flex align-items-center"> 
+                <i class="bi bi-journal-text me-2"></i> <span>SOPS</span>
+            </a> 
+        </li> 
+        <!-- SOP CATEGORIES (Menu Baru - Tampil Mobile & Desktop) --> 
+        <li class="nav-item"> 
+            <a href="sop_categories.php" class="nav-link <?= ($currentPage == 'sop_categories.php') ? 'active bg-primary text-white' : 'text-white'; ?> p-2 rounded d-flex align-items-center"> 
+                <i class="bi bi-tags me-2"></i> <span>SOP Categories</span>
             </a> 
         </li> 
         <!-- SOFTWARE LICENSES (Langsung tampil di Desktop & Mobile) --> 
