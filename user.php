@@ -206,68 +206,6 @@ try {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-
-    <!-- PERBAIKAN TOTAL SIDEBAR (TERINTEGRASI & BERSIH) -->
-    <style>
-        /* ========================================== */
-        /* LAYAR DESKTOP / LAPTOP (Lebar >= 768px)    */
-        /* ========================================== */
-        @media (min-width: 768px) {
-            /* Sembunyikan & matikan backdrop sepenuhnya di desktop */
-            .offcanvas-backdrop, 
-            .offcanvas-backdrop.show {
-                display: none !important;
-                opacity: 0 !important;
-                visibility: hidden !important;
-                pointer-events: none !important;
-            }
-            /* Mengizinkan scroll hanya pada menu samping desktop */
-            .hide-scrollbar {
-                overflow-y: auto !important;
-            }
-            /* Memastikan body tidak terkunci saat sidebar aktif di desktop */
-            body {
-                overflow: auto !important;
-                padding-right: 0 !important;
-            }
-        }
-
-        /* ========================================== */
-        /* LAYAR MOBILE / HP (Lebar < 768px)          */
-        /* ========================================== */
-        @media (max-width: 767.98px) {
-            /* Membuat tirai menjadi BENING dan BISA DIKLIK TEMBUS */
-            .offcanvas-backdrop.show {
-                display: block !important;
-                opacity: 0 !important;
-                background-color: transparent !important;
-                visibility: visible !important;
-                pointer-events: none !important; /* SOLUSI: Klik menembus lapisan bening */
-            }
-            /* Memastikan laci offcanvas mobile bisa di-scroll mandiri */
-            .offcanvas-md {
-                overflow-y: auto !important;
-                -webkit-overflow-scrolling: touch;
-            }
-            /* Mencegah konflik double scrollbar di HP */
-            .hide-scrollbar {
-                overflow-y: visible !important;
-            }
-        }
-    </style>
-</head>
-<body>
-
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Admin - Itakms</title>
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     
     <link href="sidebar-admin.css" rel="stylesheet">
 
@@ -517,7 +455,9 @@ try {
       <li class="nav-item"> 
         <a href="software_licenses.php" class="nav-link <?= checkActiveMenu('software_licenses.php', $currentFile) ?> rounded-end d-flex align-items-center"><i class="bi bi-key-fill me-3"></i> Software Licenses</a> 
       </li> 
-      
+      <li class="nav-item"> 
+        <a href="backup_jobs.php" class="nav-link <?= checkActiveMenu('backup_jobs.php', $currentFile) ?> rounded-end d-flex align-items-center"><i class="bi bi-database-fill-gear me-3"></i> Backup Jobs</a> 
+      </li>
       <li class="nav-item">
         <a href="user.php" class="nav-link <?= checkActiveMenu('user.php', $currentFile) ?> rounded-end d-flex align-items-center"><i class="bi bi-person-fill me-3"></i> User Profil</a>
       </li>

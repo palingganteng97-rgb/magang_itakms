@@ -2,25 +2,97 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
-// Database config
+// =========================================================================
+// 1. KONFIGURASI DATABASE & PROSES CRUD
+// =========================================================================
 $host = "10.10.6.59";
 $username = "root_host";
 $password = "password";
 $database = "magang_itakms";
 
-try {
-    $conn = new PDO("mysql:host=$host;dbname=$database", $username, $password, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    ]);
+// Paginasi
+$perPage = 50;
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$offset = ($page - 1) * $perPage;
 
-    $stmt = $conn->prepare("SELECT id, nama, keterangan, status FROM roles ORDER BY id ASC");
+try {
+    $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8mb4", $username, $password);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    // --- PROSES TAMBAH JOB BACKUP (CREATE) ---
+    if (isset($_POST['action']) && $_POST['action'] == 'create') {
+        $job_name = trim($_POST['job_name']);
+        $backup_type = $_POST['backup_type']; // 'database' atau 'files'
+        $schedule = $_POST['schedule'];       // 'daily', 'weekly', etc.
+        $status = isset($_POST['status']) ? (int)$_POST['status'] : 1;
+
+        $sql = "INSERT INTO backup_jobs (job_name, backup_type, schedule, status) 
+                VALUES (:job_name, :backup_type, :schedule, :status)";
+        
+        $stmt = $conn->prepare($sql);
+        $stmt->bindParam(':job_name', $job_name);
+        $stmt->bindParam(':backup_type', $backup_type);
+        $stmt->bindParam(':schedule', $schedule);
+        $stmt->bindParam(':status', $status, PDO::PARAM_INT);
+
+        if ($stmt->execute()) {
+            header("Location: backup_jobs.php?success=create");
+            exit;
+        }
+    }
+
+    // --- PROSES MENJALANKAN MANUAL BACKUP ON-THE-FLY (Pemicu/Trigger) ---
+    if (isset($_POST['action']) && $_POST['action'] == 'run_backup') {
+        $job_id = (int)$_POST['id'];
+        
+        // Contoh logika trigger dump database otomatis (menggunakan mysqldump)
+        $filename = "backup_" . database . "_" . time() . ".sql";
+        $targetPath = __DIR__ . "/uploads/backups/" . $filename;
+        
+        // Perintah CLI shell Linux untuk backup database
+        $command = "mysqldump -h $host -u $username -p$password $database > $targetPath";
+        system($command, $outputCode);
+
+        if ($outputCode === 0) {
+            // Update waktu backup terakhir jika berhasil
+            $updateLog = $conn->prepare("UPDATE backup_jobs SET last_run = NOW(), last_status = 'success' WHERE id = :id");
+            $updateLog->bindParam(':id', $job_id);
+            $updateLog->execute();
+            header("Location: backup_jobs.php?success=backup_run");
+        } else {
+            $updateLog = $conn->prepare("UPDATE backup_jobs SET last_status = 'failed' WHERE id = :id");
+            $updateLog->bindParam(':id', $job_id);
+            $updateLog->execute();
+            header("Location: backup_jobs.php?error=backup_failed");
+        }
+        exit;
+    }
+
+    // --- PROSES HAPUS JOB (DELETE) ---
+    if (isset($_POST['action']) && $_POST['action'] == 'delete') {
+        $id = (int)$_POST['id'];
+        $stmt = $conn->prepare("DELETE FROM backup_jobs WHERE id = :id");
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        
+        if ($stmt->execute()) {
+            header("Location: backup_jobs.php?success=delete");
+            exit;
+        }
+    }
+
+    // --- PROSES MENAMPILKAN DATA (READ) ---
+    $totalQuery = $conn->query("SELECT COUNT(*) FROM backup_jobs");
+    $totalRows = $totalQuery->fetchColumn();
+    $totalPages = ceil($totalRows / $perPage);
+
+    $stmt = $conn->prepare("SELECT * FROM backup_jobs ORDER BY id DESC LIMIT :limit OFFSET :offset");
+    $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
     $stmt->execute();
-    $roles = $stmt->fetchAll();
+    $backupJobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 } catch (PDOException $e) {
-    http_response_code(500);
-    echo "Koneksi gagal: " . htmlspecialchars($e->getMessage());
-    exit;
+    die("Database Error: " . $e->getMessage());
 }
 ?>
 
@@ -309,245 +381,8 @@ try {
 
 </div> <!-- /penutup elemen offcanvas-md -->
 
-    <!-- AREA UTAMA KONTEN (Gunakan pembungkus ini agar susunan halaman tidak bergeser tertimpa sidebar) -->
-    <main class="col-md-8 ms-sm-auto col-lg-9 px-md-4 pt-4 offset-md-4 offset-lg-3">
-
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">Manajemen Roles</h1>
-                <span class="badge bg-secondary p-2">Sesi Admin</span>
-            </div>
-
-            <div class="card shadow-sm">
-                <div class="card-header bg-white d-flex flex-column flex-sm-row gap-2 justify-content-between align-items-sm-center">
-                    <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-shield-lock me-2"></i> Tabel Manajemen Roles</h5>
-                    <button type="button" class="btn btn-sm btn-dark" data-bs-toggle="modal" data-bs-target="#modalTambahRole">
-                        <i class="bi bi-plus-lg me-1"></i> Tambah Role
-                    </button>
-                </div>
-
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover table-striped mb-0 align-middle">
-                            <thead class="table-light">
-                            <tr>
-                                <th style="width: 90px;">ID</th>
-                                <th>Nama</th>
-                                <th>Keterangan</th>
-                                <th>Status</th>
-                                <th style="width: 140px;">Aksi</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <?php if (count($roles) > 0): ?>
-                                <?php foreach ($roles as $role): ?>
-                                    <tr>
-                                        <td class="fw-bold">#<?= (int)$role['id'] ?></td>
-                                        <td>
-                                            <span class="badge bg-dark px-2.5 py-1.5"><?= htmlspecialchars($role['nama']) ?></span>
-                                        </td>
-                                        <td class="text-secondary small"><?= htmlspecialchars($role['keterangan'] ?? '-') ?></td>
-                                        <td>
-                                            <?php if ((int)$role['status'] === 1): ?>
-                                                <span class="badge bg-success-subtle text-success border border-success px-2.5 py-1.5">Aktif</span>
-                                            <?php else: ?>
-                                                <span class="badge bg-danger-subtle text-danger border border-danger px-2.5 py-1.5">Non-Aktif</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td class="text-end">
-                                            <button
-                                                type="button"
-                                                class="btn btn-sm btn-outline-primary btnEditRole"
-                                                data-id="<?= (int)$role['id'] ?>"
-                                                data-nama="<?= htmlspecialchars($role['nama']) ?>"
-                                                data-keterangan="<?= htmlspecialchars($role['keterangan'] ?? '') ?>"
-                                                data-status="<?= (int)$role['status'] ?>"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#modalEditRole"
-                                            >
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                            <button
-                                                type="button"
-                                                class="btn btn-sm btn-outline-danger btnDeleteRole"
-                                                data-id="<?= (int)$role['id'] ?>"
-                                            >
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <tr>
-                                    <td colspan="5" class="text-center py-4 text-muted">Belum ada data roles.</td>
-                                </tr>
-                            <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
-</div>
-
-<!-- Modal Tambah Role -->
-<div class="modal fade" id="modalTambahRole" tabindex="-1" aria-labelledby="modalTambahRoleLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="formTambahRole" method="POST">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalTambahRoleLabel">Tambah Role</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-
-                <div class="modal-body">
-                    <input type="hidden" name="action" value="create">
-
-                    <!-- id auto increment di DB; nama wajib -->
-                    <div class="mb-3">
-                        <label class="form-label">Nama Peran</label>
-                        <input type="text" name="nama" class="form-control" required>
-                    </div>
-
-                    <!-- keterangan NULL default -->
-                    <div class="mb-3">
-                        <label class="form-label">Keterangan (opsional)</label>
-                        <textarea name="keterangan" class="form-control" rows="3"></textarea>
-                    </div>
-
-                    <!-- status default '1' -->
-                    <input type="hidden" name="status" value="1">
-                </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary">Simpan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Edit Role -->
-<div class="modal fade" id="modalEditRole" tabindex="-1" aria-labelledby="modalEditRoleLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="formEditRole" action="crud_roles.php" method="POST">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalEditRoleLabel">Edit Role</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-
-                <div class="modal-body">
-                    <input type="hidden" name="action" value="update">
-                    <input type="hidden" name="id" id="editId">
-
-                    <div class="mb-3">
-                        <label class="form-label">Nama Peran</label>
-                        <input type="text" name="nama" id="editNama" class="form-control" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Keterangan (opsional)</label>
-                        <textarea name="keterangan" id="editKeterangan" class="form-control" rows="3"></textarea>
-                    </div>
-
-                    <!-- status bisa diedit sesuai data (default 1 di insert) -->
-                    <div class="mb-3">
-                        <label class="form-label">Status</label>
-                        <select name="status" id="editStatus" class="form-select" required>
-                            <option value="1">Aktif</option>
-                            <option value="0">Non-Aktif</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary">Update</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // Isi modal edit
-        const modalEdit = document.getElementById('modalEditRole');
-        modalEdit.addEventListener('show.bs.modal', (event) => {
-            const btn = event.relatedTarget;
-            if (!btn) return;
-            document.getElementById('editId').value = btn.getAttribute('data-id');
-            document.getElementById('editNama').value = btn.getAttribute('data-nama');
-            document.getElementById('editKeterangan').value = btn.getAttribute('data-keterangan');
-            document.getElementById('editStatus').value = btn.getAttribute('data-status');
-        });
-
-        // Supaya tidak tampil JSON mentah saat submit form (karena crud_roles.php mengembalikan JSON)
-        // Kita intercept submit dan redirect balik ke roles.php setelah sukses.
-        const ajaxSubmit = (form) => {
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const formData = new FormData(form);
-
-                try {
-                    const res = await fetch('crud_roles.php', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    const data = await res.json();
-
-                    if (data.ok) {
-                        alert(data.message);
-                        window.location.href = 'roles.php';
-                    } else {
-                        alert('Gagal: ' + (data.message || 'Unknown error'));
-                    }
-                } catch (err) {
-                    console.error(err);
-                    alert('Gagal menghubungi server.');
-                }
-            });
-        };
-
-        ajaxSubmit(document.getElementById('formTambahRole'));
-        ajaxSubmit(document.getElementById('formEditRole'));
-
-        // Delete via AJAX
-        document.querySelectorAll('.btnDeleteRole').forEach((btn) => {
-            btn.addEventListener('click', async () => {
-                const id = btn.getAttribute('data-id');
-                if (!confirm('Apakah yakin menghapus role ini?')) return;
-
-                const formData = new FormData();
-                formData.append('action', 'delete');
-                formData.append('id', id);
-
-                try {
-                    const res = await fetch('crud_roles.php', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    const data = await res.json();
-
-                    if (data.ok) {
-                        alert(data.message);
-                        window.location.href = 'roles.php';
-                    } else {
-                        alert('Gagal menghapus: ' + (data.message || 'Unknown error'));
-                    }
-                } catch (err) {
-                    console.error(err);
-                    alert('Gagal menghubungi server.');
-                }
-            });
-        });
-    });
-</script>
-
-</body>
-</html>
-
+<!-- ==================================================================== -->
+<!-- BAGIAN C: PEMBUNGKUS MAIN KONTEN UTAMA (SEKARANG SUDAH DI LUAR)       -->
+<!-- ==================================================================== -->
+<main class="main-content p-3 p-md-4 flex-grow-1 overflow-x-hidden">
+    
