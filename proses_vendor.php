@@ -42,6 +42,12 @@ if (isset($_POST['action']) && $_POST['action'] == 'add_vendor') {
             ':status'  => $status
         ]);
 
+        // =========================================================================
+        // PENGISIAN DATA ID LOGS INSTAN (TAMBAH DATA VENDOR)
+        // =========================================================================
+        $last_id = $conn->lastInsertId();
+        write_log($conn, "Menambahkan data vendor baru: '" . $nama . "'", "vendors", $last_id);
+
         header("Location: vendors.php?status=success_add");
         exit();
     } catch (PDOException $e) {
@@ -84,6 +90,11 @@ if (isset($_POST['action']) && $_POST['action'] == 'edit_vendor') {
             ':id'      => $id
         ]);
 
+        // =========================================================================
+        // PENGISIAN DATA ID LOGS INSTAN (UBAH DATA VENDOR)
+        // =========================================================================
+        write_log($conn, "Memperbarui profil informasi data vendor: '" . $nama . "'", "vendors", $id);
+
         header("Location: vendors.php?status=success_update");
         exit();
     } catch (PDOException $e) {
@@ -91,22 +102,49 @@ if (isset($_POST['action']) && $_POST['action'] == 'edit_vendor') {
     }
 }
 
-// 4. LOGIKA HAPUS DATA (DELETE)
+// 4. LOGIKA HAPUS DATA (DELETE DENGAN PEMBERSIHAN MULTI-TABEL)
 if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id'])) {
     $id = (int)$_GET['id'];
 
     try {
-        $sql = "DELETE FROM vendors WHERE id = :id";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute([':id' => $id]);
+        // A. Mulai Database Transaction untuk mengunci integritas proses hapus berantai
+        $conn->beginTransaction();
+
+        // B. Ambil nama vendor sebelum datanya dimusnahkan untuk deskripsi log audit
+        $get_vendor = $conn->prepare("SELECT nama FROM vendors WHERE id = :id");
+        $get_vendor->execute([':id' => $id]);
+        $vendor = $get_vendor->fetch(PDO::FETCH_ASSOC);
+
+        if ($vendor) {
+            $nama_vendor = $vendor['nama'] ?? 'Tidak Diketahui';
+
+            // C. FIX ERROR 1451: Hapus data kontak relasi di tabel anak 'vendor_contacts' terlebih dahulu
+            $stmt_contacts = $conn->prepare("DELETE FROM vendor_contacts WHERE vendor_id = :id");
+            $stmt_contacts->execute([':id' => $id]);
+
+            // D. Setelah tabel anak bersih, barulah aman menghapus baris data di tabel induk 'vendors'
+            $stmt_vendor = $conn->prepare("DELETE FROM vendors WHERE id = :id");
+            $stmt_vendor->execute([':id' => $id]);
+
+            // =========================================================================
+            // PENGISIAN DATA ID LOGS INSTAN (HAPUS DATA VENDOR)
+            // =========================================================================
+            write_log($conn, "Menghapus total data vendor: '" . $nama_vendor . "' beserta seluruh kontak relasinya", "vendors", $id);
+
+            // E. Commit seluruh rangkaian query transaksi database jika sukses tanpa kendala
+            $conn->commit();
+        }
 
         header("Location: vendors.php?status=success_delete");
         exit();
-    } catch (PDOException $e) {
-        die("Error hapus data: " . $e->getMessage());
+    } catch (Exception $e) {
+        // Batalkan semua query hapus jika ada salah satu operasi tabel anak/induk yang gagal
+        $conn->rollBack();
+        die("Error hapus data akibat batasan sistem: " . $e->getMessage());
     }
 }
 
 // Jika tidak ada aksi valid, kembalikan ke halaman utama vendor
 header("Location: vendors.php");
 exit();
+?>
