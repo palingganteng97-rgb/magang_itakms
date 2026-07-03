@@ -192,7 +192,7 @@ try {
                 display: block !important;
                 max-height: calc(100vh - 160px) !important;
                 overflow-y: auto !important;
-                overflow-x: hidden !important;
+                overflow-x: hidden !hidden !important;
                 scrollbar-width: none;
                 -ms-overflow-style: none;
             }
@@ -204,7 +204,7 @@ try {
                 margin-left: 280px !important;
                 width: calc(100% - 280px) !important;
                 min-height: 100vh !important;
-                display: block !important; /* Kembalikan sifat block di laptop */
+                display: block !important;
             }
             .offcanvas-backdrop, .offcanvas-backdrop.show {
                 display: none !important;
@@ -221,9 +221,8 @@ try {
             body {
                 overflow: auto !important;
                 position: relative !important;
-                display: block !important; /* Hancurkan flexbox desktop di HP */
+                display: block !important;
             }
-            /* Kunci container induk luar agar di HP melepas kuncian flex */
             .d-md-flex {
                 display: block !important; 
             }
@@ -236,13 +235,12 @@ try {
                 max-height: none !important;
                 overflow-y: visible !important;
             }
-            /* SOLUSI UTAMA: Hancurkan pembatasan tinggi pendek di HP */
             .main-content {
                 width: 100% !important;
                 margin-left: 0 !important;
-                min-height: calc(100vh - 70px) !important; /* Ambil sisa tinggi layar HP */
+                min-height: calc(100vh - 70px) !important;
                 display: block !important;
-                height: auto !important; /* Biarkan memanjang alami mengikuti jumlah data tabel */
+                height: auto !important;
             }
             .offcanvas-backdrop.show {
                 display: block !important;
@@ -286,6 +284,68 @@ try {
         .sidebar-fixed .nav-link.active-style i {
             color: #0d6efd !important;
         }
+    </style>
+
+    <!-- FORCE CSS OVERRIDE UNTUK WARNA & GARIS PEMBATAS TABEL (ULTIMATE RESET) -->
+    <style>
+        /* 1. Pembuatan Garis Pembatas Vertikal & Horizontal */
+        .custom-table, .custom-table th, .custom-table td {
+            border: 1px solid #e3e6f0 !important;
+            padding: 15px 20px !important;
+            vertical-align: middle !important;
+        }
+
+        /* 2. Warna Judul Kolom Atas (Header) */
+        .custom-table th, .custom-table th * {
+            color: #4e73df !important;
+            font-weight: 700 !important;
+            background-color: #f8f9fc !important;
+        }
+
+        /* 3. Kolom 1 (ID): Dipaksa Hitam Gelap */
+        .custom-table tr td:nth-child(1),
+        .custom-table tr td:nth-child(1) * {
+            color: #222222 !important;
+            font-weight: 700 !important;
+            text-decoration: none !important;
+        }
+
+        /* 4. Kolom 2 (Kategori): Dipaksa Biru Cerah Khas Badge */
+        .custom-table tr td:nth-child(2),
+        .custom-table tr td:nth-child(2) * {
+            color: #1a73e8 !important; 
+            font-weight: 700 !important;
+            text-decoration: none !important;
+        }
+
+        /* 5. Kolom 3 (Judul Artikel): Dipaksa Biru Link Gelap/Navy */
+        .custom-table tr td:nth-child(3),
+        .custom-table tr td:nth-child(3) * {
+            color: #2e59d9 !important; 
+            font-weight: 600 !important;
+            text-decoration: none !important;
+        }
+
+        /* 6. Kolom 4 (Isi Konten): Dipaksa Abu-Abu Netral (Bukan Biru) */
+        .custom-table tr td:nth-child(4),
+        .custom-table tr td:nth-child(4) * {
+            color: #5a5c69 !important; 
+            font-weight: 400 !important;
+            text-decoration: none !important;
+        }
+
+        /* 7. Kolom 5 (Lampiran Berkas): Dipaksa Toska / Cyan */
+        .custom-table tr td:nth-child(5),
+        .custom-table tr td:nth-child(5) * {
+            color: #029cbd !important;
+            font-weight: 600 !important;
+            text-decoration: none !important;
+        }
+        
+        /* 8. Pewarnaan Mandiri Blok Tombol Kolom Aksi */
+        .custom-table .btn-detail, .custom-table .btn-detail * { color: #36b9cc !important; text-decoration: none !important; }
+        .custom-table .btn-edit, .custom-table .btn-edit * { color: #f6c23e !important; text-decoration: none !important; }
+        .custom-table .btn-delete, .custom-table .btn-delete * { color: #e74a3b !important; background: none !important; border: none !important; padding: 0 !important; }
     </style>
 
 </head>
@@ -437,116 +497,116 @@ try {
 
 </div> <!-- /penutup elemen offcanvas-md -->
 
+<!-- PEMUTUS LINK GLOBAL (Mencegah kebocoran tag <a> dari file header eksternal) -->
+</a>
+
 <!-- AREA UTAMA KONTEN -->
 <main class="col-md-8 ms-sm-auto col-lg-9 px-md-4 pt-4 offset-md-4 offset-lg-3">
     <!-- Header Konten -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
         <h2 style="margin: 0; color: #333; font-size: 28px; font-weight: 600;">Knowledge Articles</h2>
         <!-- FIX: Mengarah langsung ke berkas halaman mandiri tambah_artikel.php -->
-        <a href="tambah_artikel.php" class="btn btn-primary">+ Tambah Artikel Baru</a> 
+        <a href="tambah_artikel.php" class="btn btn-primary" style="color: #ffffff !important;">+ Tambah Artikel Baru</a> 
     </div>
 
     <!-- Kotak Filter & Pencarian -->
     <div style="background-color: #fff; padding: 15px; border-radius: 8px; border: 1px solid #e3e6f0; margin-bottom: 20px;">
         <form method="GET" action="" style="display: flex; gap: 10px; align-items: center;">
             <input type="text" name="search" placeholder="Cari berdasarkan judul atau isi artikel..." value="<?php echo htmlspecialchars($search ?? ''); ?>" 
-                   style="flex: 1; padding: 10px 15px; border: 1px solid #d1d3e2; border-radius: 6px; font-size: 14px; outline: none;">
-            <button type="submit" style="background-color: #4e73df; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;">
+                   style="flex: 1; padding: 10px 15px; border: 1px solid #d1d3e2; border-radius: 6px; font-size: 14px; outline: none; color: #333333 !important;">
+            <button type="submit" style="background-color: #4e73df; color: white !important; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;">
                 Cari
             </button>
             <?php if (!empty($search)): ?>
-                <a href="?" style="color: #ea4335; text-decoration: none; font-size: 14px; padding: 0 5px;">Reset</a>
+                <a href="?" style="color: #ea4335 !important; text-decoration: none; font-size: 14px; padding: 0 5px;">Reset</a>
             <?php endif; ?>
         </form>
     </div>
 
-<!-- UBAH DI BARIS PERTAMA: Tambahkan overflow-x: auto; -->
-<div style="background-color: #fff; border-radius: 8px; border: 1px solid #e3e6f0; overflow: hidden; overflow-x: auto; box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.05);"> 
-    <!-- Elemen <table> tetap sama seperti sebelumnya -->
-    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-        <thead>
-            <tr style="background-color: #f8f9fc; border-bottom: 2px solid #e3e6f0;">
-                <th style="padding: 15px 20px; color: #4e73df; font-weight: 700; width: 60px;">ID</th>
-                <!-- Lebar Kategori disesuaikan agar teks tidak turun -->
-                <th style="padding: 15px 20px; color: #4e73df; font-weight: 700; width: 180px; white-space: nowrap;">Kategori</th>
-                <!-- Lebar Judul disesuaikan agar lebih luas -->
-                <th style="padding: 15px 20px; color: #4e73df; font-weight: 700; width: 300px;">Judul</th>
-                <th style="padding: 15px 20px; color: #4e73df; font-weight: 700;">Isi Konten</th>
-                <th style="padding: 15px 20px; color: #4e73df; font-weight: 700; width: 150px;">Lampiran</th>
-                <th style="padding: 15px 20px; color: #4e73df; font-weight: 700; width: 100px;">Status</th>
-                <th style="padding: 15px 20px; color: #4e73df; font-weight: 700; width: 200px; text-align: center;">Aksi</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php if (!empty($articles) && count($articles) > 0): ?>
-                <?php foreach ($articles as $row): ?>
-                    <tr style="border-bottom: 1px solid #e3e6f0; transition: background 0.15s;" onmouseover="this.style.backgroundColor='#f8f9fc'" onmouseout="this.style.backgroundColor='transparent'">
-                        <td style="padding: 15px 20px; color: #6e707e;"><?php echo $row['id']; ?></td>
-                        
-                        <!-- PERBAIKAN 1: Tambah white-space: nowrap agar kategori memanjang ke kanan -->
-                        <td style="padding: 15px 20px; color: #6e707e; white-space: nowrap;">
-                            <?php if (!empty($row['category_name'])): ?>
-                                <span style="background-color: #eaecf4; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; color: #4e73df; display: inline-block;">
-                                    <?php echo htmlspecialchars($row['category_name']); ?>
-                                </span>
-                            <?php else: ?>
-                                <span style="color: #b7b9cc; font-style: italic;">Tanpa Kategori</span>
-                            <?php endif; ?>
-                        </td>
+    <!-- TABEL RESPONSIF DENGAN KELAS KUSTOM -->
+    <div style="background-color: #fff; border-radius: 8px; border: 1px solid #e3e6f0; overflow-x: auto; box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.05); margin-bottom: 20px;"> 
+        <table class="custom-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; min-width: 800px;">
+            <thead>
+                <tr style="background-color: #f8f9fc; border-bottom: 2px solid #e3e6f0;">
+                    <th style="width: 60px; text-align: center;">ID</th>
+                    <th style="width: 150px; white-space: nowrap;">Kategori</th>
+                    <th style="width: 200px;">Judul</th>
+                    <th style="width: 250px;">Isi Konten</th>
+                    <th style="width: 130px;">Lampiran</th>
+                    <th style="width: 100px; text-align: center;">Status</th>
+                    <th style="width: 180px; text-align: center;">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (!empty($articles) && count($articles) > 0): ?>
+                    <?php foreach ($articles as $row): ?>
+                        <tr style="border-bottom: 1px solid #e3e6f0;">
+                            
+                            <!-- 1. ID -->
+                            <td style="text-align: center;">
+                                <?php echo $row['id']; ?>
+                            </td>
+                            
+                            <!-- 2. Kategori -->
+                            <td>
+                                <?php if (!empty($row['category_name'])): ?>
+                                    <span style="background-color: #e8f0fe; padding: 4px 10px; border-radius: 4px; font-size: 12px; display: inline-block; border: 1px solid #c2dbf7;">
+                                        <?php echo htmlspecialchars($row['category_name']); ?>
+                                    </span>
+                                <?php else: ?>
+                                    <span style="font-style: italic; font-size: 13px;">Tanpa Kategori</span>
+                                <?php endif; ?>
+                            </td>
 
-                        <!-- PERBAIKAN 2: Tambah white-space: nowrap agar judul memanjang ke kanan -->
-                        <td style="padding: 15px 20px; font-weight: 600; color: #2e59d9; white-space: nowrap;">
-                            <?php echo htmlspecialchars($row['judul'] ?? ''); ?>
-                        </td>
-                        <td style="padding: 15px 20px; color: #6e707e; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            <?php echo htmlspecialchars(strip_tags($row['isi'] ?? '')); ?>
-                        </td>
-                        
-                        <!-- PERBAIKAN LAMPIRAN: Dikunci barisnya dan disejajarkan secara vertikal -->
-                        <td style="padding: 15px 20px; white-space: nowrap;">
-                            <?php if (!empty($row['lampiran'])): ?>
-                                <a href="uploads/<?php echo htmlspecialchars($row['lampiran']); ?>" target="_blank" style="color: #36b9cc; text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; vertical-align: middle;">
-                                    <span style="font-size: 16px; line-height: 1;">📁</span> Lihat Berkas
-                                </a>
-                            <?php else: ?>
-                                <span style="color: #b7b9cc; font-style: italic;">Tidak ada</span>
-                            <?php endif; ?>
-                        </td>
-                        
-                        <td style="padding: 15px 20px;">
-                            <?php if (($row['status'] ?? 1) == 1): ?>
-                                <span style="background-color: #1cc88a; color: white; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-block;">Aktif</span>
-                            <?php else: ?>
-                                <span style="background-color: #858796; color: white; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-block;">Draf</span>
-                            <?php endif; ?>
-                        </td>
-                        <td style="padding: 15px 20px; text-align: center; white-space: nowrap;">
-                            <!-- PERBAIKAN: Mengubah button modal menjadi tautan link ke halaman detail -->
-                            <a href="detail_artikel.php?id=<?php echo $row['id']; ?>" style="color: #36b9cc; text-decoration: none; font-weight: 600; margin-right: 12px; display: inline-block;">
-                                Detail
-                            </a>
+                            <!-- 3. Judul -->
+                            <td>
+                                <?php echo htmlspecialchars($row['judul'] ?? ''); ?>
+                            </td>
+
+                            <!-- 4. Isi Konten -->
+                            <td style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                <?php echo htmlspecialchars(strip_tags($row['isi'] ?? '')); ?>
+                            </td>
                             
-                            <a href="edit_artikel.php?id=<?php echo $row['id']; ?>" style="color: #f6c23e; text-decoration: none; font-weight: 600; margin-right: 12px; display: inline-block;">
-                                Edit
-                            </a>
+                            <!-- 5. Lampiran -->
+                            <td>
+                                <?php if (!empty($row['lampiran'])): ?>
+                                    <a href="uploads/<?php echo htmlspecialchars($row['lampiran']); ?>" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                                        <span style="color: initial;">📁</span> Lihat Berkas
+                                    </a>
+                                <?php else: ?>
+                                    <span style="font-style: italic;">Tidak ada</span>
+                                <?php endif; ?>
+                            </td>
                             
-                            <button type="button" class="btn" style="color: #e74a3b; background: none; border: none; font-weight: 600; padding: 0; cursor: pointer; vertical-align: baseline;" 
-                                    onclick="openDeleteModal(<?php echo $row['id']; ?>)">
-                                Hapus
-                            </button>
+                            <!-- 6. Status -->
+                            <td style="text-align: center;">
+                                <?php if (($row['status'] ?? 1) == 1): ?>
+                                    <span style="background-color: #1cc88a !important; color: white !important; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-block;">Aktif</span>
+                                <?php else: ?>
+                                    <span style="background-color: #858796 !important; color: white !important; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-block;">Draf</span>
+                                <?php endif; ?>
+                            </td>
+
+                            <!-- 7. Aksi -->
+                            <td style="text-align: center; white-space: nowrap;">
+                                <a href="detail_artikel.php?id=<?php echo $row['id']; ?>" class="btn-detail" style="text-decoration: none; margin-right: 12px; display: inline-block;">Detail</a>
+                                <a href="edit_artikel.php?id=<?php echo $row['id']; ?>" class="btn-edit" style="text-decoration: none; margin-right: 12px; display: inline-block;">Edit</a>
+                                <button type="button" class="btn-delete" style="cursor: pointer;" onclick="openDeleteModal(<?php echo $row['id']; ?>)">Hapus</button>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="7" style="padding: 30px; text-align: center; font-style: italic;">
+                            Tidak ada data artikel yang ditemukan.
                         </td>
                     </tr>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <tr>
-                    <td colspan="7" style="padding: 30px; text-align: center; color: #858796; font-style: italic;">
-                        Tidak ada data artikel yang ditemukan.
-                    </td>
-                </tr>
-            <?php endif; ?>
-        </tbody>
-    </table>
-</div>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+</main>
 
     <!-- Paginasi di Bagian Bawah Tabel -->
     <?php if (isset($totalPages) && $totalPages > 1): ?>
