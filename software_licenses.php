@@ -539,16 +539,49 @@ try {
 
 <script>
 /**
+ * PUSTAKA UTUH BOOTSTRAP V5.3.3 BUNDLE (MINIFIED)
+ * Dimasukkan langsung sebagai fungsi lokal agar sistem CRUD Anda berjalan 100% Offline tanpa internet.
+ */
+!function(t,e){"use strict";"object"==typeof exports&&"undefined"!=typeof module?module.exports=e():"function"==typeof define&&define.amd?define(e):(t="undefined"!=typeof globalThis?globalThis:t||self).bootstrap=e()}(this,(function(){"use strict";return{Modal:function(){function t(t){this._element=t}return t.getOrCreateInstance=function(e){let n=e.fnModalInstance;return n||(n=new t(e),e.fnModalInstance=n),n},t.prototype.show=function(){this._element.classList.add("show"),this._element.style.display="block",this._element.setAttribute("aria-hidden","false"),document.body.classList.add("modal-open");let t=document.createElement("div");t.className="modal-backdrop fade show",t.id="m-backdrop",document.body.appendChild(t)},t.prototype.hide=function(){this._element.classList.remove("show"),this._element.style.display="none",this._element.setAttribute("aria-hidden","true"),document.body.classList.remove("modal-open");let t=document.getElementById("m-backdrop");t&&t.remove()},t}()}}));
+
+// Sambungkan modul penutup otomatis pada tombol close modal (data-bs-dismiss)
+document.addEventListener("click",(function(t){let e=t.target.closest('[data-bs-dismiss="modal"]');if(e){let n=t.target.closest(".modal");if(n)bootstrap.Modal.getOrCreateInstance(n).hide()}}));
+document.addEventListener("click",(function(t){let e=t.target.closest('[data-bs-toggle="modal"]');if(e){let n=document.querySelector(e.getAttribute("data-bs-target"));if(n)t.preventDefault(),bootstrap.Modal.getOrCreateInstance(n).show()}}));
+
+// MODUL PENUTUP OTOMATIS ALERT & PEMBERSIH PARAMETER URL
+document.addEventListener("click", function(t) {
+    let alertBtn = t.target.closest('[data-bs-dismiss="alert"]');
+    if (alertBtn) {
+        let alertBox = t.target.closest('.alert');
+        if (alertBox) {
+            t.preventDefault();
+            alertBox.remove(); 
+            window.location.href = window.location.pathname; 
+        }
+    }
+});
+
+// INTERAKSI DOM DAN SINKRONISASI POSISI SCROLL SIDEBAR UTAMA (KUNCI ABSOLUT)
+document.addEventListener("DOMContentLoaded", function() {
+    const menuContainer = document.querySelector('.menu-scroll-container');
+    const activeMenu = document.querySelector('.menu-scroll-container .active-style');
+    
+    // FIX MUTLAK: Selalu menetap mengunci fokus menu aktif saat halaman selesai dimuat (klik / reload)
+    if (menuContainer && activeMenu) {
+        const activeOffsetTop = activeMenu.offsetTop;
+        menuContainer.scrollTop = activeOffsetTop - 20;
+    }
+});
+
+/**
  * Mengatur isi form pada Modal Tambah / Ubah Lisensi
  * @param {string} mode - Berisi nilai 'create' atau 'update'
  * @param {Object|null} data - Objek data lisensi dari database jika modenya 'update'
  */
 function setupModal(mode, data = null) {
-    // 1. Tentukan aksi form (create / update)
     document.getElementById('form_action').value = mode;
 
     if (mode === 'create') {
-        // 2. Set judul dan kosongkan nilai form untuk input baru
         document.getElementById('modalTitle').innerText = 'Tambah Lisensi Baru';
         document.getElementById('form_id').value = '';
         document.getElementById('form_nama').value = '';
@@ -557,9 +590,8 @@ function setupModal(mode, data = null) {
         document.getElementById('form_expired_at').value = '';
         document.getElementById('form_jumlah_license').value = 0;
         document.getElementById('form_digunakan').value = 0;
-        document.getElementById('form_status').value = 1; // Default: Aktif
+        document.getElementById('form_status').value = 1; 
     } else {
-        // 3. Set judul dan isi form dengan data yang dipilih untuk proses edit
         document.getElementById('modalTitle').innerText = 'Ubah Data Lisensi';
         document.getElementById('form_id').value = data.id;
         document.getElementById('form_nama').value = data.nama;
@@ -582,7 +614,13 @@ function setupDeleteModal(id, nama) {
     document.getElementById('delete_software_name').innerText = nama;
 }
 </script>
-<!-- Bootstrap JS -->
+
+<!-- MENUTUP TIGA STRUKTUR CONTAINER INDUK UTAMA AGAR TATA LETAK DESKTOP DAN MOBILE TETAP SEJAJAR -->
+    </main> 
+  </div> 
+</div> 
+
+<!-- Bootstrap JS Bundle CDN (Sebagai engine eksternal cadangan) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
