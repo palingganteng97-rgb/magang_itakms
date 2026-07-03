@@ -1,19 +1,21 @@
 <?php
 // ====================================================================
-// LOGIKA BACKEND UTAMA - DAILY CHECKLISTS (INSTANT REDIRECT)
+// LOGIKA BACKEND UTAMA - DAILY CHECKLISTS WITH USER OPTION SELECT
 // ====================================================================
 
+// FIX: Menghapus session_start() ganda agar tidak bertabrakan dengan auth.php
 require_once __DIR__ . '/auth.php';
 require_login(); 
 require_once __DIR__ . '/db.php'; 
 
-// Sesuaikan nama file saat ini untuk menu aktif
 $currentFile = 'daily_checklist.php';
-
 $message = '';
 $message_type = '';
 
-// Ambil user_id dari session login Anda (sesuaikan dengan key session sistem Anda)
+// Tangkap parameter tanggal dari form pencarian di tabel (Gunakan metode GET)
+$filter_tanggal = isset($_GET['search_date']) ? $_GET['search_date'] : '';
+
+// Mengambil ID user dari session, jika kosong otomatis menggunakan ID default 1 (untuk development/uji coba)
 $current_user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 1;
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -22,14 +24,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['action']) && $_POST['action'] == 'create') {
         $tanggal = $_POST['tanggal'];
         $item    = $_POST['item'];
-        $status  = isset($_POST['status']) ? (int)$_POST['status'] : 0;
+        // KUNCI BARU: Menangkap user_id hasil pilihan dari elemen select modal
+        $chosen_user_id = $_POST['user_id']; 
+        // Status otomatis dikunci 0 (Pending) saat pertama kali ditambah lewat modal
+        $status  = 0; 
 
         try {
+            // Menggunakan variabel $chosen_user_id hasil kiriman form
             $sql = "INSERT INTO daily_checklists (tanggal, item, status, user_id) VALUES (?, ?, ?, ?)";
             $stmt = $conn->prepare($sql);
-            $stmt->execute([$tanggal, $item, $status, $current_user_id]);
+            $stmt->execute([$tanggal, $item, $status, $chosen_user_id]);
             
-            echo "<script>window.location.href = 'daily_checklist.php';</script>";
+            // Pertahankan parameter filter tanggal jika sedang melakukan pencarian saat tambah data
+            $redirect_url = !empty($filter_tanggal) ? "daily_checklist.php?search_date=" . urlencode($filter_tanggal) : "daily_checklist.php";
+            echo "<script>window.location.href = '$redirect_url';</script>";
             exit();
         } catch (Exception $e) {
             $message = "Gagal menambah Checklist: " . $e->getMessage();
@@ -42,14 +50,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $id      = $_POST['id'];
         $tanggal = $_POST['tanggal'];
         $item    = $_POST['item'];
-        $status  = isset($_POST['status']) ? (int)$_POST['status'] : 0;
+        // KUNCI BARU: Menangkap perubahan user_id hasil pilihan dari elemen select modal edit
+        $chosen_user_id = $_POST['user_id']; 
 
         try {
-            $sql = "UPDATE daily_checklists SET tanggal = ?, item = ?, status = ? WHERE id = ?";
+            // Menyisipkan kolom user_id ke dalam pembaharuan query update database
+            $sql = "UPDATE daily_checklists SET tanggal = ?, item = ?, user_id = ? WHERE id = ?";
             $stmt = $conn->prepare($sql);
-            $stmt->execute([$tanggal, $item, $status, $id]);
+            $stmt->execute([$tanggal, $item, $chosen_user_id, $id]);
             
-            echo "<script>window.location.href = 'daily_checklist.php';</script>";
+            // Pertahankan parameter filter tanggal jika sedang melakukan pencarian saat update data
+            $redirect_url = !empty($filter_tanggal) ? "daily_checklist.php?search_date=" . urlencode($filter_tanggal) : "daily_checklist.php";
+            echo "<script>window.location.href = '$redirect_url';</script>";
             exit();
         } catch (Exception $e) {
             $message = "Gagal memperbarui Checklist: " . $e->getMessage();
@@ -57,7 +69,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
-    // === PROSES HAPUS DATA (DELETE VIA MODAL POST) ===
+    // === PROSES TOGGLE STATUS INSTAN (CHECKBOX KLIK DI TABEL) ===
+    if (isset($_POST['action']) && $_POST['action'] == 'toggle_status') {
+        $id = $_POST['id'];
+        // Membalikkan status: jika 1 jadi 0, jika 0 jadi 1
+        $new_status = $_POST['current_status'] == 1 ? 0 : 1;
+
+        try {
+            $sql = "UPDATE daily_checklists SET status = ? WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->execute([$new_status, $id]);
+            
+            // Pertahankan parameter filter tanggal jika sedang melakukan pencarian saat klik checkbox
+            $redirect_url = !empty($filter_tanggal) ? "daily_checklist.php?search_date=" . urlencode($filter_tanggal) : "daily_checklist.php";
+            echo "<script>window.location.href = '$redirect_url';</script>";
+            exit();
+        } catch (Exception $e) {
+            $message = "Gagal memperbarui status: " . $e->getMessage();
+            $message_type = "danger";
+        }
+    }
+
+    // === PROSES HAPUS DATA (DELETE) ===
     if (isset($_POST['action']) && $_POST['action'] == 'delete') {
         $id = $_POST['id'];
         
@@ -66,7 +99,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt = $conn->prepare($sql);
             $stmt->execute([$id]);
             
-            echo "<script>window.location.href = 'daily_checklist.php';</script>";
+            // Pertahankan parameter filter tanggal jika sedang melakukan pencarian saat hapus data
+            $redirect_url = !empty($filter_tanggal) ? "daily_checklist.php?search_date=" . urlencode($filter_tanggal) : "daily_checklist.php";
+            echo "<script>window.location.href = '$redirect_url';</script>";
             exit();
         } catch (Exception $e) {
             $message = "Gagal menghapus Checklist: " . $e->getMessage();
@@ -76,10 +111,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 
 // ====================================================================
-// PEMBACAAN DATA AKHIR (SELECT DATA DAILY CHECKLISTS)
+// PEMBACAAN DATA UTAMA (MENGGUNAKAN LEFT JOIN KE TABEL USERS)
 // ====================================================================
 try {
-    $daily_checklists = $conn->query("SELECT * FROM daily_checklists ORDER BY tanggal DESC, id DESC")->fetchAll(PDO::FETCH_ASSOC);
+    if (!empty($filter_tanggal)) {
+        // Jika ada filter tanggal, jalankan query WHERE dengan Prepared Statements agar aman dari SQL Injection
+        $sql_select = "SELECT dc.*, u.username FROM daily_checklists dc 
+                       LEFT JOIN users u ON dc.user_id = u.id 
+                       WHERE dc.tanggal = ?
+                       ORDER BY dc.id DESC";
+        $stmt_select = $conn->prepare($sql_select);
+        $stmt_select->execute([$filter_tanggal]);
+        $daily_checklists = $stmt_select->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        // Jika tidak ada filter tanggal, tampilkan seluruh rekam data kegiatan secara normal
+        $sql_select = "SELECT dc.*, u.username FROM daily_checklists dc 
+                       LEFT JOIN users u ON dc.user_id = u.id 
+                       ORDER BY dc.tanggal DESC, dc.id DESC";
+        $daily_checklists = $conn->query($sql_select)->fetchAll(PDO::FETCH_ASSOC);
+    }
 } catch (Exception $e) {
     $daily_checklists = [];
     $message = "Gagal memuat data database: " . $e->getMessage();
@@ -384,11 +434,26 @@ try {
     <!-- KARTU DAN TABEL UTAMA DAILY CHECKLIST -->
     <div class="card shadow-sm border-0 rounded-3">
         <!-- Header Konten Utama -->
-        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom border-light">
+        <div class="card-header bg-white py-3 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 border-bottom border-light">
             <h5 class="mb-0 text-dark fw-bold">
                 <i class="bi bi-card-checklist text-primary me-2"></i> Daily Checklist
             </h5>
-            <!-- Tombol Tambah yang Adaptif di Mobile (Hanya Ikon + Teks Pendek) -->
+            
+            <!-- FORM PENCARIAN MENURUT TANGGAL (SEJAJAR HORIZONTAL) -->
+            <form action="daily_checklist.php" method="GET" class="d-flex align-items-center gap-2 m-0 flex-grow-1 flex-sm-grow-0" style="max-width: 400px;">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-search"></i></span>
+                    <input type="date" name="search_date" class="form-control bg-light border-start-0 text-dark" value="<?= htmlspecialchars($filter_tanggal); ?>">
+                </div>
+                <button type="submit" class="btn btn-sm btn-outline-secondary fw-semibold px-3">Cari</button>
+                <?php if (!empty($filter_tanggal)): ?>
+                    <a href="daily_checklist.php" class="btn btn-sm btn-light border text-danger" title="Reset Pencarian">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                <?php endif; ?>
+            </form>
+
+            <!-- Tombol Tambah yang Adaptif -->
             <button class="btn btn-primary btn-sm px-2 px-md-3 fw-semibold shadow-sm rounded-2" data-bs-toggle="modal" data-bs-target="#modalAddChecklist">
                 <i class="bi bi-plus-lg me-md-1"></i><span class="d-none d-md-inline"> Tambah Item</span>
             </button>
@@ -410,30 +475,33 @@ try {
                 <table class="table table-hover align-middle m-0" style="width: 100%;">
                     <thead class="table-light text-muted small text-uppercase border-bottom">
                         <tr>
-                            <!-- ID disembunyikan di mobile agar menghemat ruang layar HP -->
-                            <th style="width: 8%;" class="text-center ps-3 d-none d-md-table-cell">ID</th>
-                            <th style="width: 20%; min-width: 90px;" class="ps-3 ps-md-0">Tanggal</th>
-                            <th style="width: 47%;">Item Kegiatan</th>
-                            <th style="width: 15%;" class="text-center">Status</th>
-                            <th style="width: 10%; min-width: 80px;" class="text-center pe-3">Aksi</th>
+                            <th style="width: 7%;" class="text-center ps-3 d-none d-md-table-cell">ID</th>
+                            <th style="width: 15%; min-width: 90px;" class="ps-3 ps-md-0">Tanggal</th>
+                            <th style="width: 44%;">Item Kegiatan</th>
+                            <th style="width: 12%;" class="text-center">Status</th>
+                            <th style="width: 12%;" class="d-none d-lg-table-cell">Petugas</th>
+                            <th style="width: 10%; min-width: 80px;" class="text-center">Aksi</th>
+                            <!-- PINDAH KE SINI: Kolom Check berada di paling kanan -->
+                            <th style="width: 7%;" class="text-center pe-3">Check</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if(count($daily_checklists) == 0): ?>
                             <tr>
-                                <td colspan="5" class="text-center text-muted py-5">
-                                    <i class="bi bi-clipboard-x display-6 d-block mb-2 text-secondary"></i> Belum ada aktivitas hari ini.
+                                <td colspan="7" class="text-center text-muted py-5">
+                                    <i class="bi bi-clipboard-x display-6 d-block mb-2 text-secondary"></i> 
+                                    <?= !empty($filter_tanggal) ? 'Tidak ada aktivitas pada tanggal tersebut.' : 'Belum ada aktivitas hari ini.'; ?>
                                 </td>
                             </tr>
                         <?php endif; ?>
 
                         <?php foreach($daily_checklists as $row): ?>
                             <tr>
-                                <!-- ID hanya tampil di PC/Tablet -->
+                                <!-- ID -->
                                 <td class="text-center ps-3 d-none d-md-table-cell">
                                     <span class="text-muted small fw-bold">#<?= $row['id']; ?></span>
                                 </td>
-                                <!-- Tanggal yang adaptif (ukuran font mengecil di mobile) -->
+                                <!-- Tanggal -->
                                 <td class="ps-3 ps-md-0">
                                     <div class="text-dark small lh-sm">
                                         <i class="bi bi-calendar3 d-none d-md-inline me-1 text-muted"></i>
@@ -441,31 +509,54 @@ try {
                                         <span class="d-none d-md-inline"><?= date('d M Y', strtotime($row['tanggal'])); ?></span>
                                     </div>
                                 </td>
-                                <!-- Deskripsi Kegiatan otomatis membungkus teks ke bawah (tidak merusak baris) -->
+                                <!-- Item Kegiatan -->
                                 <td>
-                                    <div class="text-wrap fw-semibold text-dark small text-break" style="max-width: 100%;">
+                                    <div class="text-wrap fw-semibold small text-break text-dark" style="max-width: 100%;">
                                         <?= htmlspecialchars($row['item']); ?>
                                     </div>
                                 </td>
-                                <!-- Status Badge yang ukurannya mengecil di mobile -->
+                                <!-- Status Badge -->
                                 <td class="text-center">
                                     <?= $row['status'] == 1 
-                                        ? '<span class="badge bg-success-subtle text-success px-1.5 px-md-2 py-1 small-badge"><i class="bi bi-check2 me-md-1"></i><span class="d-none d-md-inline">Selesai</span></span>' 
-                                        : '<span class="badge bg-warning-subtle text-warning px-1.5 px-md-2 py-1 small-badge"><i class="bi bi-hourglass-split me-md-1"></i><span class="d-none d-md-inline">Pending</span></span>'; 
+                                        ? '<span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 small-badge"><i class="bi bi-check2 me-1"></i>Selesai</span>' 
+                                        : '<span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1 small-badge"><i class="bi bi-hourglass-split me-1"></i>Pending</span>'; 
                                     ?>
                                 </td>
-                                <!-- Aksi Tombol yang rapi dan sejajar di barisnya -->
-                                <td class="text-center pe-3">
+                                <!-- Nama Petugas -->
+                                <td class="d-none d-lg-table-cell">
+                                    <span class="badge bg-light text-secondary border px-2 py-1.5 small">
+                                        <i class="bi bi-person-fill me-1 text-primary"></i>
+                                        <?= htmlspecialchars($row['username'] ?? 'ID: ' . $row['user_id']); ?>
+                                    </span>
+                                </td>
+                                <!-- Kolom Aksi (Edit & Hapus) -->
+                                <td class="text-center">
                                     <div class="d-inline-flex gap-1 justify-content-center w-100">
-                                        <!-- Tombol Edit -->
                                         <button class="btn btn-sm btn-light text-warning border-0 p-1 p-md-2" data-bs-toggle="modal" data-bs-target="#modalEditChecklist<?= $row['id']; ?>" title="Ubah Data">
                                             <i class="bi bi-pencil-square fs-6"></i>
                                         </button>
-                                        <!-- Tombol Hapus -->
                                         <button class="btn btn-sm btn-light text-danger border-0 p-1 p-md-2" data-bs-toggle="modal" data-bs-target="#modalDeleteChecklist<?= $row['id']; ?>" title="Hapus Data">
                                             <i class="bi bi-trash3 fs-6"></i>
                                         </button>
                                     </div>
+                                </td>
+                                <!-- PINDAH KE SINI: Opsi Tombol Cek Status Instan -->
+                                <td class="text-center pe-3">
+                                    <form action="daily_checklist.php" method="POST" class="m-0">
+                                        <input type="hidden" name="action" value="toggle_status">
+                                        <input type="hidden" name="id" value="<?= $row['id']; ?>">
+                                        <input type="hidden" name="current_status" value="<?= $row['status']; ?>">
+                                        
+                                        <?php if($row['status'] == 1): ?>
+                                            <button type="submit" class="btn btn-link p-0 text-success border-0 shadow-none" title="Tandai Pending">
+                                                <i class="bi bi-check-square-fill fs-5"></i>
+                                            </button>
+                                        <?php else: ?>
+                                            <button type="submit" class="btn btn-link p-0 text-secondary border-0 shadow-none" title="Tandai Selesai">
+                                                <i class="bi bi-square fs-5"></i>
+                                            </button>
+                                        <?php endif; ?>
+                                    </form>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -505,24 +596,39 @@ try {
                 </div>
             </div>
 
+            <!-- Baris Pilihan Petugas/User Dinamis -->
+            <div class="row mb-3 align-items-center">
+                <label for="user_id" class="col-4 col-form-label small fw-bold text-secondary text-end">Pilih Petugas (User)</label>
+                <div class="col-8">
+                    <select id="user_id" name="user_id" class="form-select form-select-sm text-dark" required>
+                        <option value="" disabled selected>-- Pilih Petugas --</option>
+                        <?php
+                        try {
+                            $query_user = $conn->query("SELECT id, username FROM users ORDER BY username ASC");
+                            $users_list = $query_user->fetchAll(PDO::FETCH_ASSOC);
+                            foreach ($users_list as $user) {
+                                // Otomatis menandai user yang sedang login saat ini sebagai pilihan awal
+                                $selected = ($user['id'] == $current_user_id) ? 'selected' : '';
+                                echo "<option value='" . htmlspecialchars($user['id']) . "' $selected>";
+                                echo htmlspecialchars($user['username']);
+                                echo "</option>";
+                            }
+                        } catch (Exception $e) {
+                            echo "<option value='' disabled>Error: " . htmlspecialchars($e->getMessage()) . "</option>";
+                        }
+                        ?>
+                    </select>
+                </div>
+            </div>
+
             <!-- Baris Item Kegiatan / Deskripsi Tugas -->
-            <div class="row mb-3 align-items-start">
+            <div class="row mb-2 align-items-start">
                 <label for="item" class="col-4 col-form-label small fw-bold text-secondary text-end pt-1">Item Kegiatan</label>
                 <div class="col-8">
                     <textarea id="item" name="item" class="form-control form-control-sm text-dark" rows="3" placeholder="Contoh: Periksa kapasitas storage server utama dan log backup..." required></textarea>
                 </div>
             </div>
             
-            <!-- Baris Status Regulasi Awal (TINYINT) -->
-            <div class="row mb-2 align-items-center">
-                <label for="status" class="col-4 col-form-label small fw-bold text-secondary text-end">Status Kerja</label>
-                <div class="col-8">
-                    <select id="status" name="status" class="form-select form-select-sm" style="max-width: 200px;">
-                        <option value="0" selected>Pending (Belum Selesai)</option>
-                        <option value="1">Selesai</option>
-                    </select>
-                </div>
-            </div>
           </div>
           
           <!-- Tombol Aksi Mandiri -->
@@ -535,75 +641,71 @@ try {
   </div>
 </div>
 
-<!-- ==================================================================== -->
-<!-- TAHAP 3: MODAL EDIT DATA CHECKLIST (SEJAJAR HORIZONTAL & DINAMIS)   -->
-<!-- ==================================================================== -->
-<div class="modal fade" id="modalEditChecklist<?= $row['id']; ?>" tabindex="-1" aria-labelledby="modalEditChecklistLabel<?= $row['id']; ?>" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-3">
-        <form action="daily_checklist.php" method="POST">
-            <!-- Hidden Input Keperluan Handler CRUD PHP -->
-            <input type="hidden" name="action" value="update">
-            <input type="hidden" name="id" value="<?= $row['id']; ?>">
-            
-            <!-- Header Modal Edit -->
-            <div class="modal-header border-bottom-0 pb-0">
-            <h5 class="modal-title fw-bold text-dark" id="modalEditChecklistLabel<?= $row['id']; ?>">
-                <i class="bi bi-pencil-square text-warning me-2"></i> Ubah Item Checklist #<?= $row['id']; ?>
-            </h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            
-            <!-- Body Modal Edit (Sejajar Kesamping) -->
-            <div class="modal-body pt-3">
-            
-                <!-- Baris Tanggal Kegiatan -->
-                <div class="row mb-3 align-items-center">
-                    <label for="tanggal_<?= $row['id']; ?>" class="col-4 col-form-label small fw-bold text-secondary text-end">Tanggal Kegiatan</label>
-                    <div class="col-8">
-                        <input type="date" id="tanggal_<?= $row['id']; ?>" name="tanggal" class="form-control form-control-sm text-dark" value="<?= $row['tanggal']; ?>" required>
-                    </div>
+    <!-- MODAL EDIT DATA CHECKLIST -->
+    <div class="modal fade" id="modalEditChecklist<?= $row['id']; ?>" tabindex="-1" aria-labelledby="modalEditChecklistLabel<?= $row['id']; ?>" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-3">
+            <form action="daily_checklist.php" method="POST">
+                <input type="hidden" name="action" value="update">
+                <input type="hidden" name="id" value="<?= $row['id']; ?>">
+                
+                <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold text-dark" id="modalEditChecklistLabel<?= $row['id']; ?>">
+                    <i class="bi bi-pencil-square text-warning me-2"></i> Ubah Item Checklist #<?= $row['id']; ?>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
+                
+                <div class="modal-body pt-3">
+                    <!-- Baris Tanggal Kegiatan -->
+                    <div class="row mb-3 align-items-center">
+                        <label for="tanggal_<?= $row['id']; ?>" class="col-4 col-form-label small fw-bold text-secondary text-end">Tanggal Kegiatan</label>
+                        <div class="col-8">
+                            <input type="date" id="tanggal_<?= $row['id']; ?>" name="tanggal" class="form-control form-control-sm text-dark" value="<?= $row['tanggal']; ?>" required>
+                        </div>
+                    </div>
 
-                <!-- Baris Item Kegiatan / Deskripsi Tugas -->
-                <div class="row mb-3 align-items-start">
-                    <label for="item_<?= $row['id']; ?>" class="col-4 col-form-label small fw-bold text-secondary text-end pt-1">Item Kegiatan</label>
-                    <div class="col-8">
-                        <textarea id="item_<?= $row['id']; ?>" name="item" class="form-control form-control-sm text-dark" rows="3" required><?= htmlspecialchars($row['item']); ?></textarea>
+                    <!-- Baris Pilihan Ubah Petugas/User -->
+                    <div class="row mb-3 align-items-center">
+                        <label for="user_id_<?= $row['id']; ?>" class="col-4 col-form-label small fw-bold text-secondary text-end">Petugas (User)</label>
+                        <div class="col-8">
+                            <select id="user_id_<?= $row['id']; ?>" name="user_id" class="form-select form-select-sm text-dark" required>
+                                <?php
+                                try {
+                                    $query_user = $conn->query("SELECT id, username FROM users ORDER BY username ASC");
+                                    $users_list = $query_user->fetchAll(PDO::FETCH_ASSOC);
+                                    foreach ($users_list as $user) {
+                                        // Menandai secara tepat user mana yang memiliki tugas ini sebelumnya
+                                        $selected = ($user['id'] == $row['user_id']) ? 'selected' : '';
+                                        echo "<option value='" . htmlspecialchars($user['id']) . "' $selected>";
+                                        echo htmlspecialchars($user['username']);
+                                        echo "</option>";
+                                    }
+                                } catch (Exception $e) {
+                                    echo "<option value='' disabled>Error: " . htmlspecialchars($e->getMessage()) . "</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Baris Item Kegiatan -->
+                    <div class="row mb-3 align-items-start">
+                        <label for="item_<?= $row['id']; ?>" class="col-4 col-form-label small fw-bold text-secondary text-end pt-1">Item Kegiatan</label>
+                        <div class="col-8">
+                            <textarea id="item_<?= $row['id']; ?>" name="item" class="form-control form-control-sm text-dark" rows="3" required><?= htmlspecialchars($row['item']); ?></textarea>
+                        </div>
                     </div>
                 </div>
                 
-                <!-- Baris Informasi User ID Pembuat (Read-Only / Hanya Tampilan) -->
-                <div class="row mb-3 align-items-center">
-                    <label class="col-4 col-form-label small fw-bold text-secondary text-end">Petugas (User ID)</label>
-                    <div class="col-8">
-                        <span class="small text-muted bg-light border p-1 px-2 rounded d-inline-block">
-                            <i class="bi bi-person me-1"></i> User ID #<?= htmlspecialchars($row['user_id']); ?>
-                        </span>
-                    </div>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-sm btn-light border px-3" data-bs-dismiss="modal">Tutup</button>
+                    <button type="submit" class="btn btn-sm btn-warning fw-bold text-white px-4 shadow-sm">Update Tugas</button>
                 </div>
-                
-                <!-- Baris Ubah Status Kerja (TINYINT) -->
-                <div class="row mb-2 align-items-center">
-                    <label for="status_<?= $row['id']; ?>" class="col-4 col-form-label small fw-bold text-secondary text-end">Status</label>
-                    <div class="col-8">
-                        <select id="status_<?= $row['id']; ?>" name="status" class="form-select form-select-sm" style="max-width: 200px;">
-                            <option value="0" <?= $row['status'] == 0 ? 'selected' : ''; ?>>Pending (Belum Selesai)</option>
-                            <option value="1" <?= $row['status'] == 1 ? 'selected' : ''; ?>>Selesai</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Footer Tombol Aksi -->
-            <div class="modal-footer border-top-0 pt-0">
-                <button type="button" class="btn btn-sm btn-light border px-3" data-bs-toggle="modal">Tutup</button>
-                <button type="submit" class="btn btn-sm btn-warning fw-bold text-white px-4 shadow-sm">Update Tugas</button>
-            </div>
-        </form>
+            </form>
+        </div>
+        </div>
     </div>
-    </div>
-</div>
 
 <!-- ==================================================================== -->
 <!-- MODAL HAPUS DATA CHECKLIST (POST METHOD - AMAN DAN SEJAJAR)        -->
@@ -665,7 +767,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
-// MODUL PENUTUP OTOMATIS ALERT & PEMBERSIH PARAMETER URL (DINAMIS UNTUK DAILY CHECKLIST)
+// MODUL PENUTUP OTOMATIS ALERT & PEMBERSIH PARAMETER CRITICAL URL SECARA AMAN
 document.addEventListener("click", function(t) {
     let alertBtn = t.target.closest('[data-bs-dismiss="alert"]');
     if (alertBtn) {
@@ -673,8 +775,15 @@ document.addEventListener("click", function(t) {
         if (alertBox) {
             t.preventDefault();
             alertBox.remove(); 
-            // Otomatis mengembalikan URL bersih sesuai file yang sedang diakses (daily_checklist.php)
-            window.location.href = window.location.pathname; 
+            
+            // Logika Cerdas: Hapus parameter pesan sukses/gagal, tapi PERTAHANKAN tanggal pencarian jika ada
+            let url = new URL(window.location.href);
+            if (url.searchParams.has('status') || url.searchParams.has('msg')) {
+                url.searchParams.delete('status');
+                url.searchParams.delete('msg');
+                // Mengubah URL di address bar browser secara halus tanpa reload halaman
+                window.history.replaceState({}, document.title, url);
+            }
         }
     }
 });
