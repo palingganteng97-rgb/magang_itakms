@@ -241,90 +241,102 @@ if (isset($_GET['status'])) {
       <i class="bi bi-speedometer2 me-2"></i> ITAKMS
   </h4>
   
-  <!-- 3. AREA MENU TENGAH (Mendukung scroll mandiri, fleksibel & bersih untuk semua opsi) -->
+  <!-- 3. AREA MENU TENGAH (Otomatis & Fleksibel untuk Semua Opsi Berbasis Fungsi PHP) -->
+  <?php
+  // Ambil nama file yang sedang aktif saat ini secara real-time
+  $currentFile = basename($_SERVER['PHP_SELF']);
+
+  // Fungsi pintar untuk otomatis mencetak class 'active-style' jika nama file cocok
+  if (!function_exists('checkActiveMenu')) {
+      function checkActiveMenu($targetFile, $currentFile) {
+          return ($currentFile === $targetFile) ? 'active-style' : '';
+      }
+  }
+  ?>
+  
   <div class="flex-grow-1 menu-scroll-container w-100">
     <ul class="nav flex-column w-100">
       
       <li class="nav-item">
-        <a href="dashboard.php" class="nav-link <?= ($currentPage == 'dashboard.php') ? 'active-style' : ''; ?> rounded-end d-flex align-items-center"><i class="bi bi-house-door me-3"></i> Dashboard</a>
+        <a href="dashboard.php" class="nav-link <?= checkActiveMenu('dashboard.php', $currentFile) ?> rounded-end d-flex align-items-center"><i class="bi bi-house-door me-3"></i> Dashboard</a>
       </li>
       
       <li class="nav-item">
-        <a href="roles.php" class="nav-link <?= ($currentPage == 'roles.php') ? 'active-style' : ''; ?> rounded-end d-flex align-items-center"><i class="bi bi-shield-lock me-3"></i> Manajemen Roles</a>
+        <a href="roles.php" class="nav-link <?= checkActiveMenu('roles.php', $currentFile) ?> rounded-end d-flex align-items-center"><i class="bi bi-shield-lock me-3"></i> Manajemen Roles</a>
       </li>
       
       <li class="nav-item">
-        <a href="relasi.php" class="nav-link <?= ($currentPage == 'relasi.php') ? 'active-style' : ''; ?> rounded-end text-nowrap d-flex align-items-center" style="overflow: hidden; text-overflow: ellipsis;" title="Manajemen Bangunan & Ruang">
-          <i class="bi bi-diagram-3 me-3"></i> Manajemen Bangunan & Ruang
+        <a href="relasi.php" class="nav-link <?= checkActiveMenu('relasi.php', $currentFile) ?> rounded-end d-flex align-items-center text-truncate" title="Manajemen Bangunan & Ruang">
+          <i class="bi bi-diagram-3 me-3 flex-shrink-0"></i> <span class="text-truncate">Manajemen Bangunan & Ruang</span>
         </a>
       </li>
       
       <li class="nav-item">
-        <a href="assets.php" class="nav-link <?= ($currentPage == 'assets.php') ? 'active-style' : ''; ?> rounded-end d-flex align-items-center"><i class="bi bi-folder2-open me-3"></i> Assets</a>
+        <a href="assets.php" class="nav-link <?= checkActiveMenu('assets.php', $currentFile) ?> rounded-end d-flex align-items-center"><i class="bi bi-folder2-open me-3"></i> Assets</a>
       </li>
       
       <li class="nav-item">
-        <a href="manajemen_asset.php" class="nav-link <?= ($currentPage == 'manajemen_asset.php') ? 'active-style' : ''; ?> rounded-end d-flex align-items-center"><i class="bi bi-boxes me-3"></i> Manajemen Asset</a>
+        <a href="manajemen_asset.php" class="nav-link <?= checkActiveMenu('manajemen_asset.php', $currentFile) ?> rounded-end d-flex align-items-center"><i class="bi bi-boxes me-3"></i> Manajemen Asset</a>
       </li>
       
       <li class="nav-item">
-        <a href="asset_movements.php" class="nav-link <?= ($currentPage == 'asset_movements.php') ? 'active-style' : ''; ?> rounded-end d-flex align-items-center"><i class="bi bi-arrow-left-right me-3"></i> Log Perpindahan</a>
+        <a href="asset_movements.php" class="nav-link <?= checkActiveMenu('asset_movements.php', $currentFile) ?> rounded-end d-flex align-items-center"><i class="bi bi-arrow-left-right me-3"></i> Log Perpindahan</a>
       </li>
       
       <li class="nav-item">
-        <a href="server.php" class="nav-link <?= ($currentPage == 'server.php') ? 'active-style' : ''; ?> rounded-end d-flex align-items-center"><i class="bi bi-hdd-network me-3"></i> Server</a>
+        <a href="server.php" class="nav-link <?= checkActiveMenu('server.php', $currentFile) ?> rounded-end d-flex align-items-center"><i class="bi bi-hdd-network me-3"></i> Server</a>
       </li>
       
       <li class="nav-item">
-        <a href="network_device.php" class="nav-link <?= ($currentPage == 'network_device.php') ? 'active-style' : ''; ?> rounded-end d-flex align-items-center"><i class="bi bi-router me-3"></i> Network Device</a>
+        <a href="network_device.php" class="nav-link <?= checkActiveMenu('network_device.php', $currentFile) ?> rounded-end d-flex align-items-center"><i class="bi bi-router me-3"></i> Network Device</a>
       </li>
       
       <li class="nav-item">
-        <a href="network_port.php" class="nav-link <?= ($currentPage == 'network_port.php') ? 'active-style' : ''; ?> rounded-end d-flex align-items-center"><i class="bi bi-ethernet me-3"></i> Network Port</a>
+        <a href="network_port.php" class="nav-link <?= checkActiveMenu('network_port.php', $currentFile) ?> rounded-end d-flex align-items-center"><i class="bi bi-ethernet me-3"></i> Network Port</a>
       </li>
       
       <li class="nav-item">
-        <a href="vendors.php" class="nav-link <?= ($currentPage == 'vendors.php') ? 'active-style' : ''; ?> rounded-end d-flex align-items-center"><i class="bi bi-building me-3"></i> Vendors</a>
+        <a href="vendors.php" class="nav-link <?= checkActiveMenu('vendors.php', $currentFile) ?> rounded-end d-flex align-items-center"><i class="bi bi-building me-3"></i> Vendors</a>
       </li>
       
       <li class="nav-item">
-        <a href="password_categories.php" class="nav-link <?= ($currentPage == 'password_categories.php') ? 'active-style' : ''; ?> rounded-end d-flex align-items-center"><i class="bi bi-grid-fill me-3"></i> Password Categories</a>
+        <a href="password_categories.php" class="nav-link <?= checkActiveMenu('password_categories.php', $currentFile) ?> rounded-end d-flex align-items-center"><i class="bi bi-grid-fill me-3"></i> Password Categories</a>
       </li>
       
       <li class="nav-item">
-        <a href="password_vault.php" class="nav-link <?= ($currentPage == 'password_vault.php') ? 'active-style' : ''; ?> rounded-end d-flex align-items-center"><i class="bi bi-safe me-3"></i> Password Vault</a>
+        <a href="password_vault.php" class="nav-link <?= checkActiveMenu('password_vault.php', $currentFile) ?> rounded-end d-flex align-items-center"><i class="bi bi-safe me-3"></i> Password Vault</a>
       </li>
       
       <li class="nav-item">
-        <a href="tickets.php" class="nav-link <?= ($currentPage == 'tickets.php') ? 'active-style' : ''; ?> rounded-end d-flex align-items-center"><i class="bi bi-ticket-perforated-fill me-3"></i> Tikets</a>
+        <a href="tickets.php" class="nav-link <?= checkActiveMenu('tickets.php', $currentFile) ?> rounded-end d-flex align-items-center"><i class="bi bi-ticket-perforated-fill me-3"></i> Tikets</a>
       </li>
       
       <li class="nav-item">
-        <a href="maintenance.php" class="nav-link <?= ($currentPage == 'maintenance.php') ? 'active-style' : ''; ?> rounded-end d-flex align-items-center"><i class="bi bi-wrench-adjustable-circle me-3"></i> Maintenance</a>
+        <a href="maintenance.php" class="nav-link <?= checkActiveMenu('maintenance.php', $currentFile) ?> rounded-end d-flex align-items-center"><i class="bi bi-wrench-adjustable-circle me-3"></i> Maintenance</a>
       </li>
       
       <li class="nav-item"> 
-        <a href="knowledge_categories.php" class="nav-link <?= ($currentPage == 'knowledge_categories.php') ? 'active-style' : ''; ?> rounded-end d-flex align-items-center"><i class="bi bi-tags-fill me-3"></i> Knowledge Categories</a> 
+        <a href="knowledge_categories.php" class="nav-link <?= checkActiveMenu('knowledge_categories.php', $currentFile) ?> rounded-end d-flex align-items-center"><i class="bi bi-tags-fill me-3"></i> Knowledge Categories</a> 
       </li> 
       
       <li class="nav-item"> 
-        <a href="knowledge_articles.php" class="nav-link <?= ($currentPage == 'knowledge_articles.php') ? 'active-style' : ''; ?> rounded-end d-flex align-items-center"><i class="bi bi-file-earmark-text-fill me-3"></i> Knowledge Articles</a> 
+        <a href="knowledge_articles.php" class="nav-link <?= checkActiveMenu('knowledge_articles.php', $currentFile) ?> rounded-end d-flex align-items-center"><i class="bi bi-file-earmark-text-fill me-3"></i> Knowledge Articles</a> 
       </li> 
       
       <li class="nav-item"> 
-        <a href="sops.php" class="nav-link <?= ($currentPage == 'sops.php') ? 'active-style' : ''; ?> rounded-end d-flex align-items-center"><i class="bi bi-journal-text me-3"></i> SOPS</a> 
+        <a href="sops.php" class="nav-link <?= checkActiveMenu('sops.php', $currentFile) ?> rounded-end d-flex align-items-center"><i class="bi bi-journal-text me-3"></i> SOPS</a> 
       </li> 
       
       <li class="nav-item"> 
-        <a href="sop_categories.php" class="nav-link <?= ($currentPage == 'sop_categories.php') ? 'active-style' : ''; ?> rounded-end d-flex align-items-center"><i class="bi bi-tags me-3"></i> SOP Categories</a> 
+        <a href="sop_categories.php" class="nav-link <?= checkActiveMenu('sop_categories.php', $currentFile) ?> rounded-end d-flex align-items-center"><i class="bi bi-tags me-3"></i> SOP Categories</a> 
       </li> 
       
       <li class="nav-item"> 
-        <a href="software_licenses.php" class="nav-link <?= ($currentPage == 'software_licenses.php') ? 'active-style' : ''; ?> rounded-end d-flex align-items-center"><i class="bi bi-key-fill me-3"></i> Software Licenses</a> 
+        <a href="software_licenses.php" class="nav-link <?= checkActiveMenu('software_licenses.php', $currentFile) ?> rounded-end d-flex align-items-center"><i class="bi bi-key-fill me-3"></i> Software Licenses</a> 
       </li> 
       
       <li class="nav-item">
-        <a href="user.php" class="nav-link <?= ($currentPage == 'user.php') ? 'active-style' : ''; ?> rounded-end d-flex align-items-center"><i class="bi bi-person-fill me-3"></i> User Profil</a>
+        <a href="user.php" class="nav-link <?= checkActiveMenu('user.php', $currentFile) ?> rounded-end d-flex align-items-center"><i class="bi bi-person-fill me-3"></i> User Profil</a>
       </li>
 
     </ul>
@@ -344,7 +356,7 @@ if (isset($_GET['status'])) {
     </ul>
   </div>
 
-</div> <!-- KUNCI UTAMA: Tag penutup untuk menutup elemen offcanvas sidebar (BAGIAN B) -->
+</div> <!-- /penutup elemen offcanvas-md -->
 
     <!-- ========================================== -->
     <!-- 3. MAIN CONTENT KATEGORI (RESPONSIVE)     -->
