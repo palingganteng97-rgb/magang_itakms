@@ -84,8 +84,9 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Artikel</title>
+    <title>Tambah Artikel Baru</title>
     
+    <!-- STYLING VISUAL OFFLINE MANDIRI (MENGAMANKAN LAYOUT MODERN TANPA LINK INTERNET KELUAR) -->
     <!-- STYLING VISUAL OFFLINE MANDIRI (MENGAMANKAN LAYOUT MODERN TANPA LINK INTERNET KELUAR) -->
     <style>
         body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; color: #334155; }
@@ -96,8 +97,10 @@ try {
         
         /* Layout Flexbox 2 Kolom Sejajar */
         .flex-row-box { display: flex; gap: 25px; flex-wrap: wrap; }
-        .col-kiri { flex: 1; min-width: 320px; display: flex; flex-direction: column; gap: 15px; }
-        .col-kanan { flex: 1.4; min-width: 380px; display: flex; flex-direction: column; }
+        
+        /* PERBAIKAN: Menggunakan basis persentase agar bisa mengecil di mobile */
+        .col-kiri { flex: 1 1 300px; display: flex; flex-direction: column; gap: 15px; min-width: 0; }
+        .col-kanan { flex: 1.4 1 350px; display: flex; flex-direction: column; min-width: 0; }
         
         /* Pengaturan Elemen Formulir */
         .form-group-box { display: flex; flex-direction: column; gap: 6px; }
@@ -105,8 +108,8 @@ try {
         .form-control-box { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 14px; outline: none; color: #334155; background-color: #fff; transition: border-color 0.15s; }
         .form-control-box:focus { border-color: #4e73df; }
         
-        /* Toolbar Format Gaya Microsoft Word */
-        .word-toolbar { background: #f8f9fc; border: 1px solid #cbd5e1; border-bottom: none; padding: 6px 10px; border-top-left-radius: 6px; border-top-right-radius: 6px; display: flex; gap: 6px; align-items: center; }
+        /* PERBAIKAN: Toolbar Format dibikin flex-wrap agar tombol turun ke bawah jika layar sempit */
+        .word-toolbar { background: #f8f9fc; border: 1px solid #cbd5e1; border-bottom: none; padding: 6px 10px; border-top-left-radius: 6px; border-top-right-radius: 6px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
         .btn-w { background: #ffffff; border: 1px solid #cbd5e1; color: #475569; padding: 5px 14px; font-size: 13px; border-radius: 4px; cursor: pointer; font-weight: 600; transition: all 0.15s; outline: none; }
         .btn-w:hover { background-color: #f1f5f9; color: #0f172a; border-color: #94a3b8; }
         
@@ -114,7 +117,7 @@ try {
         #editorArea { height: 195px; min-height: 195px; max-height: 195px; border: 1px solid #cbd5e1; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; background: #fff; padding: 12px; overflow: auto; outline: none; box-sizing: border-box; font-size: 14px; line-height: 1.5; color: #212529; }
         #editorArea:focus { border-color: #4e73df; box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.1); }
         
-        /* KEMBALIKAN KE INLINE: Menyelaraskan CSS agar patuh pada kontrol script pemutus spasi */
+        /* KEMBALIKAN KE INLINE */
         #editorArea u {
             display: inline !important;
             text-decoration: underline !important;
@@ -137,7 +140,18 @@ try {
         .btn-batal:hover { background-color: #475569; }
         .btn-simpan { background-color: #1cc88a; color: white; }
         .btn-simpan:hover { background-color: #17a673; }
+
+        /* TAMBAHAN: Media Queries Khusus Mobile Layar Sempit (< 576px) */
+        @media (max-width: 576px) {
+            body { padding: 10px; }
+            .card-body-box { padding: 15px; }
+            .flex-row-box { gap: 15px; }
+            .col-kiri, .col-kanan { flex: 1 1 100%; min-width: 0; }
+            .footer-box { text-align: center; display: flex; flex-direction: column-reverse; gap: 10px; }
+            .btn-action { width: 100%; margin-right: 0 !important; }
+        }
     </style>
+
 </head>
 
 <body>
@@ -149,13 +163,14 @@ try {
             <form id="articleForm" method="POST" action="" enctype="multipart/form-data">
                 <div class="flex-row-box">
                     
-                    <!-- KOLOM KIRI (Metadata dengan Data-Binding Otomatis) -->
+                    <!-- KOLOM KIRI (Informasi Utama) -->
                     <div class="col-kiri">
                         <div class="form-group-box">
                             <label>Pilih Kategori</label>
                             <select name="category_id" class="form-control-box">
                                 <option value="">-- Tanpa Kategori --</option>
                                 <?php foreach ($categories as $cat): ?>
+                                    <!-- PERBAIKAN: Menambahkan kondisi selected otomatis -->
                                     <option value="<?= $cat['id']; ?>" <?= ($article['category_id'] == $cat['id']) ? 'selected' : ''; ?>>
                                         <?= htmlspecialchars($cat['nama']); ?>
                                     </option>
@@ -164,32 +179,36 @@ try {
                         </div>
                         <div class="form-group-box">
                             <label>Judul Artikel *</label>
-                            <input type="text" name="judul" class="form-control-box" required value="<?= htmlspecialchars($article['judul']); ?>">
+                            <!-- PERBAIKAN: Menampilkan judul artikel lama menggunakan atribut value -->
+                            <input type="text" name="judul" class="form-control-box" required placeholder="Masukkan judul artikel..." value="<?= htmlspecialchars($article['judul']); ?>">
                         </div>
                         <div class="form-group-box">
-                            <label>Ganti File Lampiran <span style="font-weight: normal; font-size: 11px; color: #64748b;">(Kosongkan jika tidak diganti)</span></label>
+                            <label>Ganti File Lampiran <span style="font-weight: normal; color: #64748b; font-size: 11px;">(Kosongkan jika tidak diganti)</span></label>
                             <input type="file" name="lampiran" class="form-control-box" style="padding: 7px 10px;">
+                            
+                            <!-- PERBAIKAN: Menampilkan indikator file lampiran yang sedang aktif saat ini -->
                             <?php if (!empty($article['lampiran'])): ?>
-                                <div style="font-size: 12px; margin-top: 2px; color: #0891b2; font-weight: 500; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
-                                    📁 File aktif: <strong><?= htmlspecialchars($article['lampiran']); ?></strong>
+                                <div class="file-aktif-box">
+                                    📁 <span style="color: #64748b;">File aktif:</span> <a href="uploads/<?= $article['lampiran']; ?>" target="_blank" style="color: #4e73df; font-weight: 600; text-decoration: none;"><?= htmlspecialchars($article['lampiran']); ?></a>
                                 </div>
                             <?php endif; ?>
                         </div>
                         <div class="form-group-box">
                             <label>Status Publikasi</label>
                             <select name="status" class="form-control-box">
+                                <!-- PERBAIKAN: Menambahkan kondisi selected sesuai status di database -->
                                 <option value="1" <?= ($article['status'] == 1) ? 'selected' : ''; ?>>1 (Publish)</option>
                                 <option value="0" <?= ($article['status'] == 0) ? 'selected' : ''; ?>>0 (Draft)</option>
                             </select>
                         </div>
                     </div>
 
-                    <!-- KOLOM KANAN (Word Editor Offline dengan Status Indikator Aktif) -->
+                    <!-- KOLOM KANAN (Word Editor dengan Status Deteksi Tombol Aktif) -->
                     <div class="col-kanan">
                         <div class="form-group-box" style="height: 100%; display: flex; flex-direction: column;">
                             <label>Isi Artikel *</label>
                             
-                            <!-- Toolbar Format Word Dengan Gaya Huruf Sesuai Fungsi -->
+                            <!-- Toolbar Format Word Dengan Desain Huruf Sesuai Fungsi -->
                             <div class="word-toolbar">
                                 <button type="button" id="btn-bold" class="btn-w" onclick="formatText('bold')" style="font-weight: bold;">B</button>
                                 <button type="button" id="btn-italic" class="btn-w" onclick="formatText('italic')" style="font-style: italic;">I</button>
@@ -200,17 +219,19 @@ try {
                                 <button type="button" id="btn-ol" class="btn-w" onclick="formatText('insertOrderedList')">1. List</button>
                             </div>
 
-                            <!-- Area Mengetik Utama Sejajar Sempurna (Memuat Data Lama Database) -->
-                            <div id="editorArea" contenteditable="true">
-                                <?php echo $article['isi'] ?? ''; ?>
-                            </div>
+                            <!-- Area Tempat Mengetik Konten Utama -->
+                            <!-- PERBAIKAN: Mencetak isi konten artikel lama ke dalam editor text area -->
+                            <div id="editorArea" contenteditable="true"><?= $article['isi']; ?></div>
                             
-                            <!-- Hidden input penampung data teks format untuk dikirim ke PHP $_POST['isi'] -->
+                            <!-- Input tersembunyi penampung hasil ketikan HTML untuk dikirim ke PHP -->
                             <input type="hidden" name="isi" id="hiddenIsi">
                         </div>
                     </div>
 
+                </div>
+
                 <!-- Tombol Aksi Formulir -->
+                <!-- PERBAIKAN: Menukar posisi tombol agar di desktop merapat ke kanan dengan urutan Batal -> Simpan -->
                 <div class="footer-box">
                     <a href="knowledge_articles.php" class="btn-action btn-batal">Batal</a>
                     <button type="submit" class="btn-action btn-simpan">Simpan Artikel</button>

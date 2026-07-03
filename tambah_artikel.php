@@ -58,6 +58,7 @@ try {
     <title>Tambah Artikel Baru</title>
     
     <!-- STYLING VISUAL OFFLINE MANDIRI (MENGAMANKAN LAYOUT MODERN TANPA LINK INTERNET KELUAR) -->
+    <!-- STYLING VISUAL OFFLINE MANDIRI (MENGAMANKAN LAYOUT MODERN TANPA LINK INTERNET KELUAR) -->
     <style>
         body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; color: #334155; }
         .container-box { max-width: 950px; margin: 2% auto; background: #ffffff; border-radius: 8px; border: 1px solid #e3e6f0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); overflow: hidden; }
@@ -67,8 +68,10 @@ try {
         
         /* Layout Flexbox 2 Kolom Sejajar */
         .flex-row-box { display: flex; gap: 25px; flex-wrap: wrap; }
-        .col-kiri { flex: 1; min-width: 320px; display: flex; flex-direction: column; gap: 15px; }
-        .col-kanan { flex: 1.4; min-width: 380px; display: flex; flex-direction: column; }
+        
+        /* PERBAIKAN: Menggunakan basis persentase agar bisa mengecil di mobile */
+        .col-kiri { flex: 1 1 300px; display: flex; flex-direction: column; gap: 15px; min-width: 0; }
+        .col-kanan { flex: 1.4 1 350px; display: flex; flex-direction: column; min-width: 0; }
         
         /* Pengaturan Elemen Formulir */
         .form-group-box { display: flex; flex-direction: column; gap: 6px; }
@@ -76,8 +79,8 @@ try {
         .form-control-box { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 14px; outline: none; color: #334155; background-color: #fff; transition: border-color 0.15s; }
         .form-control-box:focus { border-color: #4e73df; }
         
-        /* Toolbar Format Gaya Microsoft Word */
-        .word-toolbar { background: #f8f9fc; border: 1px solid #cbd5e1; border-bottom: none; padding: 6px 10px; border-top-left-radius: 6px; border-top-right-radius: 6px; display: flex; gap: 6px; align-items: center; }
+        /* PERBAIKAN: Toolbar Format dibikin flex-wrap agar tombol turun ke bawah jika layar sempit */
+        .word-toolbar { background: #f8f9fc; border: 1px solid #cbd5e1; border-bottom: none; padding: 6px 10px; border-top-left-radius: 6px; border-top-right-radius: 6px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
         .btn-w { background: #ffffff; border: 1px solid #cbd5e1; color: #475569; padding: 5px 14px; font-size: 13px; border-radius: 4px; cursor: pointer; font-weight: 600; transition: all 0.15s; outline: none; }
         .btn-w:hover { background-color: #f1f5f9; color: #0f172a; border-color: #94a3b8; }
         
@@ -85,7 +88,7 @@ try {
         #editorArea { height: 195px; min-height: 195px; max-height: 195px; border: 1px solid #cbd5e1; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; background: #fff; padding: 12px; overflow: auto; outline: none; box-sizing: border-box; font-size: 14px; line-height: 1.5; color: #212529; }
         #editorArea:focus { border-color: #4e73df; box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.1); }
         
-        /* KEMBALIKAN KE INLINE: Menyelaraskan CSS agar patuh pada kontrol script pemutus spasi */
+        /* KEMBALIKAN KE INLINE */
         #editorArea u {
             display: inline !important;
             text-decoration: underline !important;
@@ -108,7 +111,18 @@ try {
         .btn-batal:hover { background-color: #475569; }
         .btn-simpan { background-color: #1cc88a; color: white; }
         .btn-simpan:hover { background-color: #17a673; }
+
+        /* TAMBAHAN: Media Queries Khusus Mobile Layar Sempit (< 576px) */
+        @media (max-width: 576px) {
+            body { padding: 10px; }
+            .card-body-box { padding: 15px; }
+            .flex-row-box { gap: 15px; }
+            .col-kiri, .col-kanan { flex: 1 1 100%; min-width: 0; }
+            .footer-box { text-align: center; display: flex; flex-direction: column-reverse; gap: 10px; }
+            .btn-action { width: 100%; margin-right: 0 !important; }
+        }
     </style>
+
 </head>
 
 <body>

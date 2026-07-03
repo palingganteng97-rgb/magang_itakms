@@ -523,7 +523,7 @@ try {
         </form>
     </div>
 
-    <!-- TABEL RESPONSIF DENGAN KELAS KUSTOM -->
+<!-- TABEL RESPONSIF DENGAN KELAS KUSTOM -->
     <div style="background-color: #fff; border-radius: 8px; border: 1px solid #e3e6f0; overflow-x: auto; box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.05); margin-bottom: 20px;"> 
         <table class="custom-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; min-width: 800px;">
             <thead>
@@ -563,11 +563,21 @@ try {
                                 <?php echo htmlspecialchars($row['judul'] ?? ''); ?>
                             </td>
 
-                            <!-- 4. Isi Konten -->
-                            <td style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                <?php echo htmlspecialchars(strip_tags($row['isi'] ?? '')); ?>
+                            <!-- 4. Isi Konten (PERBAIKAN MUTLAK: Paksa Tebal via CSS Inline) -->
+                            <td style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold !important; color: #334155;">
+                                <?php 
+                                    $isi_raw = $row['isi'] ?? '';
+                                    
+                                    // Bersihkan kode &nbsp; agar spasi kembali normal
+                                    $isi_tanpa_nbsp = str_replace('&nbsp;', ' ', $isi_raw);
+                                    
+                                    // Buang tag HTML agar tidak mengacaukan potongan ellipsis CSS
+                                    $isi_polos = strip_tags($isi_tanpa_nbsp);
+                                    
+                                    echo htmlspecialchars($isi_polos); 
+                                ?>
                             </td>
-                            
+
                             <!-- 5. Lampiran -->
                             <td>
                                 <?php if (!empty($row['lampiran'])): ?>
