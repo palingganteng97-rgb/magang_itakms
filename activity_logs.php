@@ -1,52 +1,16 @@
 <?php
 // ====================================================================
-// LOGIKA BACKEND UTAMA - ACTIVITY LOGS VIEW & PAGINATION WITH LOGGER
+// LOGIKA BACKEND UTAMA - ACTIVITY LOGS VIEW & PAGINATION
 // ====================================================================
 
 require_once __DIR__ . '/auth.php';
 require_login();
+require_once __DIR__ . '/db.php'; 
 
 // =========================================================================
-// 1. DEKLARASI FUNGSI GLOBAL LOGGER UTAMA
+// 1. KONFIGURASI DATABASE & PAGINASI
 // =========================================================================
-function write_log($conn, $aktivitas, $nama_tabel = null, $data_id = null) {
-    // Pastikan session dimuat untuk membaca ID user yang sedang login
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
-    
-    // Fallback otomatis ke user ID 1 jika session kosong saat development
-    $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 1;
-    
-    // Deteksi IP Address secara akurat
-    $ip_address = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
-    if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
-        $ip_address = $_SERVER['HTTP_CLIENT_IP'];
-    } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-        $ip_address = $_SERVER['HTTP_X_FORWARDED_FOR'];
-    }
-
-    // Deteksi informasi Browser / Perangkat
-    $browser = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : 'Unknown';
-
-    try {
-        $sql = "INSERT INTO activity_logs (user_id, aktivitas, nama_tabel, data_id, ip_address, browser, created_at) 
-                VALUES (?, ?, ?, ?, ?, ?, NOW())";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute([$user_id, $aktivitas, $nama_tabel, $data_id, $ip_address, $browser]);
-    } catch (Exception $e) {
-        error_log("Gagal menulis activity log: " . $e->getMessage());
-    }
-}
-
-// =========================================================================
-// 2. KONFIGURASI DATABASE & PAGINASI
-// =========================================================================
-$host = "10.10.6.59";
-$username = "root_host";
-$password = "password";
-$database = "magang_itakms";
-
+// Nilai $host, $username, $password, dan $database otomatis diwarisi dari db.php
 $currentFile = 'activity_logs.php';
 $message = '';
 $message_type = '';
@@ -57,6 +21,7 @@ $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $offset = ($page - 1) * $perPage;
 
 try {
+    // Memastikan koneksi PDO terbentuk dengan memanfaatkan variabel dari db.php
     $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8mb4", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
@@ -72,14 +37,13 @@ try {
         unset($_SESSION['flash_error']);
     }
 
-    // TRIGGER LOG OTOMATIS: Catat log setiap kali ada user membuka halaman log ini
-    // Log hanya dicatat pada muatan halaman pertama (bukan saat melakukan pencarian kata kunci)
+    // TRIGGER LOG OTOMATIS GLOBAL: Berhasil dipanggil tanpa error redeclare
     if (!isset($_GET['search']) && !isset($_GET['page'])) {
         write_log($conn, "Membuka halaman Log Aktivitas Sistem", "activity_logs", null);
     }
 
     // =========================================================================
-    // 3. AMBIL DATA LOGS & AMBIL DATA PAGINASI (READ DENGAN LEFT JOIN USERS)
+    // 2. AMBIL DATA LOGS & AMBIL DATA PAGINASI (READ DENGAN LEFT JOIN USERS)
     // =========================================================================
     $search = trim($_GET['search'] ?? '');
     
