@@ -22,12 +22,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $status    = isset($_POST['status']) ? $_POST['status'] : 1;
 
         try {
-            // Kolom backup_terakhir secara default bernilai NULL saat data baru dibuat
             $sql = "INSERT INTO backup_jobs (server_id, lokasi, jadwal, status, backup_terakhir) VALUES (?, ?, ?, ?, NULL)";
             $stmt = $conn->prepare($sql);
             $stmt->execute([$server_id, $lokasi, $jadwal, $status]);
             
-            // Pengalihan instan kembali ke halaman utama jobs
             echo "<script>window.location.href = 'backup_jobs.php';</script>";
             exit();
         } catch (Exception $e) {
@@ -45,7 +43,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $status    = isset($_POST['status']) ? $_POST['status'] : 1;
 
         try {
-            // Mengubah data server_id, lokasi, jadwal, dan status berdasarkan ID target
             $sql = "UPDATE backup_jobs SET server_id = ?, lokasi = ?, jadwal = ?, status = ? WHERE id = ?";
             $stmt = $conn->prepare($sql);
             $stmt->execute([$server_id, $lokasi, $jadwal, $status, $id]);
@@ -64,7 +61,6 @@ if (isset($_GET['delete'])) {
     $id = $_GET['delete'];
     
     try {
-        // Eksekusi penghapusan baris data pada tabel backup_jobs
         $sql = "DELETE FROM backup_jobs WHERE id = ?";
         $stmt = $conn->prepare($sql);
         $stmt->execute([$id]);
@@ -78,18 +74,16 @@ if (isset($_GET['delete'])) {
 }
 
 // ====================================================================
-// PEMBACAAN DATA AKHIR (SELECT)
+// PEMBACAAN DATA AKHIR (SELECT DENGAN LEFT JOIN KELAS SERVERS)
 // ====================================================================
 try {
-    // Mengambil seluruh riwayat tugas urut dari yang paling baru dimasukkan
-    $backup_jobs = $conn->query("SELECT * FROM backup_jobs ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+    $backup_jobs = $conn->query("SELECT bj.*, s.fungsi FROM backup_jobs bj LEFT JOIN servers s ON bj.server_id = s.id ORDER BY bj.id DESC")->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     $backup_jobs = [];
     $message = "Gagal memuat data database: " . $e->getMessage();
     $message_type = "danger";
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -407,7 +401,6 @@ try {
                 <table class="table table-bordered table-hover align-middle m-0 text-nowrap">
                     <thead class="table-light text-muted small text-uppercase">
                         <tr>
-                            <!-- style min-width menjaga proporsi lebar kolom tetap sejajar di semua ukuran layar -->
                             <th style="width: 5%; min-width: 60px;" class="text-center">ID</th>
                             <th style="width: 15%; min-width: 120px;">Server ID</th>
                             <th style="width: 25%; min-width: 220px;">Lokasi Penyimpanan</th>
@@ -431,7 +424,6 @@ try {
                                 <td class="text-center"><span class="text-muted fw-bold">#<?= $row['id']; ?></span></td>
                                 <td class="fw-semibold text-dark">Server #<?= htmlspecialchars($row['server_id']); ?></td>
                                 <td>
-                                    <!-- max-width diatur dinamis menggunakan px agar pemotongan teks rapi di mobile & desktop -->
                                     <div class="d-inline-block text-truncate" style="max-width: 200px;" title="<?= htmlspecialchars($row['lokasi']); ?>">
                                         <span class="badge bg-light text-dark border px-2 py-1.5">
                                             <i class="bi bi-folder2-open me-1 text-secondary"></i><?= htmlspecialchars($row['lokasi']); ?>
@@ -452,7 +444,6 @@ try {
                                     <?= $row['status'] == 1 ? '<span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Aktif</span>' : '<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">Non-Aktif</span>'; ?>
                                 </td>
                                 <td class="text-center">
-                                    <!-- d-flex & justify-content-center memastikan tombol aksi sejajar di tengah cell -->
                                     <div class="d-flex justify-content-center">
                                         <div class="btn-group shadow-sm border rounded bg-white">
                                             <!-- Tombol Pemicu Modal Edit -->
@@ -471,7 +462,6 @@ try {
                     </tbody>
                 </table>
             </div>
-
         </div>
     </div>
 </main>
@@ -482,7 +472,6 @@ try {
 <div class="modal fade" id="modalAddBackup" tabindex="-1" aria-labelledby="modalAddBackupLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg rounded-3">
-      <!-- Mengarah ke backup_jobs.php tanpa enctype karena tidak ada upload file berkas -->
       <form action="backup_jobs.php" method="POST">
           <!-- Hidden Input Action untuk Handler CRUD PHP -->
           <input type="hidden" name="action" value="create">
@@ -495,25 +484,43 @@ try {
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           
-          <!-- Body Modal (Sejajar Kesamping) -->
+          <!-- Body Modal -->
           <div class="modal-body pt-3">
             
-            <!-- Baris Server ID (BIGINT) -->
-            <div class="row mb-3 align-items-center">
-                <label for="server_id" class="col-4 col-form-label small fw-bold text-secondary text-end">Server ID</label>
-                <div class="col-8">
-                    <input type="number" id="server_id" name="server_id" class="form-control form-control-sm text-dark" placeholder="Contoh: 102" required>
-                </div>
-            </div>
-            
-            <!-- Baris Lokasi Penyimpanan / Path (VARCHAR 255) -->
+<!-- Baris Server ID (Dropdown PDO Terintegrasi Aman) -->
+<div class="row mb-3 align-items-center">
+    <label for="server_id" class="col-4 col-form-label small fw-bold text-secondary text-end">Server ID</label>
+    <div class="col-8">
+        <select id="server_id" name="server_id" class="form-select form-select-sm text-dark" required>
+            <option value="" disabled selected>-- Pilih Server --</option>
+            <?php
+            try {
+                // Diubah menggunakan nama kolom 'id' dan 'fungsi' sesuai skema tabel servers Anda
+                $query_server = $conn->query("SELECT id, fungsi FROM servers ORDER BY id ASC");
+                $servers = $query_server->fetchAll(PDO::FETCH_ASSOC);
+
+                foreach ($servers as $server) {
+                    echo "<option value='" . htmlspecialchars($server['id']) . "'>";
+                    echo "ID " . htmlspecialchars($server['id']) . " - " . htmlspecialchars($server['fungsi'] ?? 'Tanpa Fungsi/Deskripsi');
+                    echo "</option>";
+                }
+            } catch (Exception $e) {
+                // Memunculkan detail pesan error asli jika query MySQL tersendat
+                echo "<option value='' disabled>SQL Error: " . htmlspecialchars($e->getMessage()) . "</option>";
+            }
+            ?>
+        </select>
+    </div>
+</div>
+
+            <!-- Baris Lokasi Penyimpanan / Path -->
             <div class="row mb-3 align-items-center">
                 <label for="lokasi" class="col-4 col-form-label small fw-bold text-secondary text-end">Lokasi / Path Tujuan</label>
                 <div class="col-8">
                     <input type="text" id="lokasi" name="lokasi" class="form-control form-control-sm text-dark" maxlength="255" placeholder="Contoh: /var/www/backup/db_main" required>
                 </div>
             </div>
-            
+
             <!-- Baris Jadwal Eksekusi (VARCHAR 100) -->
             <div class="row mb-3 align-items-center">
                 <label for="jadwal" class="col-4 col-form-label small fw-bold text-secondary text-end">Jadwal (Cron/Waktu)</label>
@@ -567,14 +574,36 @@ try {
             <!-- Body Modal Edit (Sejajar Kesamping) -->
             <div class="modal-body pt-3">
             
-            <!-- Baris Ubah Server ID (BIGINT) -->
-            <div class="row mb-3 align-items-center">
-                <label for="server_id_<?= $row['id']; ?>" class="col-4 col-form-label small fw-bold text-secondary text-end">Server ID</label>
-                <div class="col-8">
-                    <input type="number" id="server_id_<?= $row['id']; ?>" name="server_id" class="form-control form-control-sm text-dark" value="<?= htmlspecialchars($row['server_id']); ?>" required>
-                </div>
-            </div>
-            
+<!-- Baris Server ID (PASTIKAN MENGGUNAKAN KODE INI) -->
+<div class="row mb-3 align-items-center">
+    <label for="server_id" class="col-4 col-form-label small fw-bold text-secondary text-end">Server ID</label>
+    <div class="col-8">
+        <select id="server_id" name="server_id" class="form-select form-select-sm text-dark" required>
+            <option value="" disabled selected>-- Pilih Server --</option>
+            <?php
+            try {
+                // Diubah menggunakan kolom 'id' dan 'fungsi' sesuai skema asli HeidiSQL Anda
+                $query_server = $conn->query("SELECT id, fungsi FROM servers ORDER BY id ASC");
+                $servers = $query_server->fetchAll(PDO::FETCH_ASSOC);
+
+                if (!empty($servers)) {
+                    foreach ($servers as $server) {
+                        echo "<option value='" . htmlspecialchars($server['id']) . "'>";
+                        echo "ID " . htmlspecialchars($server['id']) . " - " . htmlspecialchars($server['fungsi'] ?? 'Tanpa Deskripsi');
+                        echo "</option>";
+                    }
+                } else {
+                    echo "<option value='' disabled>Tabel servers kosong di database</option>";
+                }
+            } catch (Exception $e) {
+                // Jika masih gagal, opsi di bawah ini akan memunculkan pesan error teknis MySQL aslinya
+                echo "<option value='' disabled>Error: " . htmlspecialchars($e->getMessage()) . "</option>";
+            }
+            ?>
+        </select>
+    </div>
+</div>
+
             <!-- Baris Ubah Lokasi Penyimpanan / Path (VARCHAR 255) -->
             <div class="row mb-3 align-items-center">
                 <label for="lokasi_<?= $row['id']; ?>" class="col-4 col-form-label small fw-bold text-secondary text-end">Lokasi / Path Tujuan</label>
