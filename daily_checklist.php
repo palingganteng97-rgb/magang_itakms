@@ -649,7 +649,12 @@ try {
   </div>
 </div>
 
-    <!-- MODAL EDIT DATA CHECKLIST -->
+<!-- KUNCI MUTLAK: Awal Perulangan Modal (Harus sama dengan perulangan di tabel main Anda) -->
+<?php foreach($daily_checklists as $row): ?>
+
+    <!-- ==================================================================== -->
+    <!-- 1. MODAL EDIT DATA CHECKLIST                                         -->
+    <!-- ==================================================================== -->
     <div class="modal fade" id="modalEditChecklist<?= $row['id']; ?>" tabindex="-1" aria-labelledby="modalEditChecklistLabel<?= $row['id']; ?>" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-3">
@@ -683,7 +688,6 @@ try {
                                     $query_user = $conn->query("SELECT id, username FROM users ORDER BY username ASC");
                                     $users_list = $query_user->fetchAll(PDO::FETCH_ASSOC);
                                     foreach ($users_list as $user) {
-                                        // Menandai secara tepat user mana yang memiliki tugas ini sebelumnya
                                         $selected = ($user['id'] == $row['user_id']) ? 'selected' : '';
                                         echo "<option value='" . htmlspecialchars($user['id']) . "' $selected>";
                                         echo htmlspecialchars($user['username']);
@@ -707,7 +711,7 @@ try {
                 </div>
                 
                 <div class="modal-footer border-top-0 pt-0">
-                    <button type="button" class="btn btn-sm btn-light border px-3" data-bs-dismiss="modal">Tutup</button>
+                    <button type="button" class="btn btn-sm btn-light border px-3" data-bs-toggle="modal">Tutup</button>
                     <button type="submit" class="btn btn-sm btn-warning fw-bold text-white px-4 shadow-sm">Update Tugas</button>
                 </div>
             </form>
@@ -715,87 +719,50 @@ try {
         </div>
     </div>
 
-<!-- ==================================================================== -->
-<!-- MODAL HAPUS DATA CHECKLIST (POST METHOD - AMAN DAN SEJAJAR)        -->
-<!-- ==================================================================== -->
-<div class="modal fade" id="modalDeleteChecklist<?= $row['id']; ?>" tabindex="-1" aria-labelledby="modalDeleteChecklistLabel<?= $row['id']; ?>" aria-hidden="true">
-  <div class="modal-dialog modal-md modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-3">
-      <form action="daily_checklist.php" method="POST">
-          <!-- Hidden Input Keperluan Handler CRUD PHP -->
-          <input type="hidden" name="action" value="delete">
-          <input type="hidden" name="id" value="<?= $row['id']; ?>">
-          
-          <!-- Header Modal -->
-          <div class="modal-header border-bottom-0 pb-0">
-            <h5 class="modal-title fw-bold text-danger" id="modalDeleteChecklistLabel<?= $row['id']; ?>">
-              <i class="bi bi-exclamation-triangle-fill me-2"></i>Konfirmasi Hapus
-            </h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          
-          <!-- Body Modal Dengan Format Memanjang Kanan -->
-          <div class="modal-body pt-3">
-            <div class="row align-items-center">
-                <!-- Sisi Kiri: Ikon Peringatan -->
-                <div class="col-sm-2 text-center text-sm-end mb-3 mb-sm-0">
-                    <i class="bi bi-trash3 text-danger display-6"></i>
+    <!-- ==================================================================== -->
+    <!-- 2. MODAL HAPUS DATA CHECKLIST (POST METHOD - AMAN DAN SEJAJAR)        -->
+    <!-- ==================================================================== -->
+    <div class="modal fade" id="modalDeleteChecklist<?= $row['id']; ?>" tabindex="-1" aria-labelledby="modalDeleteChecklistLabel<?= $row['id']; ?>" aria-hidden="true">
+      <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-3">
+          <form action="daily_checklist.php" method="POST">
+              <input type="hidden" name="action" value="delete">
+              <input type="hidden" name="id" value="<?= $row['id']; ?>">
+              
+              <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold text-danger" id="modalDeleteChecklistLabel<?= $row['id']; ?>">
+                  <i class="bi bi-exclamation-triangle-fill me-2"></i>Konfirmasi Hapus
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              
+              <div class="modal-body pt-3">
+                <div class="row align-items-center">
+                    <div class="col-sm-2 text-center text-sm-end mb-3 mb-sm-0">
+                        <i class="bi bi-trash3 text-danger display-6"></i>
+                    </div>
+                    <div class="col-sm-10">
+                        <p class="mb-1 text-secondary small fw-bold">Anda akan menghapus item checklist berikut:</p>
+                        <h6 class="fw-bold text-dark mb-0">"Item #<?= $row['id']; ?> - <?= htmlspecialchars($row['item']); ?>"</h6>
+                        <p class="text-muted small mt-2 mb-0">Tindakan ini bersifat permanen. Rekam aktivitas checklist harian ini akan dihapus sepenuhnya dari database sistem.</p>
+                    </div>
                 </div>
-                <!-- Sisi Kanan: Teks Penjelasan Data -->
-                <div class="col-sm-10">
-                    <p class="mb-1 text-secondary small fw-bold">Anda akan menghapus item checklist berikut:</p>
-                    <h6 class="fw-bold text-dark mb-0">"Item #<?= $row['id']; ?> - <?= htmlspecialchars($row['item']); ?>"</h6>
-                    <p class="text-muted small mt-2 mb-0">Tindakan ini bersifat permanen. Rekam aktivitas checklist harian ini akan dihapus sepenuhnya dari database sistem.</p>
-                </div>
-            </div>
-          </div>
-          
-          <!-- Footer Tombol Aksi -->
-          <div class="modal-footer border-top-0 pt-2">
-            <button type="button" class="btn btn-sm btn-light border px-3" data-bs-dismiss="modal">Batal</button>
-            <button type="submit" class="btn btn-sm btn-danger fw-bold px-4 shadow-sm">
-                <i class="bi bi-trash me-1"></i>Ya, Hapus Data
-            </button>
-          </div>
-      </form>
+              </div>
+              
+              <div class="modal-footer border-top-0 pt-2">
+                <button type="button" class="btn btn-sm btn-light border px-3" data-bs-dismiss="modal">Batal</button>
+                <button type="submit" class="btn btn-sm btn-danger fw-bold px-4 shadow-sm">
+                    <i class="bi bi-trash me-1"></i>Ya, Hapus Data
+                </button>
+              </div>
+          </form>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
-<!-- INTERAKSI DOM DAN SINKRONISASI POSISI SCROLL SIDEBAR UTAMA (KUNCI MUTLAK) -->
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    const menuContainer = document.querySelector('.menu-scroll-container');
-    const activeMenu = document.querySelector('.menu-scroll-container .active-style');
-    
-    // FIX MUTLAK: Selalu menetap mengunci fokus menu aktif saat halaman selesai dimuat (klik / reload)
-    if (menuContainer && activeMenu) {
-        const activeOffsetTop = activeMenu.offsetTop;
-        menuContainer.scrollTop = activeOffsetTop - 20;
-    }
-});
+<!-- KUNCI MUTLAK: Akhir Perulangan Modal (Pastikan baris ini ada dan tidak terhapus) -->
+<?php endforeach; ?>
 
-// MODUL PENUTUP OTOMATIS ALERT & PEMBERSIH PARAMETER CRITICAL URL SECARA AMAN
-document.addEventListener("click", function(t) {
-    let alertBtn = t.target.closest('[data-bs-dismiss="alert"]');
-    if (alertBtn) {
-        let alertBox = t.target.closest('.alert');
-        if (alertBox) {
-            t.preventDefault();
-            alertBox.remove(); 
-            
-            // Logika Cerdas: Hapus parameter pesan sukses/gagal, tapi PERTAHANKAN tanggal pencarian jika ada
-            let url = new URL(window.location.href);
-            if (url.searchParams.has('status') || url.searchParams.has('msg')) {
-                url.searchParams.delete('status');
-                url.searchParams.delete('msg');
-                // Mengubah URL di address bar browser secara halus tanpa reload halaman
-                window.history.replaceState({}, document.title, url);
-            }
-        }
-    }
-});
-</script>
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

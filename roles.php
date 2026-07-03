@@ -563,6 +563,4 @@ try {
     });
 </script>
 
-</body>
-</html>
-
+    <?php include 'footer-admin.php'; ?>
