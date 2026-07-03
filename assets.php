@@ -1,5 +1,11 @@
 <?php
 // =========================================================================
+// 1. OPSI UTAMA: MUAT PENGAMAN AUTH AGAR LOG OTOMATIS BERJALAN SEMPURNA
+// =========================================================================
+require_once __DIR__ . '/auth.php';
+require_login(); // KUNCI UTAMA: Ini yang akan otomatis memicu write_log untuk assets.php
+
+// =========================================================================
 // LOGIKA BACKEND: assets.php (SUDAH MEMULIHKAN DROPDOWN RUANGAN MODAL MUTASI)
 // =========================================================================
 $host     = "10.10.6.59";
