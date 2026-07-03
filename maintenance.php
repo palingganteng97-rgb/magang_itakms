@@ -647,5 +647,4 @@ document.addEventListener("click", function(t) {
 });
 </script>
 
-</body>
-</html>
+<?php include 'footer-admin.php'; ?>
