@@ -568,43 +568,37 @@ try {
 </div>
 </main>
 
-    <!-- =========================================================================
-         STRUKTUR MODAL HAPUS DATA (MURNI TAMPILAN)
-         ========================================================================= -->
-    <div id="modalDelete" class="modal-custom">
-        <!-- max-width dipangkas menjadi 400px agar terlihat seperti kotak dialog konfirmasi kecil -->
-        <div class="modal-content-custom" style="max-width: 400px; margin: 12% auto; text-align: center; padding: 30px 25px;">
-            
-            <!-- Ikon Peringatan Besar -->
-            <div style="color: #dc2626; font-size: 48px; margin-bottom: 15px; line-height: 1;">
-                <i class="bi bi-exclamation-triangle-fill"></i>
-            </div>
-            
-            <!-- Judul Konfirmasi -->
-            <h3 style="margin: 0 0 10px 0; color: #1e293b; font-size: 20px; font-weight: 700;">Hapus Artikel?</h3>
-            
-            <!-- Teks Penjelasan -->
-            <p style="margin: 0 0 25px 0; color: #64748b; font-size: 14px; line-height: 1.5;">
-                Apakah Anda yakin ingin menghapus data artikel ini secara permanen? Tindakan ini tidak dapat dibatalkan.
-            </p>
-            
-            <!-- Tombol Aksi Kanan-Kiri Berdampingan -->
-            <div style="display: flex; gap: 10px; justify-content: center;">
-                <button type="button" class="btn-secondary-custom" onclick="closeDeleteModal()" style="flex: 1; margin: 0; padding: 10px 0;">
-                    Batal
-                </button>
-            <!-- Cari tombol hapus merah di dalam kode modalDelete Anda, lalu ubah menjadi ini -->
-            <button type="button" class="btn-danger-custom" onclick="executeDelete()" style="flex: 1; padding: 10px 0;">
+<!-- AREA MODAL HAPUS (ID SINKRON DENGAN JAVASCRIPT: modalDelete) -->
+<div id="modalDelete" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); justify-content: center; align-items: center;">
+    <div style="background-color: #fff; padding: 30px; border-radius: 8px; width: 400px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); position: relative; margin: auto;">
+        
+        <!-- Simbol Peringatan / Icon Bahaya -->
+        <div style="background-color: #fff5f5; color: #e74a3b; width: 70px; height: 70px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 35px; margin: 0 auto 20px auto; border: 2px solid #ffe3e3;">
+            ⚠️
+        </div>
+        
+        <!-- Judul Modal -->
+        <h3 style="margin: 0 0 10px 0; color: #333; font-size: 22px; font-weight: 600; font-family: sans-serif;">Hapus Artikel?</h3>
+        
+        <!-- Deskripsi Konten -->
+        <p style="color: #858796; font-size: 14px; margin-bottom: 25px; line-height: 1.5; font-family: sans-serif;">
+            Apakah Anda yakin ingin menghapus data artikel ini secara permanen? Tindakan ini tidak dapat dibatalkan.
+        </p>
+        
+        <!-- Tombol Aksi Kontrol -->
+        <div style="display: flex; gap: 15px; justify-content: center;">
+            <!-- Tombol Batal Pemutus Modal -->
+            <button type="button" onclick="closeDeleteModal()" style="background-color: #fff; color: #4e73df; border: 1px solid #d1d3e2; padding: 10px 25px; border-radius: 6px; cursor: pointer; font-weight: 600; min-width: 100px; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.backgroundColor='#f8f9fc'" onmouseout="this.style.backgroundColor='#fff'">
+                Batal
+            </button>
+            <!-- Tombol Konfirmasi Hapus Data -->
+            <button type="button" onclick="executeDelete()" style="background-color: #e74a3b; color: white; border: none; padding: 10px 25px; border-radius: 6px; cursor: pointer; font-weight: 600; min-width: 100px; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.backgroundColor='#be3827'" onmouseout="this.style.backgroundColor='#e74a3b'">
                 Ya, Hapus
             </button>
-            </div>
         </div>
     </div>
+</div>
 
-
-<!-- =========================================================================
-     KONTROL MODAL FIX (MODAL HAPUS & MODAL DETAIL)
-     ========================================================================= -->
 <script>
     // ----------------------------------------------------
     // VARIABEL GLOBAL & KONTROL MODAL HAPUS
@@ -714,7 +708,4 @@ document.addEventListener("click", function(t) {
 });
 </script>
 
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<?php include 'footer-admin.php'; ?>

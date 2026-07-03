@@ -2,7 +2,12 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
-// 1. Konfigurasi Koneksi Database
+// =========================================================================
+// 1. BARIS WAJIB: DEKLARASI CURRENT PAGE UNTUK SIDEBAR DINAMIS
+// =========================================================================
+$currentPage = basename($_SERVER['PHP_SELF']);
+
+// 2. Konfigurasi Koneksi Database
 $host = "10.10.6.59";
 $username = "root_host";
 $password = "password";
@@ -12,6 +17,23 @@ $database = "magang_itakms";
 $perPage = 50;
 $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $offset = ($page - 1) * $perPage;
+
+// Inisialisasi variabel notifikasi alert
+$message = '';
+$messageType = 'success';
+
+if (isset($_GET['status'])) {
+    if ($_GET['status'] == 'success_add') {
+        $message = "Data Network Port baru berhasil ditambahkan!";
+        $messageType = "success";
+    } elseif ($_GET['status'] == 'success_update') {
+        $message = "Perubahan data Network Port berhasil disimpan!";
+        $messageType = "success";
+    } elseif ($_GET['status'] == 'success_delete') {
+        $message = "Data Network Port berhasil dihapus secara permanen!";
+        $messageType = "danger";
+    }
+}
 
 try {
     $conn = new PDO("mysql:host=$host;dbname=$database", $username, $password);
@@ -26,7 +48,7 @@ try {
         $network_device_id = $_POST['network_device_id'];
         $port              = $_POST['port'];
         $nama              = $_POST['nama'];
-        $status            = $_POST['status']; // Bernilai 1 atau 0 dari form
+        $status            = $_POST['status']; 
 
         $stmtInsert = $conn->prepare("INSERT INTO network_ports (network_device_id, port, nama, status) VALUES (?, ?, ?, ?)");
         $stmtInsert->execute([$network_device_id, $port, $nama, $status]);
@@ -41,7 +63,7 @@ try {
         $network_device_id = $_POST['network_device_id'];
         $port              = $_POST['port'];
         $nama              = $_POST['nama'];
-        $status            = $_POST['status']; // Bernilai 1 atau 0 dari form
+        $status            = $_POST['status']; 
 
         $stmtUpdate = $conn->prepare("UPDATE network_ports SET network_device_id = ?, port = ?, nama = ?, status = ? WHERE id = ?");
         $stmtUpdate->execute([$network_device_id, $port, $nama, $status, $id]);
@@ -50,9 +72,9 @@ try {
         exit;
     }
 
-    // C. PROSES HAPUS DATA PORT (Delete)
-    if (isset($_GET['delete'])) {
-        $idDelete = $_GET['delete'];
+    // C. PROSES HAPUS DATA PORT (Delete POST via Secure Modal)
+    if (isset($_POST['action']) && $_POST['action'] == 'delete') {
+        $idDelete = $_POST['id'];
 
         $stmtDelete = $conn->prepare("DELETE FROM network_ports WHERE id = ?");
         $stmtDelete->execute([$idDelete]);
@@ -76,7 +98,7 @@ try {
     $totalRows = $stmtCount->fetchColumn();
     $totalPages = ceil($totalRows / $perPage);
 
-    // 3. Mengambil record data dari tabel network_ports + INNER JOIN ke network_devices untuk memunculkan info VLAN induknya
+    // 3. Mengambil record data dari tabel network_ports + INNER JOIN ke network_devices
     $stmtPorts = $conn->prepare("
         SELECT np.*, nd.vlan 
         FROM network_ports np
@@ -378,236 +400,212 @@ try {
 
 </div> <!-- /penutup elemen offcanvas-md -->
 
-<!-- AREA UTAMA KONTEN (Gunakan pembungkus ini agar susunan halaman tidak bergeser tertimpa sidebar) -->
-    <main class="col-12 col-md-8 col-lg-9 ms-sm-auto ms-md-auto px-md-4 pt-4 offset-md-4 offset-lg-3">
+<!-- ==================================================================== -->
+<!-- BAGIAN C: PEMBUNGKUS MAIN KONTEN UTAMA (NETWORK PORT RESPONSIVE)    -->
+<!-- ==================================================================== -->
+<main class="main-content p-3 p-md-4 flex-grow-1 overflow-x-hidden">
 
-      <!-- Header Konten Utama (PERBAIKAN: Ditambahkan tag penutup </div> di akhir baris judul) -->
-      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2 fs-4 fs-md-2">Dashboard Sistem - Network Ports</h1>
-      </div> 
+    <!-- HEADER HALAMAN & TOMBOL AKSI -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2 mb-0">Network Ports</h1>
+        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#portModal" onclick="window.clearFormPort()">
+            <i class="bi bi-ethernet me-1"></i> Tambah Port Baru
+        </button>
+    </div>
 
-      <!-- Notifikasi Flash Status CRUD -->
-      <?php if(isset($_GET['status'])): ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <?php
-              if($_GET['status'] == 'success_add') echo '<i class="bi bi-check-circle-fill me-2"></i> Data port baru berhasil ditambahkan!';
-              if($_GET['status'] == 'success_update') echo '<i class="bi bi-check-circle-fill me-2"></i> Konfigurasi port berhasil diperbarui!';
-              if($_GET['status'] == 'success_delete') echo '<i class="bi bi-trash-fill me-2"></i> Data port berhasil dihapus!';
-            ?>
+    <!-- NOTIFIKASI SYSTEM ALERT -->
+    <?php if (!empty($message)): ?>
+        <div class="alert alert-<?= $messageType ?> alert-dismissible fade show" role="alert">
+            <?= $message ?>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
-      <?php endif; ?>
+    <?php endif; ?>
 
-      <!-- Tombol Pemicu Modal Tambah (C - Create) -->
-      <div class="mb-3">
-        <button class="btn btn-primary btn-sm btn-md-md" data-bs-toggle="modal" data-bs-target="#addPortModal">
-          <i class="bi bi-plus-circle me-1"></i> Tambah Network Port
-        </button>
-      </div>
+    <!-- AREA DATA TABEL UTAMA -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 text-nowrap">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-3">ID</th>
+                                    <th>VLAN Induk (Perangkat)</th>
+                                    <th>Nomor Port</th>
+                                    <th>Nama / Alokasi Port</th>
+                                    <th>Status</th>
+                                    <th class="text-center pe-3">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (isset($ports) && count($ports) > 0): ?>
+                                    <?php foreach ($ports as $row): ?>
+                                        <tr>
+                                            <td class="ps-3 fw-bold"><?= $row['id'] ?></td>
+                                            <td>
+                                                <span class="badge bg-secondary px-2 py-1">
+                                                    VLAN <?= htmlspecialchars($row['vlan'] ?? 'Unknown') ?>
+                                                </span>
+                                            </td>
+                                            <td class="fw-medium text-primary"><?= htmlspecialchars($row['port']) ?></td>
+                                            <td><?= htmlspecialchars($row['nama'] ?? '-') ?></td>
+                                            <td>
+                                                <span class="badge <?= $row['status'] == 1 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' ?> rounded-pill px-3">
+                                                    <?= $row['status'] == 1 ? 'Aktif' : 'Non-Aktif' ?>
+                                                </span>
+                                            </td>
+                                            <td class="text-center pe-3">
+                                                <!-- Tombol Edit (Ikon Pensil Kuning) -->
+                                                <button type="button" class="btn btn-sm btn-outline-warning me-1" data-bs-toggle="modal" data-bs-target="#portModal" onclick='window.editPort(<?= json_encode($row, JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'>
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </button>
+                                                <!-- Tombol Hapus (Ikon Sampah Merah) -->
+                                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deletePortModal" onclick="window.setupDeletePort(<?= $row['id'] ?>, '<?= htmlspecialchars($row['port'], ENT_QUOTES) ?>')">
+                                                    <i class="bi bi-trash-fill"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr><td colspan="6" class="text-center text-muted py-4">Tidak ada data network port ditemukan.</td></tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-      <!-- Tabel Data Network Ports (R - Read) -->
-      <div class="table-responsive w-100 bg-white p-2 p-md-3 rounded shadow-sm border" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-        <table class="table table-striped table-hover align-middle mb-0 text-nowrap">
-          <thead class="table-dark">
-            <tr>
-              <th style="width: 50px;">ID</th>
-              <th>Device Induk (VLAN)</th>
-              <th>No / Kode Port</th>
-              <th>Nama Deskripsi</th>
-              <th>Status Koneksi</th>
-              <th class="text-center" style="width: 100px;">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php if(empty($ports)): ?>
-                <tr>
-                  <td colspan="6" class="text-center text-muted py-4" style="white-space: normal;">
-                    <i class="bi bi-ethernet display-6 d-block mb-2 text-secondary"></i>
-                    Belum ada data konfigurasi network port terdaftar.
-                  </td>
-                </tr>
-            <?php else: ?>
-                <?php foreach($ports as $port): ?>
-                <tr>
-                  <td><?= $port['id'] ?></td>
-                  <td>
-                    <span class="badge bg-light text-dark border px-2 py-1">
-                      <i class="bi bi-router me-1 text-primary"></i> Device ID: <?= htmlspecialchars($port['network_device_id'] ?? '-') ?> 
-                      (<?= htmlspecialchars($port['vlan'] ?? 'Tanpa VLAN') ?>)
-                    </span>
-                  </td>
-                  <td><strong><code class="text-dark"><?= htmlspecialchars($port['port'] ?? '-') ?></code></strong></td>
-                  <td><?= htmlspecialchars($port['nama'] ?? '-') ?></td>
-                  <td>
-                    <?php if(($port['status']) == 1): ?>
-                        <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i> 1 - Up / Active</span>
-                    <?php else: ?>
-                        <span class="badge bg-danger"><i class="bi bi-x-circle-fill me-1"></i> 0 - Down / Disable</span>
-                    <?php endif; ?>
-                  </td>
-                  <td class="text-center">
-                    <button class="btn btn-sm btn-warning me-1" 
-                            data-bs-toggle="modal" 
-                            data-bs-target="#editPortModal"
-                            data-id="<?= $port['id'] ?>"
-                            data-device="<?= $port['network_device_id'] ?>"
-                            data-port="<?= htmlspecialchars($port['port'] ?? '') ?>"
-                            data-nama="<?= htmlspecialchars($port['nama'] ?? '') ?>"
-                            data-status="<?= $port['status'] ?>"
-                            title="Ubah Data Port">
-                      <i class="bi bi-pencil-square"></i>
-                    </button>
-                    <a href="network_port.php?delete=<?= $port['id'] ?>" 
-                       class="btn btn-sm btn-danger" 
-                       onclick="return confirm('Apakah Anda yakin ingin menghapus konfigurasi port ini?')"
-                       title="Hapus Data Port">
-                      <i class="bi bi-trash"></i>
-                    </a>
-                  </td>
-                </tr>
-                <?php endforeach; ?>
-            <?php endif; ?>
-          </tbody>
-        </table>
-      </div>
-    </main>
-  </div>
-</div>
+    <!-- ==================================================================== -->
+    <!-- INTERFACES MODAL FORM: TAMBAH & EDIT DATA PORT                       -->
+    <!-- ==================================================================== -->
+    <div class="modal fade" id="portModal" tabindex="-1" aria-labelledby="portModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-3">
+                <form id="portForm" action="network_port.php" method="POST">
+                    
+                    <div class="modal-header border-bottom-0 pt-3 px-4">
+                        <h5 class="modal-title fw-bold text-dark" id="portModalLabel">Tambah Port Baru</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    
+                    <div class="modal-body px-4 py-2">
+                        <input type="hidden" name="action" id="formAction" value="create">
+                        <input type="hidden" name="id" id="portId">
 
-<!-- ========================================== -->
-<!-- MODAL COMPONENT UNTUK FORM CRUD (BOOTSTRAP)-->
-<!-- ========================================== -->
+                        <div class="row g-3">
+                            <!-- Dropdown Perangkat / VLAN Induk -->
+                            <div class="col-12">
+                                <label for="portDevice" class="form-label small fw-bold text-secondary">Perangkat (VLAN Induk)</label>
+                                <select name="network_device_id" id="portDevice" class="form-select" required>
+                                    <option value="" disabled selected>-- Pilih Perangkat / VLAN --</option>
+                                    <?php
+                                    if (isset($listDevices)) {
+                                        foreach ($listDevices as $device) {
+                                            echo "<option value='{$device['id']}'>ID Perangkat: {$device['id']} - VLAN {$device['vlan']}</option>";
+                                        }
+                                    }
+                                    ?>
+                                </select>
+                            </div>
 
-<!-- MODAL TAMBAH PORT (CREATE) -->
-<div class="modal fade" id="addPortModal" tabindex="-1" aria-labelledby="addPortModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-scrollable">
-    <form action="network_port.php" method="POST" class="modal-content">
-      <input type="hidden" name="action" value="create">
-      <div class="modal-header">
-        <h5 class="modal-title" id="addPortModalLabel"><i class="bi bi-plus-circle me-2 text-primary"></i>Tambah Data Port Baru</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <!-- Dropdown Pilih Network Device Induk -->
-        <div class="mb-3">
-            <label class="form-label fw-bold">Pilih Perangkat Jaringan (Device) <span class="text-danger">*</span></label>
-            <select name="network_device_id" class="form-select" required>
-                <option value="">-- Pilih Network Device --</option>
-                <?php if(!empty($listDevices)): ?>
-                    <?php foreach($listDevices as $dev): ?>
-                        <option value="<?= $dev['id'] ?>">Device ID: <?= $dev['id'] ?> (VLAN: <?= htmlspecialchars($dev['vlan'] ?? '-') ?>)</option>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <option value="" disabled class="text-danger">Tidak ada data device! Tambah di menu Network Device dulu.</option>
-                <?php endif; ?>
-            </select>
-        </div>
-        <!-- Input Port -->
-        <div class="mb-3">
-          <label class="form-label fw-bold">No / Kode Port <span class="text-danger">*</span></label>
-          <input type="text" name="port" class="form-control" placeholder="Contoh: Gi1/0/1, Eth1, Port-24" required>
-        </div>
-        <!-- Input Nama Deskripsi -->
-        <div class="mb-3">
-          <label class="form-label fw-bold">Nama Deskripsi / Keterangan <span class="text-danger">*</span></label>
-          <input type="text" name="nama" class="form-control" placeholder="Contoh: Uplink Server Utama, Jalur PC Admin" required>
-        </div>
-        <!-- Dropdown Status (TINYINT 1 / 0) -->
-        <div class="mb-3">
-          <label class="form-label fw-bold">Status Port <span class="text-danger">*</span></label>
-          <select name="status" class="form-select" required>
-            <option value="1">1 (Up / Active)</option>
-            <option value="0">0 (Down / Disable)</option>
-          </select>
-        </div>
-      </div>
-      <div class="modal-footer bg-light">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-        <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i> Simpan Port</button>
-      </div>
-    </form>
-  </div>
-</div>
+                            <!-- Input Nomor/Nama Port -->
+                            <div class="col-12">
+                                <label for="portCode" class="form-label small fw-bold text-secondary">Nomor / Identitas Port (Maks. 20 Karakter)</label>
+                                <input type="text" name="port" id="portCode" class="form-control" placeholder="Contoh: Ge0/1, Port 24" maxlength="20" required>
+                            </div>
 
-<!-- MODAL EDIT PORT (UPDATE) - DENGAN SCROLLABLE -->
-<div class="modal fade" id="editPortModal" tabindex="-1" aria-labelledby="editPortModalLabel" aria-hidden="true">
-  <!-- TAMBAHKAN CLASS modal-dialog-scrollable AGAR RAPI DI LAYAR -->
-  <div class="modal-dialog modal-dialog-scrollable">
-    <form action="network_port.php" method="POST" class="modal-content">
-      <!-- Hidden Input untuk memicu Logika 'update' di PHP Backend -->
-      <input type="hidden" name="action" value="update">
-      <!-- Hidden Input untuk menampung ID Primary Key port yang sedang diedit -->
-      <input type="hidden" name="id" id="edit_port_id">
-      
-      <div class="modal-header">
-        <h5 class="modal-title" id="editPortModalLabel"><i class="bi bi-pencil-square me-2 text-warning"></i>Ubah Konfigurasi Port</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      
-      <div class="modal-body">
-        <!-- Dropdown Pilih Network Device Induk -->
-        <div class="mb-3">
-            <label class="form-label fw-bold">Perangkat Jaringan (Device) <span class="text-danger">*</span></label>
-            <select name="network_device_id" id="edit_network_device_id" class="form-select" required>
-                <?php foreach($listDevices as $dev): ?>
-                    <option value="<?= $dev['id'] ?>">Device ID: <?= $dev['id'] ?> (VLAN: <?= htmlspecialchars($dev['vlan'] ?? '-') ?>)</option>
-                <?php endforeach; ?>
-            </select>
+                            <!-- Input Alokasi Nama -->
+                            <div class="col-12">
+                                <label for="portNama" class="form-label small fw-bold text-secondary">Nama Alokasi / Deskripsi Port</label>
+                                <input type="text" name="nama" id="portNama" class="form-control" placeholder="Contoh: Jalur Server, Uplink Core Sw" maxlength="100">
+                            </div>
+
+                            <!-- Dropdown Status -->
+                            <div class="col-12">
+                                <label for="portStatus" class="form-label small fw-bold text-secondary">Status Port</label>
+                                <select name="status" id="portStatus" class="form-select" required>
+                                    <option value="1">Aktif / Connected</option>
+                                    <option value="0">Non-Aktif / Disconnected</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer border-top-0 pb-3 px-4">
+                        <button type="button" class="btn btn-sm btn-light border px-3" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-sm btn-primary fw-bold px-4 shadow-sm">Simpan Port</button>
+                    </div>
+                </form>
+            </div>
         </div>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- INTERFACES MODAL FORM: KONFIRMASI SECURITY HAPUS PORT               -->
+    <!-- ==================================================================== -->
+    <div class="modal fade" id="deletePortModal" tabindex="-1" aria-labelledby="deletePortModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+            <div class="modal-content border-0 shadow-lg rounded-3">
+                <form action="network_port.php" method="POST">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="id" id="delete_form_id">
+
+                    <div class="modal-body text-center p-4">
+                        <div class="text-danger mb-3">
+                            <i class="bi bi-exclamation-triangle-fill" style="font-size: 3.5rem;"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark" id="deletePortModalLabel">Hapus Port?</h5>
+                        <p class="text-muted small px-2 mt-2">
+                            Apakah Anda yakin ingin menghapus data <span id="delete_port_code" class="fw-bold text-dark"></span> secara permanen? Tindakan ini tidak dapat dibatalkan.
+                        </p>
+                    </div>
+                    <div class="modal-footer border-top-0 d-flex justify-content-center pb-4 pt-0 gap-2">
+                        <button type="button" class="btn btn-sm btn-light border px-4 fw-medium" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-sm btn-danger fw-bold px-4 shadow-sm">Ya, Hapus</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- CONTROLLER SCRIPT JAVASCRIPT: PENGENDALI MODAL CRUD NETWORK PORT     -->
+    <!-- ==================================================================== -->
+    <script>
+    // 1. Fungsi Reset Isian Form Modal Port
+    window.clearFormPort = function() {
+        const form = document.getElementById('portForm'); 
+        if (form) form.reset();
+        if (document.getElementById('formAction')) document.getElementById('formAction').value = 'create';
+        if (document.getElementById('portId')) document.getElementById('portId').value = '';
+        if (document.getElementById('portModalLabel')) document.getElementById('portModalLabel').innerText = 'Tambah Port Baru';
+    };
+
+    // 2. Fungsi Otomatis Mengisi Form Modal Saat Edit (Pensil Kuning)
+    window.editPort = function(data) {
+        window.clearFormPort();
+        if (document.getElementById('formAction')) document.getElementById('formAction').value = 'update';
+        if (document.getElementById('portId')) document.getElementById('portId').value = data.id;
+        if (document.getElementById('portModalLabel')) document.getElementById('portModalLabel').innerText = 'Edit Data Port (ID: ' + data.id + ')';
         
-        <!-- Input Port -->
-        <div class="mb-3">
-          <label class="form-label fw-bold">No / Kode Port <span class="text-danger">*</span></label>
-          <input type="text" name="port" id="edit_port" class="form-control" required>
-        </div>
-        
-        <!-- Input Nama Deskripsi -->
-        <div class="mb-3">
-          <label class="form-label fw-bold">Nama Deskripsi / Keterangan <span class="text-danger">*</span></label>
-          <input type="text" name="nama" id="edit_nama" class="form-control" required>
-        </div>
-        
-        <!-- Dropdown Status (TINYINT 1 / 0) -->
-        <div class="mb-3">
-          <label class="form-label fw-bold">Status Port <span class="text-danger">*</span></label>
-          <select name="status" id="edit_status" class="form-select" required>
-            <option value="1">1 (Up / Active)</option>
-            <option value="0">0 (Down / Disable)</option>
-          </select>
-        </div>
-      </div>
-      
-      <div class="modal-footer bg-light">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-        <button type="submit" class="btn btn-success"><i class="bi bi-check-circle me-1"></i> Simpan Perubahan</button>
-      </div>
-    </form>
-  </div>
-</div>
+        if (document.getElementById('portDevice')) document.getElementById('portDevice').value = data.network_device_id;
+        if (document.getElementById('portCode')) document.getElementById('portCode').value = data.port;
+        if (document.getElementById('portNama')) document.getElementById('portNama').value = data.nama;
+        if (document.getElementById('portStatus')) document.getElementById('portStatus').value = data.status;
+    };
 
-<!-- SCRIPT JS UNTUK BINDING DATA TABEL KE MODAL EDIT PORT -->
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const editPortModal = document.getElementById('editPortModal');
-    if (editPortModal) {
-        editPortModal.addEventListener('show.bs.modal', event => {
-            const button = event.relatedTarget;
-            
-            // Mengambil nilai atribut 'data-*' dari tombol edit yang diklik
-            const id = button.getAttribute('data-id');
-            const device = button.getAttribute('data-device');
-            const port = button.getAttribute('data-port');
-            const nama = button.getAttribute('data-nama');
-            const status = button.getAttribute('data-status');
-            
-            // Menyisipkan nilai ke dalam field form modal edit secara otomatis
-            document.getElementById('edit_port_id').value = id;
-            document.getElementById('edit_network_device_id').value = device;
-            document.getElementById('edit_port').value = port;
-            document.getElementById('edit_nama').value = nama;
-            document.getElementById('edit_status').value = status;
-        });
-    }
-});
-</script>
-<?php include 'footer-admin.php'; ?>
+    // 3. Fungsi Menembakkan Parameter ID & Nomor Port ke Modal Hapus
+    window.setupDeletePort = function(id, port) {
+        if (document.getElementById('delete_form_id')) {
+            document.getElementById('delete_form_id').value = id;
+        }
+        if (document.getElementById('delete_port_code')) {
+            document.getElementById('delete_port_code').innerText = 'Port "' + port + '"';
+        }
+    };
+    </script>
+
+    <?php include 'footer-admin.php'; ?>
