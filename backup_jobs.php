@@ -487,31 +487,31 @@ try {
           <!-- Body Modal -->
           <div class="modal-body pt-3">
             
-<!-- Baris Server ID (Dropdown PDO Terintegrasi Aman) -->
-<div class="row mb-3 align-items-center">
-    <label for="server_id" class="col-4 col-form-label small fw-bold text-secondary text-end">Server ID</label>
-    <div class="col-8">
-        <select id="server_id" name="server_id" class="form-select form-select-sm text-dark" required>
-            <option value="" disabled selected>-- Pilih Server --</option>
-            <?php
-            try {
-                // Diubah menggunakan nama kolom 'id' dan 'fungsi' sesuai skema tabel servers Anda
-                $query_server = $conn->query("SELECT id, fungsi FROM servers ORDER BY id ASC");
-                $servers = $query_server->fetchAll(PDO::FETCH_ASSOC);
+          <!-- Baris Server ID (Dropdown PDO Terintegrasi Aman) -->
+          <div class="row mb-3 align-items-center">
+              <label for="server_id" class="col-4 col-form-label small fw-bold text-secondary text-end">Server ID</label>
+              <div class="col-8">
+                  <select id="server_id" name="server_id" class="form-select form-select-sm text-dark" required>
+                      <option value="" disabled selected>-- Pilih Server --</option>
+                      <?php
+                      try {
+                          // Diubah menggunakan nama kolom 'id' dan 'fungsi' sesuai skema tabel servers Anda
+                          $query_server = $conn->query("SELECT id, fungsi FROM servers ORDER BY id ASC");
+                          $servers = $query_server->fetchAll(PDO::FETCH_ASSOC);
 
-                foreach ($servers as $server) {
-                    echo "<option value='" . htmlspecialchars($server['id']) . "'>";
-                    echo "ID " . htmlspecialchars($server['id']) . " - " . htmlspecialchars($server['fungsi'] ?? 'Tanpa Fungsi/Deskripsi');
-                    echo "</option>";
-                }
-            } catch (Exception $e) {
-                // Memunculkan detail pesan error asli jika query MySQL tersendat
-                echo "<option value='' disabled>SQL Error: " . htmlspecialchars($e->getMessage()) . "</option>";
-            }
-            ?>
-        </select>
-    </div>
-</div>
+                          foreach ($servers as $server) {
+                              echo "<option value='" . htmlspecialchars($server['id']) . "'>";
+                              echo "ID " . htmlspecialchars($server['id']) . " - " . htmlspecialchars($server['fungsi'] ?? 'Tanpa Fungsi/Deskripsi');
+                              echo "</option>";
+                          }
+                      } catch (Exception $e) {
+                          // Memunculkan detail pesan error asli jika query MySQL tersendat
+                          echo "<option value='' disabled>SQL Error: " . htmlspecialchars($e->getMessage()) . "</option>";
+                      }
+                      ?>
+                  </select>
+              </div>
+          </div>
 
             <!-- Baris Lokasi Penyimpanan / Path -->
             <div class="row mb-3 align-items-center">
