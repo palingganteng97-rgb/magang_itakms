@@ -3,8 +3,10 @@ require_once __DIR__ . '/auth.php';
 require_login();
 
 // =========================================================================
-// 1. AUTENTIKASI AKSES ROLE BERDASARKAN MATRIKS
+// 1. AMBIL DATA ROLE USER DINAMIS & TERJEMAHKAN ID ANGKA MENJADI TEKS
 // =========================================================================
+$sessionRoleId = isset($_SESSION['user']['role_id']) ? (int)$_SESSION['user']['role_id'] : 4;
+
 $roleMapping = [
     1 => 'Super Admin',
     2 => 'Admin IT',
@@ -12,141 +14,181 @@ $roleMapping = [
     4 => 'Viewer'
 ];
 
-$rawRole = $_SESSION['user']['role'] ?? $_SESSION['role'] ?? $_SESSION['user_role'] ?? 4;
+$userRole = isset($roleMapping[$sessionRoleId]) ? $roleMapping[$sessionRoleId] : 'Viewer';
 
-// Jika session mengembalikan angka, terjemahkan menjadi teks role
-if (array_key_exists($rawRole, $roleMapping)) {
-    $userRole = $roleMapping[$rawRole];
-} else {
-    $userRole = $rawRole; 
-}
-
-// Konversi ke huruf kecil untuk akurasi pencocokan string data
-$roleCheckEngine = strtolower(trim($userRole));
-
-// Proteksi Ketat: Hanya kunci jika terdeteksi 'teknisi' atau 'viewer'.
-// Berikan jaminan lolos jika string mengandung kata 'super admin' atau 'admin it'
-if (in_array($roleCheckEngine, ['teknisi', 'viewer']) && $roleCheckEngine !== 'super admin' && $roleCheckEngine !== 'admin it') {
+// =========================================================================
+// 2. PROTEKSI HALAMAN BERDASARKAN MATRIKS RESMI DOKUMEN ANDA
+// =========================================================================
+if ($userRole === 'Viewer') {
     echo "<script>
-            alert('Akses Ditolak! Akun Anda tidak memiliki izin untuk memodifikasi data API.');
+            alert('Akses Ditolak! Akun Viewer tidak memiliki izin untuk melihat data Integrasi API Vendor.');
             window.location='vendors.php';
           </script>";
     exit();
 }
 
 // =========================================================================
-// 2. KONFIGURASI DATABASE MAGANG_ITAKMS
+// FIX PENYEBAB ERROR: DEKLARASI FUNGSI CEK HAK AKSES CRUD UNTUK VENDOR APIS
+// =========================================================================
+if (!function_exists('hasCrudAccess')) {
+    function hasCrudAccess($fileName, $actionType, $currentRole) {
+        $crudMatrix = [
+            'vendor_apis.php' => [
+                'Super Admin' => ['C', 'R', 'U', 'D'], 
+                'Admin IT'    => ['C', 'R', 'U', 'D'], 
+                'Teknisi'     => ['R'], 
+                'Viewer'      => []
+            ]
+        ];
+
+        $cleanFileName = basename($fileName);
+        if ($cleanFileName === 'vendor_apis.php') {
+            $fileName = 'vendor_apis.php';
+        }
+
+        if (isset($crudMatrix[$fileName][$currentRole])) {
+            return in_array($actionType, $crudMatrix[$fileName][$currentRole]);
+        }
+        return false;
+    }
+}
+
+// =========================================================================
+// 3. KONFIGURASI DATABASE
 // =========================================================================
 $host = "10.10.6.59";
 $username = "root_host";
 $password = "password";
 $database = "magang_itakms";
 
-try {
-    $conn = new PDO("mysql:host=$host;dbname=$database", $username, $password);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    die("Koneksi Database Gagal: " . $e->getMessage());
-}
-
-// Tangkap parameter aksi dan vendor_id
-$action = isset($_GET['action']) ? $_GET['action'] : '';
-$vendor_id = isset($_POST['vendor_id']) ? (int)$_POST['vendor_id'] : (isset($_GET['vendor_id']) ? (int)$_GET['vendor_id'] : 0);
+$vendor_id = isset($_GET['vendor_id']) ? (int)$_GET['vendor_id'] : 0;
 
 if ($vendor_id <= 0) {
     header("Location: vendors.php");
     exit();
 }
 
-// =========================================================================
-// 3. LOGIKA EKSEKUSI PROSES (CRUD ENGINE)
-// =========================================================================
+try {
+    $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8mb4", $username, $password);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-// --- AKSI A: TAMBAH DATA API ---
-if ($action === 'add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nama_layanan = trim($_POST['nama_layanan']);
-    $endpoint_url = trim($_POST['endpoint_url']);
-    $api_key      = trim($_POST['api_key']);
-    $method       = trim($_POST['method']);
-    $status       = (int)$_POST['status'];
+    // =========================================================================
+    // 4. LOGIKA PEMROSESAN CRUD (CREATE, UPDATE, DELETE)
+    // =========================================================================
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+        $action = $_POST['action'];
 
-    try {
-        $sql = "INSERT INTO vendor_apis (vendor_id, nama_layanan, endpoint_url, api_key, method, status) 
-                VALUES (:vendor_id, :nama_layanan, :endpoint_url, :api_key, :method, :status)";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute([
-            ':vendor_id'    => $vendor_id,
-            ':nama_layanan' => $nama_layanan,
-            ':endpoint_url' => $endpoint_url,
-            ':api_key'      => $api_key,
-            ':method'       => $method,
-            ':status'       => $status
-        ]);
+        // -----------------------------------------------------------------
+        // PROSES TAMBAH DATA (CREATE)
+        // -----------------------------------------------------------------
+        if ($action === 'create') {
+            if (!hasCrudAccess('vendor_apis.php', 'C', $userRole)) {
+                die("Akses Ditolak: Anda tidak memiliki izin untuk menambah data.");
+            }
 
-        header("Location: vendor_apis.php?vendor_id=" . $vendor_id . "&status=success_add");
-        exit();
-    } catch (PDOException $e) {
-        die("Gagal menambahkan data API: " . $e->getMessage());
+            $sqlInsert = "INSERT INTO vendor_apis (vendor_id, nama_api, environment, base_url, client_id, client_secret, user_key, secret_key, dokumentasi) 
+                          VALUES (:vendor_id, :nama_api, :environment, :base_url, :client_id, :client_secret, :user_key, :secret_key, :dokumentasi)";
+            
+            $stmtInsert = $conn->prepare($sqlInsert);
+            $stmtInsert->execute([
+                ':vendor_id'     => $vendor_id,
+                ':nama_api'      => !empty($_POST['nama_api']) ? $_POST['nama_api'] : null,
+                ':environment'   => isset($_POST['environment']) ? (int)$_POST['environment'] : null,
+                ':base_url'      => !empty($_POST['base_url']) ? $_POST['base_url'] : null,
+                ':client_id'     => !empty($_POST['client_id']) ? $_POST['client_id'] : null,
+                ':client_secret' => !empty($_POST['client_secret']) ? $_POST['client_secret'] : null,
+                ':user_key'      => !empty($_POST['user_key']) ? $_POST['user_key'] : null,
+                ':secret_key'    => !empty($_POST['secret_key']) ? $_POST['secret_key'] : null,
+                ':dokumentasi'   => !empty($_POST['dokumentasi']) ? $_POST['dokumentasi'] : null
+            ]);
+
+            echo "<script>alert('Data API berhasil ditambahkan!'); window.location='vendor_apis.php?vendor_id=$vendor_id';</script>";
+            exit();
+        }
+
+        // -----------------------------------------------------------------
+        // PROSES UBAH DATA (UPDATE)
+        // -----------------------------------------------------------------
+        if ($action === 'update') {
+            if (!hasCrudAccess('vendor_apis.php', 'U', $userRole)) {
+                die("Akses Ditolak: Anda tidak memiliki izin untuk mengubah data.");
+            }
+
+            $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+
+            $sqlUpdate = "UPDATE vendor_apis SET 
+                            nama_api = :nama_api, 
+                            environment = :environment, 
+                            base_url = :base_url, 
+                            client_id = :client_id, 
+                            client_secret = :client_secret, 
+                            user_key = :user_key, 
+                            secret_key = :secret_key, 
+                            dokumentasi = :dokumentasi 
+                          WHERE id = :id AND vendor_id = :vendor_id";
+            
+            $stmtUpdate = $conn->prepare($sqlUpdate);
+            $stmtUpdate->execute([
+                ':id'            => $id,
+                ':vendor_id'     => $vendor_id,
+                ':nama_api'      => !empty($_POST['nama_api']) ? $_POST['nama_api'] : null,
+                ':environment'   => isset($_POST['environment']) ? (int)$_POST['environment'] : null,
+                ':base_url'      => !empty($_POST['base_url']) ? $_POST['base_url'] : null,
+                ':client_id'     => !empty($_POST['client_id']) ? $_POST['client_id'] : null,
+                ':client_secret' => !empty($_POST['client_secret']) ? $_POST['client_secret'] : null,
+                ':user_key'      => !empty($_POST['user_key']) ? $_POST['user_key'] : null,
+                ':secret_key'    => !empty($_POST['secret_key']) ? $_POST['secret_key'] : null,
+                ':dokumentasi'   => !empty($_POST['dokumentasi']) ? $_POST['dokumentasi'] : null
+            ]);
+
+            echo "<script>alert('Data API berhasil diperbarui!'); window.location='vendor_apis.php?vendor_id=$vendor_id';</script>";
+            exit();
+        }
+
+        // -----------------------------------------------------------------
+        // PROSES HAPUS DATA (DELETE)
+        // -----------------------------------------------------------------
+        if ($action === 'delete') {
+            if (!hasCrudAccess('vendor_apis.php', 'D', $userRole)) {
+                die("Akses Ditolak: Anda tidak memiliki izin untuk menghapus data.");
+            }
+
+            $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+
+            $sqlDelete = "DELETE FROM vendor_apis WHERE id = :id AND vendor_id = :vendor_id";
+            $stmtDelete = $conn->prepare($sqlDelete);
+            $stmtDelete->execute([
+                ':id'        => $id,
+                ':vendor_id' => $vendor_id
+            ]);
+
+            echo "<script>alert('Data API berhasil dihapus!'); window.location='vendor_apis.php?vendor_id=$vendor_id';</script>";
+            exit();
+        }
     }
-}
 
-// --- AKSI B: PERBARUI / EDIT DATA API ---
-if ($action === 'update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $id           = (int)$_POST['id'];
-    $nama_layanan = trim($_POST['nama_layanan']);
-    $endpoint_url = trim($_POST['endpoint_url']);
-    $api_key      = trim($_POST['api_key']);
-    $method       = trim($_POST['method']);
-    $status       = (int)$_POST['status'];
+    // =========================================================================
+    // 5. PENARIKAN DATA UNTUK VIEW (READ)
+    // =========================================================================
+    // Ambal Informasi Nama Vendor Utama untuk komponen Header
+    $vendorSql = "SELECT nama FROM vendors WHERE id = :vendor_id";
+    $vendorStmt = $conn->prepare($vendorSql);
+    $vendorStmt->execute([':vendor_id' => $vendor_id]);
+    $vendorMain = $vendorStmt->fetch(PDO::FETCH_ASSOC);
 
-    try {
-        $sql = "UPDATE vendor_apis SET 
-                    nama_layanan = :nama_layanan, 
-                    endpoint_url = :endpoint_url, 
-                    api_key = :api_key, 
-                    method = :method, 
-                    status = :status 
-                WHERE id = :id AND vendor_id = :vendor_id";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute([
-            ':nama_layanan' => $nama_layanan,
-            ':endpoint_url' => $endpoint_url,
-            ':api_key'      => $api_key,
-            ':method'       => $method,
-            ':status'       => $status,
-            ':id'           => $id,
-            ':vendor_id'    => $vendor_id
-        ]);
-
-        header("Location: vendor_apis.php?vendor_id=" . $vendor_id . "&status=success_update");
-        exit();
-    } catch (PDOException $e) {
-        die("Gagal memperbarui data API: " . $e->getMessage());
+    if (!$vendorMain) {
+        die("Data vendor utama tidak ditemukan di database.");
     }
+
+    // Ambil Semua daftar Data API Berdasarkan vendor_id
+    $sql = "SELECT * FROM vendor_apis WHERE vendor_id = :vendor_id ORDER BY id DESC";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute([':vendor_id' => $vendor_id]);
+    $apis = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+} catch (PDOException $e) {
+    die("Koneksi atau Query Database Gagal: " . $e->getMessage());
 }
-
-// --- AKSI C: HAPUS DATA API ---
-if ($action === 'delete') {
-    $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-
-    try {
-        $sql = "DELETE FROM vendor_apis WHERE id = :id AND vendor_id = :vendor_id";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute([
-            ':id'        => $id,
-            ':vendor_id' => $vendor_id
-        ]);
-
-        header("Location: vendor_apis.php?vendor_id=" . $vendor_id . "&status=success_delete");
-        exit();
-    } catch (PDOException $e) {
-        die("Gagal menghapus data API: " . $e->getMessage());
-    }
-}
-
-// Jika tidak ada aksi CRUD yang dieksekusi, kembalikan secara aman ke halaman view vendor_apis
-header("Location: vendor_apis.php?vendor_id=" . $vendor_id);
-exit();
 ?>
 
 <!DOCTYPE html>
@@ -159,469 +201,358 @@ exit();
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    
-    <link href="sidebar-admin.css" rel="stylesheet">
-
-    <style>
-        /* ==================================================== */
-        /* CONFIG LAYOUT DESKTOP / LAPTOP (Lebar Layar >= 768px)*/
-        /* ==================================================== */
-        @media (min-width: 768px) {
-            body {
-                display: flex !important;
-                overflow: auto !important;
-            }
-            .offcanvas-md.sidebar-fixed {
-                position: fixed !important;
-                top: 0;
-                left: 0;
-                min-height: 100vh !important;
-                max-height: 100vh !important;
-                width: 280px !important;
-                z-index: 1040;
-                transform: none !important;
-                visibility: visible !important;
-                overflow: hidden !important;
-            }
-            .menu-scroll-container {
-                display: block !important;
-                max-height: calc(100vh - 160px) !important;
-                overflow-y: auto !important;
-                overflow-x: hidden !important;
-                scrollbar-width: none;
-                -ms-overflow-style: none;
-            }
-            .menu-scroll-container::-webkit-scrollbar {
-                display: none !important;
-            }
-            /* Menghitung lebar konten di desktop */
-            .main-content {
-                margin-left: 280px !important;
-                width: calc(100% - 280px) !important;
-                min-height: 100vh !important;
-                display: block !important; 
-            }
-            .offcanvas-backdrop, .offcanvas-backdrop.show {
-                display: none !important;
-                opacity: 0 !important;
-                visibility: hidden !important;
-                pointer-events: none !important;
-            }
-        }
-
-        /* ==================================================== */
-        /* CONFIG LAYOUT MOBILE / HP (Lebar Layar < 768px)      */
-        /* ==================================================== */
-        @media (max-width: 767.98px) {
-            body {
-                overflow: auto !important;
-                position: relative !important;
-                display: block !important; 
-            }
-            .d-md-flex {
-                display: block !important; 
-            }
-            
-            /* SOLUSI UTAMA SCROLL MOBILE: Paksa buka akses overflow-y scroll di tingkat paling luar laci */
-            .offcanvas-md.sidebar-fixed {
-                position: fixed !important;
-                width: 280px !important;
-                height: 100vh !important;
-                max-height: 100vh !important;
-                overflow-y: scroll !important; 
-                overflow-x: hidden !important;
-                -webkit-overflow-scrolling: touch !important; 
-            }
-            
-            /* Biarkan kontainer dalam memanjang alami mengikuti scroll luar */
-            .menu-scroll-container {
-                max-height: none !important;
-                height: auto !important;
-                overflow: visible !important;
-                display: block !important;
-            }
-            
-            .main-content {
-                width: 100% !important;
-                margin-left: 0 !important;
-                min-height: calc(100vh - 70px) !important; 
-                display: block !important;
-                height: auto !important; 
-            }
-            .offcanvas-backdrop.show {
-                display: block !important;
-                opacity: 0.5 !important;
-                background-color: #000000 !important;
-                visibility: visible !important;
-            }
-        }
-
-        /* ==================================================== */
-        /* KUSTOMISASI MODEREN MENU STYLE                      */
-        /* ==================================================== */
-        .sidebar-fixed .nav-link {
-            color: #adb5bd !important;
-            font-weight: 500;
-            padding: 10px 16px !important;
-            margin: 2px 0;
-            transition: all 0.25s ease-in-out;
-            border-left: 4px solid transparent;
-        }
-        .sidebar-fixed .nav-link:hover {
-            color: #ffffff !important;
-            background-color: rgba(255, 255, 255, 0.06) !important;
-            border-left-color: rgba(255, 255, 255, 0.3);
-            padding-left: 20px !important;
-        }
-        .sidebar-fixed .nav-link.active-style {
-            color: #ffffff !important;
-            background: linear-gradient(90deg, rgba(13, 110, 253, 0.25) 0%, rgba(13, 110, 253, 0.05) 100%) !important;
-            border-left: 4px solid #0d6efd !important;
-            box-shadow: inset 0 0 8px rgba(13, 110, 253, 0.15);
-            font-weight: 600;
-        }
-        .sidebar-fixed .nav-link i {
-            font-size: 1.1rem;
-            transition: transform 0.25s ease;
-        }
-        .sidebar-fixed .nav-link:hover i {
-            transform: scale(1.15);
-        }
-        .sidebar-fixed .nav-link.active-style i {
-            color: #0d6efd !important;
-        }
-    </style>
-
-    <style>
-    .card-clickable {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    .card-clickable:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
-    }
-    </style>
-
-</head>
+</head>    
 <body>
 
-<!-- ==================================================================== -->
-<!-- BAGIAN A: TOMBOL PEMICU SIDEBAR (HANYA MUNCUL DI MOBILE / HP)        -->
-<!-- ==================================================================== -->
-<div class="d-md-none p-3 bg-dark d-flex justify-content-between align-items-center w-100 position-sticky top-0 shadow-sm" style="z-index: 1050;">
-    <h5 class="text-warning mb-0 fw-bold"><i class="bi bi-speedometer2 me-2"></i> ITAKMS</h5>
-    <button class="btn btn-warning btn-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarFlexible" aria-controls="sidebarFlexible">
-        <i class="bi bi-list fs-5"></i>
-    </button>
-</div>
+<main class="col-12 px-2 px-md-4 pt-4" style="min-width: 0; overflow: hidden;">
 
-<!-- ==================================================================== -->
-<!-- BAGIAN B: INDUK KONTEN SIDEBAR RESPONSIVE (FLEKSIBEL HP & DESKTOP)   -->
-<!-- ==================================================================== -->
-<div class="offcanvas-md offcanvas-start d-flex flex-column sidebar-fixed p-3 text-bg-dark border-end border-secondary" 
-     tabindex="-1" id="sidebarFlexible" aria-labelledby="sidebarFlexibleLabel">
-
-  <!-- 1. Header Laci Menu (Hanya Muncul di Layar HP saat Laci Terbuka) -->
-  <div class="offcanvas-header border-bottom border-secondary d-md-none">
-    <h5 class="offcanvas-title text-warning fw-bold" id="sidebarFlexibleLabel">
-        <i class="bi bi-speedometer2 me-2"></i> ITAKMS
-    </h5>
-    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" data-bs-target="#sidebarFlexible" aria-label="Close"></button>
-  </div>
-  
-  <!-- 2. Judul Utama Navigasi (Hanya Muncul di Desktop/Laptop) -->
-  <h4 class="text-center mb-4 text-warning fw-bold pt-2 d-none d-md-block">
-      <i class="bi bi-speedometer2 me-2"></i> ITAKMS
-  </h4>
-  
-  <!-- 3. AREA MENU TENGAH -->
-  <?php
-  $currentFile = basename($_SERVER['PHP_SELF']);
-
-  if (!function_exists('checkActiveMenu')) {
-      function checkActiveMenu($targetFile, $currentFile) {
-          return ($currentFile === $targetFile) ? 'active-style' : '';
-      }
-  }
-  ?>
-  
-  <div class="menu-scroll-container flex-grow-1 w-100">
-      <ul class="nav flex-column mb-auto list-unstyled w-100">
-          <?php include __DIR__ . '/sidebar.php'; ?>
-      </ul>
+  <!-- Header Main Konten Atas Vendor APIs -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center pt-3 pb-2 mb-3 border-bottom gap-2">
+    <div class="w-100">
+      <!-- Tombol kembali ke vendors.php -->
+      <div class="mb-2">
+        <a href="vendors.php" class="btn btn-sm btn-outline-secondary rounded-3 px-3 py-1 d-inline-flex align-items-center gap-2 small text-decoration-none">
+          <i class="bi bi-arrow-left"></i> Kembali ke Vendor
+        </a>
+      </div>
+      <div>
+        <h1 class="h4 h3-md fw-bold text-dark mb-1 text-break">Integrasi API Vendor</h1>
+        <p class="text-muted small mb-0 d-none d-sm-block">Mengelola kredensial endpoint, token parameter, dan berkas dokumentasi API dari pihak vendor.</p>
+      </div>
+    </div>
   </div>
 
-</div>
+  <!-- Notifikasi Flash Status CRUD Vendor APIs -->
+  <?php if(isset($_GET['status'])): ?>
+    <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm mx-0" role="alert">
+        <?php
+          if($_GET['status'] == 'success_add') echo '<i class="bi bi-check-circle-fill me-2"></i> Konfigurasi API baru berhasil didaftarkan!';
+          if($_GET['status'] == 'success_update') echo '<i class="bi bi-check-circle-fill me-2"></i> Konfigurasi API berhasil diperbarui!';
+          if($_GET['status'] == 'success_delete') echo '<i class="bi bi-trash-fill me-2"></i> Konfigurasi API berhasil dihapus dari sistem!';
+        ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <?php endif; ?>
 
-    <!-- AREA KONTEN UTAMA VENDOR APIS -->
-    <main class="col-12" style="min-width: 0; overflow: hidden;">
+  <!-- Card Wadah Tabel Integrasi API -->
+  <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4 bg-white p-2 p-md-3">
+    
+    <!-- Bagian Atas Tabel: Judul & Tombol Tambah API -->
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center flex-wrap gap-2 mb-3 mb-md-4">
+      <h5 class="mb-0 text-dark fw-bold d-flex align-items-center text-break" style="font-size: calc(1rem + 0.2vw);">
+        <i class="bi bi-cloud-slash-fill me-2 text-primary"></i> Daftar Endpoint API: <span class="text-primary ms-1"><?= htmlspecialchars($vendorMain['nama']); ?></span>
+      </h5>
       
-      <!-- Header Halaman -->
-      <!-- PERUBAHAN: Menggunakan flex-column agar di mobile bertumpuk rapi, dan kembali flex-sm-row di desktop -->
-      <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center pt-2 pb-2 mb-3 border-bottom gap-2">
-        <div class="w-100">
-          <!-- Tombol Kembali ke Halaman Vendors Utama -->
-          <div class="mb-2">
-            <a href="vendors.php" class="btn btn-sm btn-outline-secondary rounded-3 px-3 py-1 d-inline-flex align-items-center gap-2 small">
-              <i class="bi bi-arrow-left"></i> Kembali ke Vendor
-            </a>
-          </div>
-          <!-- PERUBAHAN: Tambah class responsive-title -->
-          <h1 class="h4 h3-md fw-bold text-dark mb-1 text-break responsive-title">Integrasi API Vendor</h1>
-          <p class="text-muted small mb-0 d-none d-sm-block">Mengelola kredensial endpoint, token parameter, dan berkas dokumentasi API dari pihak vendor.</p>
-        </div>
-      </div>
-
-      <!-- Flash Message Form CRUD -->
-      <?php if(isset($_GET['status'])): ?>
-        <div class="alert alert-success alert-dismissible fade show rounded-3 mx-0" role="alert">
-            <i class="bi bi-check-circle-fill me-2"></i> Aksi database berhasil diproses!
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
+      <?php if (hasCrudAccess('vendor_apis.php', 'C', $userRole)): ?>
+        <button type="button" class="btn btn-primary btn-sm rounded-3 px-3 py-2 py-sm-1 d-flex align-items-center justify-content-center gap-2 shadow-sm w-100 w-sm-auto" data-bs-toggle="modal" data-bs-target="#modalTambahApi">
+            <i class="bi bi-plus-circle"></i> Tambah API Baru
+        </button>
       <?php endif; ?>
+    </div>
 
-      <!-- Wadah Card Tabel -->
-      <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4 bg-white p-2 p-md-3">
+        <!-- Tabel Data Endpoint -->
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 px-2" style="min-width: 900px;">
+              <thead class="table-light text-uppercase font-monospace small border-top">
+                <tr>
+                  <th class="ps-4 py-3" width="5%">No</th>
+                  <th width="20%">Nama API</th>
+                  <th width="12%">Environment</th>
+                  <th width="25%">Base URL</th>
+                  <th width="25%">Kredensial / Keys</th>
+                  <th class="text-center pe-4" width="13%">Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php if (empty($apis)): ?>
+                  <tr>
+                    <td colspan="6" class="text-center py-5 text-muted">
+                      <i class="bi bi-folder-x display-6 mb-2 d-block text-secondary"></i>
+                      Belum ada data konfigurasi API untuk vendor ini.
+                    </td>
+                  </tr>
+                <?php else: ?>
+                  <?php $no = 1; foreach ($apis as $api): ?>
+                    <tr>
+                      <td class="ps-4 fw-medium text-secondary"><?= $no++; ?></td>
+                      <td>
+                        <div class="fw-bold text-dark text-break"><?= htmlspecialchars($api['nama_api']); ?></div>
+                        <?php if (!empty($api['dokumentasi'])): ?>
+                          <a href="<?= htmlspecialchars($api['dokumentasi']); ?>" target="_blank" class="btn btn-sm btn-link text-decoration-none p-0 mt-1 d-inline-flex align-items-center gap-1 small fw-medium">
+                            <i class="bi bi-journal-bookmark"></i> Dokumen API <i class="bi bi-box-arrow-up-right small"></i>
+                          </a>
+                        <?php endif; ?>
+                      </td>
+                      <td>
+                        <?php if ($api['environment'] == 1): ?>
+                          <span class="badge bg-warning-subtle text-warning border border-warning rounded-pill px-2.5">Sandbox / Dev</span>
+                        <?php else: ?>
+                          <span class="badge bg-success-subtle text-success border border-success rounded-pill px-2.5">Production</span>
+                        <?php endif; ?>
+                      </td>
+                      <td>
+                        <div class="bg-light px-2 py-1.5 rounded-3 text-break border font-monospace text-secondary small">
+                          <?= htmlspecialchars($api['base_url'] ?? '-'); ?>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="font-monospace small">
+                          <?php if (!empty($api['client_id'])): ?>
+                            <div class="text-muted"><span class="fw-semibold text-secondary">ID:</span> <?= htmlspecialchars($api['client_id']); ?></div>
+                          <?php endif; ?>
+                          <?php if (!empty($api['client_secret'])): ?>
+                            <div class="text-muted"><span class="fw-semibold text-secondary">Sec:</span> <?= htmlspecialchars(mb_strimwidth($api['client_secret'], 0, 15, '...')); ?></div>
+                          <?php endif; ?>
+                          <?php if (!empty($api['user_key']) || !empty($api['secret_key'])): ?>
+                            <div class="text-primary-emphasis mt-0.5"><i class="bi bi-key-fill small"></i> Custom Keys Ready</div>
+                          <?php endif; ?>
+                        </div>
+                      </td>
+                      <td class="text-center pe-4">
+                        <div class="d-inline-flex gap-1">
+                          <!-- Tombol Detail -->
+                          <button type="button" class="btn btn-sm btn-outline-secondary rounded-3" title="Detail Lengkap" data-bs-toggle="modal" data-bs-target="#modalDetailApi<?= $api['id']; ?>">
+                            <i class="bi bi-eye"></i>
+                          </button>
+                          
+                          <!-- Tombol Edit -->
+                          <?php if (hasCrudAccess('vendor_apis.php', 'U', $userRole)): ?>
+                            <button type="button" class="btn btn-sm btn-outline-primary rounded-3" title="Ubah Data" data-bs-toggle="modal" data-bs-target="#modalEditApi<?= $api['id']; ?>">
+                              <i class="bi bi-pencil-square"></i>
+                            </button>
+                          <?php endif; ?>
+
+                          <!-- Tombol Hapus -->
+                          <?php if (hasCrudAccess('vendor_apis.php', 'D', $userRole)): ?>
+                            <button type="button" class="btn btn-sm btn-outline-danger rounded-3" title="Hapus Data" data-bs-toggle="modal" data-bs-target="#modalHapusApi<?= $api['id']; ?>">
+                              <i class="bi bi-trash"></i>
+                            </button>
+                          <?php endif; ?>
+                        </div>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                <?php endif; ?>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+  </div> <!-- Penutup container-fluid -->
+</div> <!-- Penutup main-content -->
+
+<!-- =========================================================================
+     MODAL TAMBAH API NEW REGISTRATION (CREATE)
+     ========================================================================= -->
+<?php if (hasCrudAccess('vendor_apis.php', 'C', $userRole)): ?>
+  <div class="modal fade" id="modalTambahApi" tabindex="-1" aria-labelledby="labelModalTambah" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow rounded-4">
         
-        <!-- Bagian Atas Tabel: Judul & Tombol Tambah -->
-        <!-- PERUBAHAN: flex-column di mobile menjamin tombol tambah melompat ke bawah dengan rapi jika judul terlalu panjang -->
-        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-3 mb-md-4">
-          <h5 class="mb-0 text-dark fw-bold d-flex align-items-center text-break responsive-subtitle">
-            <i class="bi bi-code-slash me-2 text-purple" style="color: #6f42c1;"></i> 
-            Daftar API: <span class="text-primary ms-1"><?= htmlspecialchars($vendorMain['nama']); ?></span>
-          </h5>
+        <form action="" method="POST">
+          <!-- Parameter wajib untuk identifikasi proses Create di Backend PHP -->
+          <input type="hidden" name="action" value="create">
           
-          <!-- Fleksibel Otomatis: Hanya tampil jika Role memiliki izin Create ('C') di file ini -->
-          <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'C', $userRole)): ?>
-          <!-- PERUBAHAN: w-100 di mobile agar tombol penuh mudah ditekan jempol, w-auto di desktop -->
-          <button type="button" class="btn btn-primary btn-sm text-white rounded-3 px-3 py-2 py-sm-1 shadow-sm d-flex align-items-center justify-content-center gap-2 w-100 w-sm-auto ms-0" style="background-color: #6f42c1; border-color: #6f42c1;" data-bs-toggle="modal" data-bs-target="#modalAddApi">
-              <i class="bi bi-plus-lg"></i> Tambah API
-          </button>
-          <?php endif; ?>
+          <div class="modal-header border-bottom-0 py-3 px-4">
+            <h5 class="modal-title fw-bold text-dark" id="labelModalTambah">
+              <i class="bi bi-plus-circle text-primary me-2"></i>Registrasi API Baru
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
           
-        </div>
-
-        <!-- PERUBAHAN: Penegasan properti pembungkus agar container tabel tidak merusak grid luar col-12 -->
-        <div class="table-responsive w-100 rounded-3 border" style="overflow-x: auto; -webkit-overflow-scrolling: touch; display: block;">
-          <table class="table table-striped table-hover align-middle mb-0 text-nowrap w-100">
-            <thead class="table-light border-bottom">
-              <tr>
-                <th class="ps-3" style="width: 60px;">No</th>
-                <th>Nama API</th>
-                <th>Environment</th>
-                <th>Base URL Endpoint</th>
-                <th>Client Credentials (ID & Secret)</th>
-                <th>API Keys (User & Secret)</th>
-                <th>Dokumentasi</th>
-                <th class="text-center pe-3" style="width: 120px;">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Isi looping data <tr> Anda diletakkan di sini -->
-              <tr>
-                <td colspan="8" class="text-center text-muted py-5" style="white-space: normal;">
-                  <i class="bi bi-code-square display-4 d-block mb-3 text-secondary opacity-50"></i>
-                  <span class="d-block fw-semibold text-dark mb-1">Belum Ada Jalur API Terdaftar</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div> <!-- /.table-responsive -->
-
-      </div> <!-- /.card -->
-    </main>
-
-  </div> <!-- /.row -->
-</div> <!-- /.container-fluid -->
-
-<!-- PERUBAHAN: Mengganti modal-lg menjadi modal-xl agar ruang horizontal lebih luas -->
-<div class="modal fade" id="modalAddApi" tabindex="-1" aria-labelledby="modalAddApiLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered">
-    <div class="modal-content rounded-4 border-0 shadow">
-      <div class="modal-header border-bottom p-3">
-        <h5 class="modal-title fw-bold text-dark" id="modalAddApiLabel">
-          <i class="bi bi-code-slash me-2 text-purple" style="color: #6f42c1;"></i> Registrasi Konfigurasi API Baru
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          <div class="modal-body p-4 pt-0">
+            <div class="row g-3">
+              
+              <!-- Nama API -->
+              <div class="col-md-8">
+                <label class="form-label small fw-bold text-secondary">Nama API <span class="text-danger">*</span></label>
+                <input type="text" class="form-control rounded-3" name="nama_api" placeholder="Contoh: API Gateway Verifikasi" required maxlength="150">
+              </div>
+              
+              <!-- Environment -->
+              <div class="col-md-4">
+                <label class="form-label small fw-bold text-secondary">Environment <span class="text-danger">*</span></label>
+                <select class="form-select rounded-3" name="environment" required>
+                  <option value="1" selected>Sandbox / Dev</option>
+                  <option value="2">Production</option>
+                </select>
+              </div>
+              
+              <!-- Base URL -->
+              <div class="col-12">
+                <label class="form-label small fw-bold text-secondary">Base URL</label>
+                <input type="url" class="form-control rounded-3 font-monospace" name="base_url" placeholder="https://vendor.com" maxlength="255">
+              </div>
+              
+              <!-- Client ID -->
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-secondary">Client ID</label>
+                <input type="text" class="form-control rounded-3 font-monospace" name="client_id" placeholder="Masukkan Client ID" maxlength="255">
+              </div>
+              
+              <!-- Link Dokumentasi -->
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-secondary">Link Dokumentasi</label>
+                <input type="text" class="form-control rounded-3" name="dokumentasi" placeholder="https://vendor.com" maxlength="255">
+              </div>
+              
+              <!-- Client Secret -->
+              <div class="col-12">
+                <label class="form-label small fw-bold text-secondary">Client Secret</label>
+                <textarea class="form-control rounded-3 font-monospace" name="client_secret" placeholder="Masukkan Client Secret" rows="2"></textarea>
+              </div>
+              
+              <!-- User Key -->
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-secondary">User Key</label>
+                <textarea class="form-control rounded-3 font-monospace" name="user_key" placeholder="Masukkan User Key (jika ada)" rows="2"></textarea>
+              </div>
+              
+              <!-- Secret Key -->
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-secondary">Secret Key</label>
+                <textarea class="form-control rounded-3 font-monospace" name="secret_key" placeholder="Masukkan Secret Key (jika ada)" rows="2"></textarea>
+              </div>
+              
+            </div>
+          </div>
+          
+          <div class="modal-footer border-top-0 px-4 pb-4">
+            <button type="button" class="btn btn-secondary rounded-3 px-3" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary rounded-3 px-4">Simpan API</button>
+          </div>
+        </form>
+        
       </div>
-      <form action="proses_vendor_api.php?action=add" method="POST">
-        <div class="modal-body p-4">
-          <!-- Hidden Input untuk Melempar ID Vendor -->
-          <input type="hidden" name="vendor_id" value="<?= $vendor_id; ?>">
-
-          <!-- Grid Pembagian 3 Kolom Sejajar (Menyamping ke Kanan) -->
-          <div class="row g-4">
-            
-            <!-- KOLOM 1 (KIRI): INFORMASI UTAMA ENDPOINT -->
-            <div class="col-md-4">
-              <div class="mb-2 text-primary fw-bold small uppercase tracking-wider border-bottom pb-2">
-                <i class="bi bi-globe me-1"></i> 1. Informasi Endpoint
-              </div>
-              <div class="p-3 bg-light rounded-3 border border-light-subtle h-100">
-                <div class="mb-3">
-                  <label class="form-label small fw-bold text-muted mb-1">Nama / Fungsi API</label>
-                  <input type="text" class="form-control rounded-3" name="nama_api" placeholder="Contoh: API Cek Resi Logistik" required maxlength="150">
-                </div>
-                <div class="mb-3">
-                  <label class="form-label small fw-bold text-muted mb-1">Environment</label>
-                  <select class="form-select rounded-3" name="environment" required>
-                    <option value="1" selected>Development / Sandbox</option>
-                    <option value="2">Production / Live</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="form-label small fw-bold text-muted mb-1">Base URL Endpoint</label>
-                  <input type="url" class="form-control rounded-3 font-monospace small text-primary" name="base_url" placeholder="https://vendor.com" required maxlength="255">
-                </div>
-              </div>
-            </div>
-
-            <!-- KOLOM 2 (TENGAH): KREDENSIAL OTENTIKASI -->
-            <div class="col-md-5">
-              <div class="mb-2 text-purple fw-bold small uppercase tracking-wider border-bottom pb-2" style="color: #6f42c1;">
-                <i class="bi bi-shield-lock me-1"></i> 2. Kredensial & Autentikasi
-              </div>
-              <div class="p-3 bg-light rounded-3 border border-light-subtle h-100">
-                <div class="row g-3">
-                  <div class="col-6">
-                    <label class="form-label small fw-bold text-muted mb-1">Client ID</label>
-                    <input type="text" class="form-control rounded-3" name="client_id" placeholder="Masukkan Client ID" maxlength="255">
-                  </div>
-                  <div class="col-6">
-                    <label class="form-label small fw-bold text-muted mb-1">Client Secret</label>
-                    <input type="text" class="form-control rounded-3" name="client_secret" placeholder="Masukkan Client Secret">
-                  </div>
-                  <div class="col-6">
-                    <label class="form-label small fw-bold text-muted mb-1">User Key</label>
-                    <input type="text" class="form-control rounded-3" name="user_key" placeholder="Masukkan User Key">
-                  </div>
-                  <div class="col-6">
-                    <label class="form-label small fw-bold text-muted mb-1">Secret Key</label>
-                    <input type="text" class="form-control rounded-3" name="secret_key" placeholder="Masukkan Secret Key">
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- KOLOM 3 (KANAN): DOKUMENTASI -->
-            <div class="col-md-3">
-              <div class="mb-2 text-secondary fw-bold small uppercase tracking-wider border-bottom pb-2">
-                <i class="bi bi-file-earmark-text me-1"></i> 3. Referensi
-              </div>
-              <div class="p-3 bg-light rounded-3 border border-light-subtle h-100">
-                <div>
-                  <label class="form-label small fw-bold text-muted mb-1">Link Dokumentasi / Swagger URL</label>
-                  <textarea class="form-control rounded-3 font-monospace small" name="dokumentasi" rows="5" placeholder="https://vendor.com" style="resize: none;" maxlength="255"></textarea>
-                </div>
-              </div>
-            </div>
-
-          </div> <!-- /.row -->
-
-        </div>
-        <div class="modal-footer bg-light border-top p-3 rounded-bottom-4">
-          <button type="button" class="btn btn-sm btn-outline-secondary rounded-3 px-3" data-bs-dismiss="modal">Batal</button>
-          <button type="submit" class="btn btn-sm text-white rounded-3 px-4 shadow-sm" style="background-color: #6f42c1;">Simpan Integrasi</button>
-        </div>
-      </form>
     </div>
   </div>
-</div>
+<?php endif; ?>
+<!-- =========================================================================
+     MODAL EDIT & HAPUS API (DILAKUKAN DI LUAR TABEL VIA LOOPING DATA)
+     ========================================================================= -->
+<?php if (!empty($apis)): ?>
+  <?php foreach ($apis as $api): ?>
 
-<!-- PERUBAHAN: Mengganti modal-lg menjadi modal-xl agar ruang horizontal lebih luas -->
-<div class="modal fade" id="modalEditApi" tabindex="-1" aria-labelledby="modalEditApiLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered">
-    <div class="modal-content rounded-4 border-0 shadow">
-      <div class="modal-header border-bottom p-3">
-        <h5 class="modal-title fw-bold text-dark" id="modalEditApiLabel">
-          <i class="bi bi-pencil-square me-2 text-warning"></i> Perbarui Konfigurasi API
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <form action="proses_vendor_api.php?action=update" method="POST">
-        <div class="modal-body p-4">
-          <!-- Hidden Primary Key ID Data API -->
-          <input type="hidden" name="id" id="edit_id">
-          <input type="hidden" name="vendor_id" value="<?= $vendor_id; ?>">
-
-          <!-- Grid Pembagian 3 Kolom Sejajar (Menyamping ke Kanan) -->
-          <div class="row g-4">
-            
-            <!-- KOLOM 1 (KIRI): INFORMASI UTAMA ENDPOINT -->
-            <div class="col-md-4">
-              <div class="mb-2 text-primary fw-bold small uppercase tracking-wider border-bottom pb-2">
-                <i class="bi bi-globe me-1"></i> 1. Informasi Endpoint
+    <!-- 1. MODAL EDIT DATA (UPDATE) -->
+    <?php if (hasCrudAccess('vendor_apis.php', 'U', $userRole)): ?>
+      <div class="modal fade" id="modalEditApi<?= $api['id']; ?>" tabindex="-1" aria-labelledby="labelModalEdit<?= $api['id']; ?>" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content border-0 shadow rounded-4">
+            <form action="" method="POST">
+              <!-- Parameter wajib untuk identifikasi proses Update di Backend PHP -->
+              <input type="hidden" name="action" value="update">
+              <input type="hidden" name="id" value="<?= $api['id']; ?>">
+              
+              <div class="modal-header border-bottom-0 py-3 px-4">
+                <h5 class="modal-title fw-bold text-dark" id="labelModalEdit<?= $api['id']; ?>">
+                  <i class="bi bi-pencil-square text-primary me-2"></i>Ubah Konfigurasi API
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
-              <div class="p-3 bg-light rounded-3 border border-light-subtle h-100">
-                <div class="mb-3">
-                  <label class="form-label small fw-bold text-muted mb-1">Nama / Fungsi API</label>
-                  <input type="text" class="form-control rounded-3" name="nama_api" id="edit_nama_api" required maxlength="150">
-                </div>
-                <div class="mb-3">
-                  <label class="form-label small fw-bold text-muted mb-1">Environment</label>
-                  <select class="form-select rounded-3" name="environment" id="edit_environment" required>
-                    <option value="1">Development / Sandbox</option>
-                    <option value="2">Production / Live</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="form-label small fw-bold text-muted mb-1">Base URL Endpoint</label>
-                  <input type="url" class="form-control rounded-3 font-monospace small text-primary" name="base_url" id="edit_base_url" required maxlength="255">
-                </div>
-              </div>
-            </div>
-
-            <!-- KOLOM 2 (TENGAH): KREDENSIAL OTENTIKASI -->
-            <div class="col-md-5">
-              <div class="mb-2 text-purple fw-bold small uppercase tracking-wider border-bottom pb-2" style="color: #6f42c1;">
-                <i class="bi bi-shield-lock me-1"></i> 2. Kredensial & Autentikasi
-              </div>
-              <div class="p-3 bg-light rounded-3 border border-light-subtle h-100">
+              
+              <div class="modal-body p-4 pt-0">
                 <div class="row g-3">
-                  <div class="col-6">
-                    <label class="form-label small fw-bold text-muted mb-1">Client ID</label>
-                    <input type="text" class="form-control rounded-3" name="client_id" id="edit_client_id" maxlength="255">
+                  <!-- Nama API -->
+                  <div class="col-md-8">
+                    <label class="form-label small fw-bold text-secondary">Nama API <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control rounded-3" name="nama_api" value="<?= htmlspecialchars($api['nama_api']); ?>" required maxlength="150">
                   </div>
-                  <div class="col-6">
-                    <label class="form-label small fw-bold text-muted mb-1">Client Secret</label>
-                    <input type="text" class="form-control rounded-3" name="client_secret" id="edit_client_secret">
+                  
+                  <!-- Environment -->
+                  <div class="col-md-4">
+                    <label class="form-label small fw-bold text-secondary">Environment <span class="text-danger">*</span></label>
+                    <select class="form-select rounded-3" name="environment" required>
+                      <option value="1" <?= $api['environment'] == 1 ? 'selected' : ''; ?>>Sandbox / Dev</option>
+                      <option value="2" <?= $api['environment'] == 2 ? 'selected' : ''; ?>>Production</option>
+                    </select>
                   </div>
-                  <div class="col-6">
-                    <label class="form-label small fw-bold text-muted mb-1">User Key</label>
-                    <input type="text" class="form-control rounded-3" name="user_key" id="edit_user_key">
+                  
+                  <!-- Base URL -->
+                  <div class="col-12">
+                    <label class="form-label small fw-bold text-secondary">Base URL</label>
+                    <input type="url" class="form-control rounded-3 font-monospace" name="base_url" value="<?= htmlspecialchars($api['base_url'] ?? ''); ?>" placeholder="https://vendor.com" maxlength="255">
                   </div>
-                  <div class="col-6">
-                    <label class="form-label small fw-bold text-muted mb-1">Secret Key</label>
-                    <input type="text" class="form-control rounded-3" name="secret_key" id="edit_secret_key">
+                  
+                  <!-- Client ID -->
+                  <div class="col-md-6">
+                    <label class="form-label small fw-bold text-secondary">Client ID</label>
+                    <input type="text" class="form-control rounded-3 font-monospace" name="client_id" value="<?= htmlspecialchars($api['client_id'] ?? ''); ?>" maxlength="255">
+                  </div>
+                  
+                  <!-- Link Dokumentasi -->
+                  <div class="col-md-6">
+                    <label class="form-label small fw-bold text-secondary">Link Dokumentasi</label>
+                    <input type="text" class="form-control rounded-3" name="dokumentasi" value="<?= htmlspecialchars($api['dokumentasi'] ?? ''); ?>" placeholder="https://vendor.com" maxlength="255">
+                  </div>
+                  
+                  <!-- Client Secret -->
+                  <div class="col-12">
+                    <label class="form-label small fw-bold text-secondary">Client Secret</label>
+                    <textarea class="form-control rounded-3 font-monospace" name="client_secret" rows="2"><?= htmlspecialchars($api['client_secret'] ?? ''); ?></textarea>
+                  </div>
+                  
+                  <!-- User Key -->
+                  <div class="col-md-6">
+                    <label class="form-label small fw-bold text-secondary">User Key</label>
+                    <textarea class="form-control rounded-3 font-monospace" name="user_key" rows="2"><?= htmlspecialchars($api['user_key'] ?? ''); ?></textarea>
+                  </div>
+                  
+                  <!-- Secret Key -->
+                  <div class="col-md-6">
+                    <label class="form-label small fw-bold text-secondary">Secret Key</label>
+                    <textarea class="form-control rounded-3 font-monospace" name="secret_key" rows="2"><?= htmlspecialchars($api['secret_key'] ?? ''); ?></textarea>
                   </div>
                 </div>
               </div>
-            </div>
-
-            <!-- KOLOM 3 (KANAN): DOKUMENTASI -->
-            <div class="col-md-3">
-              <div class="mb-2 text-secondary fw-bold small uppercase tracking-wider border-bottom pb-2">
-                <i class="bi bi-file-earmark-text me-1"></i> 3. Referensi
+              
+              <div class="modal-footer border-top-0 px-4 pb-4">
+                <button type="button" class="btn btn-secondary rounded-3 px-3" data-bs-dismiss="modal">Batal</button>
+                <button type="submit" class="btn btn-primary rounded-3 px-4">Simpan Perubahan</button>
               </div>
-              <div class="p-3 bg-light rounded-3 border border-light-subtle h-100">
-                <div>
-                  <label class="form-label small fw-bold text-muted mb-1">Link Dokumentasi / Swagger URL</label>
-                  <textarea class="form-control rounded-3 font-monospace small" name="dokumentasi" id="edit_dokumentasi" rows="5" style="resize: none;" maxlength="255"></textarea>
-                </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    <?php endif; ?>
+
+    <!-- 2. MODAL KONFIRMASI HAPUS DATA (DELETE) -->
+    <?php if (hasCrudAccess('vendor_apis.php', 'D', $userRole)): ?>
+      <div class="modal fade" id="modalHapusApi<?= $api['id']; ?>" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+          <div class="modal-content border-0 shadow rounded-4">
+            <form action="" method="POST">
+              <!-- Parameter wajib untuk identifikasi proses Delete di Backend PHP -->
+              <input type="hidden" name="action" value="delete">
+              <input type="hidden" name="id" value="<?= $api['id']; ?>">
+              
+              <div class="modal-body p-4 text-center">
+                <i class="bi bi-exclamation-triangle text-danger display-5 mb-3 d-block"></i>
+                <h6 class="fw-bold text-dark mb-2">Hapus Konfigurasi API?</h6>
+                <p class="text-muted small mb-0">Tindakan ini tidak bisa dibatalkan. Menghapus API: <br><strong class="text-danger"><?= htmlspecialchars($api['nama_api']); ?></strong>.</p>
               </div>
-            </div>
-
-          </div> <!-- /.row -->
-
+              
+              <div class="modal-footer border-top-0 px-4 pb-4 justify-content-center gap-2">
+                <button type="button" class="btn btn-sm btn-secondary rounded-3 px-3" data-bs-dismiss="modal">Batal</button>
+                <button type="submit" class="btn btn-sm btn-danger rounded-3 px-3">Ya, Hapus</button>
+              </div>
+            </form>
+          </div>
         </div>
-        <div class="modal-footer bg-light border-top p-3 rounded-bottom-4">
-          <button type="button" class="btn btn-sm btn-outline-secondary rounded-3 px-3" data-bs-dismiss="modal">Batal</button>
-          <button type="submit" class="btn btn-sm btn-warning rounded-3 px-4 shadow-sm fw-bold">Simpan Perubahan</button>
+      </div>
+    <?php endif; ?>
+
+  <?php endforeach; ?>
+<?php endif; ?>
+              </tbody>
+            </table>
+          </div>
         </div>
-      </form>
-    </div>
-  </div>
-</div>
+      </div>
+
+  </div> <!-- Penutup container-fluid -->
+</div> <!-- Penutup main-content -->
 
 <!-- 3. JAVASCRIPT BINDING DATA UNTUK MODAL EDIT -->
 <script>
