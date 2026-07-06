@@ -215,7 +215,7 @@ try {
                 display: block !important;
                 max-height: calc(100vh - 160px) !important;
                 overflow-y: auto !important;
-                overflow-x: hidden !hidden !important;
+                overflow-x: hidden !important;
                 scrollbar-width: none;
                 -ms-overflow-style: none;
             }
@@ -227,7 +227,7 @@ try {
                 margin-left: 280px !important;
                 width: calc(100% - 280px) !important;
                 min-height: 100vh !important;
-                display: block !important;
+                display: block !important; 
             }
             .offcanvas-backdrop, .offcanvas-backdrop.show {
                 display: none !important;
@@ -238,37 +238,48 @@ try {
         }
 
         /* ==================================================== */
-        /* CONFIG LAYOUT MOBILE / HP (Lebar Layar < 768px)     */
+        /* CONFIG LAYOUT MOBILE / HP (Lebar Layar < 768px)      */
         /* ==================================================== */
         @media (max-width: 767.98px) {
             body {
                 overflow: auto !important;
                 position: relative !important;
-                display: block !important;
+                display: block !important; 
             }
             .d-md-flex {
                 display: block !important; 
             }
-            .sidebar-fixed {
+            
+            /* SOLUSI UTAMA SCROLL MOBILE: Paksa buka akses overflow-y scroll di tingkat paling luar laci */
+            .offcanvas-md.sidebar-fixed {
                 position: fixed !important;
                 width: 280px !important;
                 height: 100vh !important;
+                max-height: 100vh !important;
+                overflow-y: scroll !important; 
+                overflow-x: hidden !important;
+                -webkit-overflow-scrolling: touch !important; 
             }
+            
+            /* Biarkan kontainer dalam memanjang alami mengikuti scroll luar */
             .menu-scroll-container {
                 max-height: none !important;
-                overflow-y: visible !important;
+                height: auto !important;
+                overflow: visible !important;
+                display: block !important;
             }
+            
             .main-content {
                 width: 100% !important;
                 margin-left: 0 !important;
-                min-height: calc(100vh - 70px) !important;
+                min-height: calc(100vh - 70px) !important; 
                 display: block !important;
-                height: auto !important;
+                height: auto !important; 
             }
             .offcanvas-backdrop.show {
                 display: block !important;
-                opacity: 0 !important;
-                background-color: transparent !important;
+                opacity: 0.5 !important;
+                background-color: #000000 !important;
                 visibility: visible !important;
             }
         }
@@ -309,66 +320,14 @@ try {
         }
     </style>
 
-    <!-- FORCE CSS OVERRIDE UNTUK WARNA & GARIS PEMBATAS TABEL (ULTIMATE RESET) -->
     <style>
-        /* 1. Pembuatan Garis Pembatas Vertikal & Horizontal */
-        .custom-table, .custom-table th, .custom-table td {
-            border: 1px solid #e3e6f0 !important;
-            padding: 15px 20px !important;
-            vertical-align: middle !important;
-        }
-
-        /* 2. Warna Judul Kolom Atas (Header) */
-        .custom-table th, .custom-table th * {
-            color: #4e73df !important;
-            font-weight: 700 !important;
-            background-color: #f8f9fc !important;
-        }
-
-        /* 3. Kolom 1 (ID): Dipaksa Hitam Gelap */
-        .custom-table tr td:nth-child(1),
-        .custom-table tr td:nth-child(1) * {
-            color: #222222 !important;
-            font-weight: 700 !important;
-            text-decoration: none !important;
-        }
-
-        /* 4. Kolom 2 (Kategori): Dipaksa Biru Cerah Khas Badge */
-        .custom-table tr td:nth-child(2),
-        .custom-table tr td:nth-child(2) * {
-            color: #1a73e8 !important; 
-            font-weight: 700 !important;
-            text-decoration: none !important;
-        }
-
-        /* 5. Kolom 3 (Judul Artikel): Dipaksa Biru Link Gelap/Navy */
-        .custom-table tr td:nth-child(3),
-        .custom-table tr td:nth-child(3) * {
-            color: #2e59d9 !important; 
-            font-weight: 600 !important;
-            text-decoration: none !important;
-        }
-
-        /* 6. Kolom 4 (Isi Konten): Dipaksa Abu-Abu Netral (Bukan Biru) */
-        .custom-table tr td:nth-child(4),
-        .custom-table tr td:nth-child(4) * {
-            color: #5a5c69 !important; 
-            font-weight: 400 !important;
-            text-decoration: none !important;
-        }
-
-        /* 7. Kolom 5 (Lampiran Berkas): Dipaksa Toska / Cyan */
-        .custom-table tr td:nth-child(5),
-        .custom-table tr td:nth-child(5) * {
-            color: #029cbd !important;
-            font-weight: 600 !important;
-            text-decoration: none !important;
-        }
-        
-        /* 8. Pewarnaan Mandiri Blok Tombol Kolom Aksi */
-        .custom-table .btn-detail, .custom-table .btn-detail * { color: #36b9cc !important; text-decoration: none !important; }
-        .custom-table .btn-edit, .custom-table .btn-edit * { color: #f6c23e !important; text-decoration: none !important; }
-        .custom-table .btn-delete, .custom-table .btn-delete * { color: #e74a3b !important; background: none !important; border: none !important; padding: 0 !important; }
+    .card-clickable {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card-clickable:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
+    }
     </style>
 
 </head>
@@ -403,12 +362,10 @@ try {
       <i class="bi bi-speedometer2 me-2"></i> ITAKMS
   </h4>
   
-  <!-- 3. AREA MENU TENGAH (Otomatis & Fleksibel untuk Semua Opsi Berbasis Fungsi PHP) -->
+  <!-- 3. AREA MENU TENGAH -->
   <?php
-  // Ambil nama file yang sedang aktif saat ini secara real-time
   $currentFile = basename($_SERVER['PHP_SELF']);
 
-  // Fungsi pintar untuk otomatis mencetak class 'active-style' jika nama file cocok
   if (!function_exists('checkActiveMenu')) {
       function checkActiveMenu($targetFile, $currentFile) {
           return ($currentFile === $targetFile) ? 'active-style' : '';
@@ -416,11 +373,13 @@ try {
   }
   ?>
   
-    <?php include __DIR__ . '/sidebar.php'; ?>
+  <div class="menu-scroll-container flex-grow-1 w-100">
+      <ul class="nav flex-column mb-auto list-unstyled w-100">
+          <?php include __DIR__ . '/sidebar.php'; ?>
+      </ul>
+  </div>
 
-
-<!-- PEMUTUS LINK GLOBAL (Mencegah kebocoran tag <a> dari file header eksternal) -->
-</a>
+</div>
 
 <!-- AREA UTAMA KONTEN -->
 <main class="col-md-8 ms-sm-auto col-lg-9 px-md-4 pt-4 offset-md-4 offset-lg-3">
