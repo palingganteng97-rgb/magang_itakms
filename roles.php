@@ -308,21 +308,7 @@ try {
     </ul>
   </div> <!-- /penutup area menu tengah -->
   
-  <!-- 4. Tombol Logout (Mengunci di Dasar Laci Menu) -->
-  <div class="mt-auto pt-3 border-top border-secondary bg-dark w-100 px-3">
-    <ul class="nav flex-column w-100">
-      <li class="nav-item w-100">
-        <a href="logout.php" 
-           class="nav-link d-inline-flex align-items-center py-2 px-3 rounded w-100 logout-btn-merah" 
-           style="color: #dc3545 !important; font-weight: 600 !important; transition: all 0.2s ease-in-out; box-sizing: border-box;">
-          <i class="bi bi-box-arrow-right me-3 fs-5" style="color: #dc3545 !important;"></i> 
-          <span>Logout</span>
-        </a>
-      </li>
-    </ul>
-  </div>
-
-</div> <!-- /penutup elemen offcanvas-md -->
+    <?php include __DIR__ . '/sidebar.php'; ?>
 
     <!-- AREA UTAMA KONTEN (Gunakan pembungkus ini agar susunan halaman tidak bergeser tertimpa sidebar) -->
     <main class="col-md-8 ms-sm-auto col-lg-9 px-md-4 pt-4 offset-md-4 offset-lg-3">
