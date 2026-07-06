@@ -3,58 +3,150 @@ require_once __DIR__ . '/auth.php';
 require_login();
 
 // =========================================================================
-// AMBIL DATA ROLE USER DINAMIS DARI DATABASE SESSION (Kunci Utama Hak Akses)
+// 1. AUTENTIKASI AKSES ROLE BERDASARKAN MATRIKS
 // =========================================================================
-$userRole = isset($_SESSION['user']['role']) ? $_SESSION['user']['role'] : 'Viewer';
+$roleMapping = [
+    1 => 'Super Admin',
+    2 => 'Admin IT',
+    3 => 'Teknisi',
+    4 => 'Viewer'
+];
 
-// =========================================================================
-// PROTEKSI HALAMAN BACKEND: Akun Viewer bertanda 'X' (Akses Dilarang Total!)
-// =========================================================================
-if ($userRole === 'Viewer') {
+$rawRole = $_SESSION['user']['role'] ?? $_SESSION['role'] ?? $_SESSION['user_role'] ?? 4;
+
+// Jika session mengembalikan angka, terjemahkan menjadi teks role
+if (array_key_exists($rawRole, $roleMapping)) {
+    $userRole = $roleMapping[$rawRole];
+} else {
+    $userRole = $rawRole; 
+}
+
+// Konversi ke huruf kecil untuk akurasi pencocokan string data
+$roleCheckEngine = strtolower(trim($userRole));
+
+// Proteksi Ketat: Hanya kunci jika terdeteksi 'teknisi' atau 'viewer'.
+// Berikan jaminan lolos jika string mengandung kata 'super admin' atau 'admin it'
+if (in_array($roleCheckEngine, ['teknisi', 'viewer']) && $roleCheckEngine !== 'super admin' && $roleCheckEngine !== 'admin it') {
     echo "<script>
-            alert('Akses Ditolak! Akun Viewer tidak memiliki izin untuk melihat data Integrasi API Vendor.');
-            window.location='dashboard.php';
+            alert('Akses Ditolak! Akun Anda tidak memiliki izin untuk memodifikasi data API.');
+            window.location='vendors.php';
           </script>";
     exit();
 }
 
-// 1. Konfigurasi Database
+// =========================================================================
+// 2. KONFIGURASI DATABASE MAGANG_ITAKMS
+// =========================================================================
 $host = "10.10.6.59";
 $username = "root_host";
 $password = "password";
 $database = "magang_itakms";
 
-// Mengambil ID Vendor utama dari parameter URL (misal: vendor_apis.php?vendor_id=1)
-$vendor_id = isset($_GET['vendor_id']) ? (int)$_GET['vendor_id'] : 0;
-
-if ($vendor_id <= 0) {
-    header("Location: vendors.php");
-    exit;
-}
-
 try {
     $conn = new PDO("mysql:host=$host;dbname=$database", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-    // 2. Ambil Informasi Nama Vendor Utama untuk Header
-    $vendorSql = "SELECT nama FROM vendors WHERE id = :vendor_id";
-    $vendorStmt = $conn->prepare($vendorSql);
-    $vendorStmt->execute([':vendor_id' => $vendor_id]);
-    $vendorMain = $vendorStmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$vendorMain) {
-        die("Data vendor utama tidak ditemukan.");
-    }
-
-    // 3. Query Mengambil Semua Data API Berdasarkan vendor_id
-    $sql = "SELECT * FROM vendor_apis WHERE vendor_id = :vendor_id ORDER BY id DESC";
-    $stmt = $conn->prepare($sql);
-    $stmt->execute([':vendor_id' => $vendor_id]);
-    $apis = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
 } catch (PDOException $e) {
-    die("Koneksi atau Query Database Gagal: " . $e->getMessage());
+    die("Koneksi Database Gagal: " . $e->getMessage());
 }
+
+// Tangkap parameter aksi dan vendor_id
+$action = isset($_GET['action']) ? $_GET['action'] : '';
+$vendor_id = isset($_POST['vendor_id']) ? (int)$_POST['vendor_id'] : (isset($_GET['vendor_id']) ? (int)$_GET['vendor_id'] : 0);
+
+if ($vendor_id <= 0) {
+    header("Location: vendors.php");
+    exit();
+}
+
+// =========================================================================
+// 3. LOGIKA EKSEKUSI PROSES (CRUD ENGINE)
+// =========================================================================
+
+// --- AKSI A: TAMBAH DATA API ---
+if ($action === 'add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $nama_layanan = trim($_POST['nama_layanan']);
+    $endpoint_url = trim($_POST['endpoint_url']);
+    $api_key      = trim($_POST['api_key']);
+    $method       = trim($_POST['method']);
+    $status       = (int)$_POST['status'];
+
+    try {
+        $sql = "INSERT INTO vendor_apis (vendor_id, nama_layanan, endpoint_url, api_key, method, status) 
+                VALUES (:vendor_id, :nama_layanan, :endpoint_url, :api_key, :method, :status)";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([
+            ':vendor_id'    => $vendor_id,
+            ':nama_layanan' => $nama_layanan,
+            ':endpoint_url' => $endpoint_url,
+            ':api_key'      => $api_key,
+            ':method'       => $method,
+            ':status'       => $status
+        ]);
+
+        header("Location: vendor_apis.php?vendor_id=" . $vendor_id . "&status=success_add");
+        exit();
+    } catch (PDOException $e) {
+        die("Gagal menambahkan data API: " . $e->getMessage());
+    }
+}
+
+// --- AKSI B: PERBARUI / EDIT DATA API ---
+if ($action === 'update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $id           = (int)$_POST['id'];
+    $nama_layanan = trim($_POST['nama_layanan']);
+    $endpoint_url = trim($_POST['endpoint_url']);
+    $api_key      = trim($_POST['api_key']);
+    $method       = trim($_POST['method']);
+    $status       = (int)$_POST['status'];
+
+    try {
+        $sql = "UPDATE vendor_apis SET 
+                    nama_layanan = :nama_layanan, 
+                    endpoint_url = :endpoint_url, 
+                    api_key = :api_key, 
+                    method = :method, 
+                    status = :status 
+                WHERE id = :id AND vendor_id = :vendor_id";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([
+            ':nama_layanan' => $nama_layanan,
+            ':endpoint_url' => $endpoint_url,
+            ':api_key'      => $api_key,
+            ':method'       => $method,
+            ':status'       => $status,
+            ':id'           => $id,
+            ':vendor_id'    => $vendor_id
+        ]);
+
+        header("Location: vendor_apis.php?vendor_id=" . $vendor_id . "&status=success_update");
+        exit();
+    } catch (PDOException $e) {
+        die("Gagal memperbarui data API: " . $e->getMessage());
+    }
+}
+
+// --- AKSI C: HAPUS DATA API ---
+if ($action === 'delete') {
+    $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+
+    try {
+        $sql = "DELETE FROM vendor_apis WHERE id = :id AND vendor_id = :vendor_id";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([
+            ':id'        => $id,
+            ':vendor_id' => $vendor_id
+        ]);
+
+        header("Location: vendor_apis.php?vendor_id=" . $vendor_id . "&status=success_delete");
+        exit();
+    } catch (PDOException $e) {
+        die("Gagal menghapus data API: " . $e->getMessage());
+    }
+}
+
+// Jika tidak ada aksi CRUD yang dieksekusi, kembalikan secara aman ke halaman view vendor_apis
+header("Location: vendor_apis.php?vendor_id=" . $vendor_id);
+exit();
 ?>
 
 <!DOCTYPE html>

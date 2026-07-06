@@ -302,8 +302,8 @@ try {
 </div>
 
 <!-- Tabel Data Vendors (Responsif Total & Terkunci w-100) -->
-    <!-- PERUBAHAN STRUKTUR: Mengamankan container tabel responsif agar mendengarkan perintah scroll dengan baik -->
-    <div class="table-responsive w-100 rounded-3 border" style="overflow-x: auto; -webkit-overflow-scrolling: touch; display: block;">
+    <!-- PERBAIKAN: Menghapus display: block, mengunci overflow-y, dan menambahkan padding bawah agar bilah scroll tidak tertutup -->
+    <div class="table-responsive w-100 rounded-3 border mb-3" style="overflow-x: auto !important; overflow-y: hidden !important; -webkit-overflow-scrolling: touch; padding-bottom: 8px;">
       <!-- Ditambahkan text-nowrap agar kolom teratur horizontal, w-100 agar memenuhi container -->
       <table class="table table-striped table-hover align-middle mb-0 text-nowrap w-100">
         <thead class="table-light border-bottom">
@@ -314,7 +314,6 @@ try {
             <th>No. Telepon</th>
             <th>Alamat Email / Website</th>
             <th>Status</th>
-            
             <!-- Fleksibel Otomatis: Hanya tampilkan kolom header Aksi jika user bukan Teknisi & Viewer -->
             <?php if (!in_array($userRole, ['Teknisi', 'Viewer'])): ?>
             <th class="text-center" style="width: 100px;">Aksi</th>
@@ -361,7 +360,6 @@ try {
                       <span class="badge bg-danger-subtle text-danger border border-danger px-2.5 py-1.5 rounded-pill">Non-Aktif</span>
                   <?php endif; ?>
                 </td>
-                
                 <!-- KOLOM 7: Aksi Utama (Edit & Hapus) - Disembunyikan total dari Teknisi & Viewer (X) -->
                 <?php if (!in_array($userRole, ['Teknisi', 'Viewer'])): ?>
                 <td class="text-center">
@@ -382,7 +380,6 @@ try {
                         <i class="bi bi-pencil-square"></i>
                     </button>
                     <?php endif; ?>
-                    
                     <!-- Fleksibel Otomatis: Cek Akses Delete ('D') untuk tombol Hapus -->
                     <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'D', $userRole)): ?>
                     <a href="proses_vendor.php?action=delete&id=<?= $v['id']; ?>" 
@@ -395,14 +392,12 @@ try {
                   </div>
                 </td>
                 <?php endif; ?>
-
                 <!-- KOLOM 8: Tombol Akses Vendor Contacts (Terbuka untuk semua role) -->
                 <td class="text-center">
                   <a href="vendor_contacts.php?vendor_id=<?= $v['id']; ?>" class="btn btn-sm btn-primary rounded-3 px-3 shadow-sm d-inline-flex align-items-center gap-1">
                     <i class="bi bi-person-lines-fill"></i> Kontak
                   </a>
                 </td>
-
                 <!-- KOLOM 9: Tombol Akses Vendor API - Otomatis tersembunyi jika role adalah Viewer (Akses X) -->
                 <?php if ($userRole !== 'Viewer'): ?>
                 <td class="text-center pe-3">
@@ -411,16 +406,14 @@ try {
                   </a>
                 </td>
                 <?php endif; ?>
-
               </tr>
           <?php endforeach; endif; ?>
         </tbody>
       </table>
     </div> <!-- /.table-responsive -->
-    
   </div> <!-- /.card -->
-
-</main> <!-- Penutup tag main Anda -->
+</div> <!-- /.container-fluid -->
+</div> <!-- /.main-content (Menggantikan tag /main yang merusak layout grid) -->
 
 <!-- ========================================== -->
 <!-- REVISI: MODAL TAMBAH VENDOR YANG RAPI     -->
