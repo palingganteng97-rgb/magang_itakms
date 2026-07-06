@@ -1,7 +1,10 @@
 <?php
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/auth.php'; // HUBUNGKAN DENGAN AUTH.PHP UNTUK MENGAKSES FUNGSI WRITE_LOG()
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -42,11 +45,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif ((int)($user['status'] ?? 0) !== 1) {
                 $errors[] = 'Akun tidak aktif.';
             } else {
+                // Set array session data user
                 $_SESSION['user'] = [
                     'id' => (int)$user['id'],
                     'nama' => $user['nama'],
                     'username' => $user['username']
                 ];
+
+                // AMBIL ID USER DAN TULIS LOG AKTIVITAS (LOGIN BERHASIL)
+                $user_id = (int)$user['id'];
+                write_log($conn, "Berhasil login ke dalam sistem ITAKMS", "users", $user_id);
+
                 header('Location: dashboard.php');
                 exit;
             }
@@ -54,6 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="id">
 <head>

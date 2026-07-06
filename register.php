@@ -1,7 +1,10 @@
 <?php
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/auth.php'; // HUBUNGKAN DENGAN AUTH.PHP UNTUK MENGAKSES FUNGSI WRITE_LOG()
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 header('Content-Type: text/html; charset=utf-8');
 
@@ -28,30 +31,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($exists) {
             $errors[] = 'Username atau email sudah terdaftar.';
         } else {
-            // NOTE: password column harus ada di tabel users
+            // FIX: Mengamankan password dengan hash bcrypt (Sesuai dengan logika login.php)
             $hash = password_hash($password, PASSWORD_DEFAULT);
             $status = 1;
 
+            // FIX SINKRONISASI DB: Mengubah nama kolom 'password_hash' menjadi 'password' agar sinkron dengan user.php dan login.php
             $stmtIns = $conn->prepare(
-                'INSERT INTO users (nama, username, email, telepon, status, password_hash)
-                 VALUES (:nama, :username, :email, :telepon, :status, :password_hash)'
+                'INSERT INTO users (nama, username, email, telepon, status, password)
+                 VALUES (:nama, :username, :email, :telepon, :status, :password)'
             );
 
             // telepon belum ada di form register => kosong
-            $stmtIns->execute([
+            $sukses_register = $stmtIns->execute([
                 ':nama' => $nama,
                 ':username' => $username,
                 ':email' => $email,
                 ':telepon' => '',
                 ':status' => $status,
-                ':password_hash' => $hash
+                ':password' => $hash
             ]);
+
+            // AMBIL ID USER BARU DAN TULIS LOG AKTIVITAS (REGISTER BERHASIL)
+            if ($sukses_register) {
+                $new_user_id = (int)$conn->lastInsertId();
+                
+                // Memicu pencatatan log registrasi pengguna baru
+                write_log($conn, "Melakukan registrasi mandiri akun baru dengan username: " . $username, "users", $new_user_id);
+            }
 
             $success = 'Registrasi berhasil. Silakan login.';
         }
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="id">
 <head>

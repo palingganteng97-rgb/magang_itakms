@@ -527,12 +527,15 @@ try {
 
 </main> <!-- Penutup <main> -->
 
-<!-- SCRIPTS OTOMATIS REAL-TIME & DRAG SCROLL KURSOR -->
+<!-- SCRIPTS OTOMATIS REAL-TIME & DRAG SCROLL KURSOR PERMANEN -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    // 1. PENGATURAN LOG REAL-TIME TANPA REFRESH
     const searchInput = document.querySelector('input[name="search"]') || document.querySelector('.form-control');
+    const slider = document.querySelector('.table-responsive'); // Menarget wadah luar permanen
     
+    // =========================================================================
+    // 1. FUNGSI LOG REAL-TIME AMAN (DENGAN COAK CEK BARIS TR)
+    // =========================================================================
     function fetchRealtimeLogs() {
         if (searchInput && document.activeElement === searchInput && searchInput.value.trim() !== "") {
             return; 
@@ -542,20 +545,32 @@ document.addEventListener("DOMContentLoaded", function () {
         urlParams.set('ajax', '1');
 
         fetch('activity_logs.php?' + urlParams.toString())
-            .then(response => response.text())
+            .then(response => {
+                if (response.redirected || response.url.includes('login.php')) {
+                    window.location.href = 'login.php';
+                    return;
+                }
+                return response.text();
+            })
             .then(htmlData => {
-                const tableBody = document.getElementById('logTableBody');
-                if (tableBody) {
-                    tableBody.innerHTML = htmlData;
+                if (htmlData && htmlData.includes('<tr>')) {
+                    const tableBody = document.getElementById('logTableBody');
+                    if (tableBody) {
+                        tableBody.innerHTML = htmlData; // Isi tabel diganti, wadah .table-responsive tetap utuh
+                    }
+                } else if (htmlData && htmlData.includes('login')) {
+                    window.location.href = 'login.php';
                 }
             })
             .catch(error => console.warn('Gagal memuat log waktu nyata:', error));
     }
 
+    // Jalankan pengecekan log baru setiap 2 detik
     setInterval(fetchRealtimeLogs, 2000);
 
-    // 2. PENGATURAN DRAG TO SCROLL MENGGUNAKAN KURSOR MOUSE
-    const slider = document.querySelector('.table-responsive');
+    // =========================================================================
+    // 2. FUNGSI DRAG TO SCROLL PERMANEN (TIDAK AKAN LEPAS SAAT LIVE UPDATE)
+    // =========================================================================
     let isDown = false;
     let startX;
     let scrollLeft;
@@ -582,7 +597,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (!isDown) return;
             e.preventDefault();
             const x = e.pageX - slider.offsetLeft;
-            const walk = (x - startX) * 2; // Mengatur sensitivitas/kecepatan geser tabel
+            const walk = (x - startX) * 2; // Mengatur kecepatan geser tabel (Angka 2 bisa dinaikkan jika kurang cepat)
             slider.scrollLeft = scrollLeft - walk;
         });
     }

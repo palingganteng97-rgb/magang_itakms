@@ -1,7 +1,10 @@
 <?php
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/auth.php'; // HUBUNGKAN DENGAN AUTH.PHP UNTUK MENGAKSES FUNGSI WRITE_LOG()
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 header('Content-Type: text/html; charset=utf-8');
 
@@ -14,32 +17,41 @@ $success = '';
 // - Anda bisa mengganti menjadi mekanisme email token jika sudah menyiapkan kolom token.
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Ambil input email (bisa diisi username atau email oleh user pada form)
     $email = trim($_POST['email'] ?? '');
     $newPassword = $_POST['password'] ?? '';
 
     if ($email === '' || $newPassword === '') {
         $errors[] = 'Email dan password baru wajib diisi.';
     } else {
-        // Cek user ada
-        $stmt = $conn->prepare('SELECT id, status FROM users WHERE (username = :username OR email = :email) LIMIT 1');
+        // FIX FIXED VARIABEL: Mengubah pemanggilan :username agar mengecek variabel $email yang menampung string teks input dari pengguna
+        $stmt = $conn->prepare('SELECT id, username, status FROM users WHERE username = :username OR email = :email LIMIT 1');
         $stmt->execute([
-            ':username' => $username,
-            ':email' => $email
+            ':username' => $email, // Menggunakan variabel $email untuk parameter username (fleksibel login)
+            ':email'    => $email
         ]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$user) {
-            // Jangan bocorkan apakah user ada.
-            $errors[] = 'Jika akun terdaftar, Anda akan menerima instruksi untuk reset password.';
+            // Jangan bocorkan apakah user ada (Keamanan Otentikasi)
+            $success = 'Jika akun terdaftar, Anda akan menerima instruksi untuk reset password.';
         } elseif ((int)($user['status'] ?? 0) !== 1) {
             $errors[] = 'Akun tidak aktif.';
         } else {
+            // AMBIL ID USER DAN TULIS LOG AKTIVITAS (PERMINTAAN RESET PASSWORD)
+            $user_id = (int)$user['id'];
+            $username_log = htmlspecialchars($user['username']);
+            
+            // Catat ke log aktivitas sistem lengkap beserta Data ID pengenal akunnya
+            write_log($conn, "Melakukan permintaan/aksi reset password untuk akun: " . $username_log, "users", $user_id);
+
             // Karena belum ada mekanisme token/email, tampilkan sukses generik.
             $success = 'Jika akun terdaftar, Anda akan menerima instruksi untuk reset password. (Demo: belum kirim email)';
         }
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
