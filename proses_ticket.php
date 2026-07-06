@@ -27,7 +27,7 @@ try {
         $stmt = $conn->prepare($query);
         
         // Eksekusi pengikatan data dari form modal tambah
-        $stmt->execute([
+        $sukses_add = $stmt->execute([
             ':nomor'     => $_POST['nomor'],
             ':judul'     => $_POST['judul'],
             ':deskripsi' => $_POST['deskripsi'],
@@ -35,10 +35,17 @@ try {
             ':prioritas' => $_POST['prioritas'],
             ':pelapor'   => $_SESSION['user_id'] ?? 1 // Mengambil ID dari session login, jika kosong default ke 1
         ]);
+
+        // AMBIL ID BARU DAN TULIS LOG AKTIVITAS (CREATE)
+        if ($sukses_add) {
+            $new_ticket_id = $conn->lastInsertId();
+            write_log($conn, "Menambahkan tiket pengaduan baru #" . $_POST['nomor'] . ": " . $_POST['judul'], "tickets", $new_ticket_id);
+        }
     }
     
     // LOGIKA PERBARUI DATA (UPDATE)
     elseif ($action == 'update' && $_SERVER['REQUEST_METHOD'] == 'POST') {
+        $id = intval($_POST['id']);
         
         $query = "UPDATE tickets 
                   SET judul = :judul, status = :status, teknisi = :teknisi 
@@ -46,12 +53,17 @@ try {
                   
         $stmt = $conn->prepare($query);
         
-        $stmt->execute([
+        $sukses_edit = $stmt->execute([
             ':judul'   => $_POST['judul'],
             ':status'  => $_POST['status'],
             ':teknisi' => !empty($_POST['teknisi']) ? $_POST['teknisi'] : null, // Set NULL jika teknisi belum dipilih
-            ':id'      => $_POST['id']
+            ':id'      => $id
         ]);
+
+        // TULIS LOG AKTIVITAS (UPDATE)
+        if ($sukses_edit) {
+            write_log($conn, "Memperbarui data tiket pengaduan: " . $_POST['judul'], "tickets", $id);
+        }
     }
 
     // Alihkan halaman kembali ke daftar antrean tiket setelah proses database berhasil

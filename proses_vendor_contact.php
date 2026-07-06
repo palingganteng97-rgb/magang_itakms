@@ -33,13 +33,19 @@ if (isset($_POST['action']) && $_POST['action'] == 'add_contact') {
         $sql = "INSERT INTO vendor_contacts (vendor_id, nama, jabatan, telepon, email) 
                 VALUES (:vendor_id, :nama, :jabatan, :telepon, :email)";
         $stmt = $conn->prepare($sql);
-        $stmt->execute([
+        $sukses_add = $stmt->execute([
             ':vendor_id' => $vendor_id,
             ':nama'      => $nama,
             ':jabatan'   => $jabatan,
             ':telepon'   => $telepon,
             ':email'     => $email
         ]);
+
+        // AMBIL ID BARU DAN TULIS LOG AKTIVITAS (CREATE)
+        if ($sukses_add) {
+            $new_contact_id = $conn->lastInsertId();
+            write_log($conn, "Menambahkan kontak vendor baru: " . $nama, "vendor_contacts", $new_contact_id);
+        }
 
         header("Location: vendor_contacts.php?status=success_add");
         exit();
@@ -71,7 +77,7 @@ if (isset($_POST['action']) && $_POST['action'] == 'edit_contact') {
                     email = :email 
                 WHERE id = :id";
         $stmt = $conn->prepare($sql);
-        $stmt->execute([
+        $sukses_edit = $stmt->execute([
             ':vendor_id' => $vendor_id,
             ':nama'      => $nama,
             ':jabatan'   => $jabatan,
@@ -79,6 +85,11 @@ if (isset($_POST['action']) && $_POST['action'] == 'edit_contact') {
             ':email'     => $email,
             ':id'        => $id
         ]);
+
+        // TULIS LOG AKTIVITAS (UPDATE)
+        if ($sukses_edit) {
+            write_log($conn, "Mengubah data kontak vendor menjadi: " . $nama, "vendor_contacts", $id);
+        }
 
         header("Location: vendor_contacts.php?status=success_update");
         exit();
@@ -92,9 +103,20 @@ if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id']))
     $id = (int)$_GET['id'];
 
     try {
+        // 1. Ambil nama kontak terlebih dahulu untuk log sebelum datanya terhapus
+        $get_info = $conn->prepare("SELECT nama FROM vendor_contacts WHERE id = :id");
+        $get_info->execute([':id' => $id]);
+        $nama_kontak = $get_info->fetchColumn() ?: 'Unknown';
+
+        // 2. Jalankan query hapus data
         $sql = "DELETE FROM vendor_contacts WHERE id = :id";
         $stmt = $conn->prepare($sql);
-        $stmt->execute([':id' => $id]);
+        $sukses_delete = $stmt->execute([':id' => $id]);
+
+        // TULIS LOG AKTIVITAS (DELETE)
+        if ($sukses_delete) {
+            write_log($conn, "Menghapus data kontak vendor: " . $nama_kontak, "vendor_contacts", $id);
+        }
 
         header("Location: vendor_contacts.php?status=success_delete");
         exit();

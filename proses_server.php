@@ -31,7 +31,7 @@ try {
             $sql = "INSERT INTO servers (asset_id, os, cpu, ram, storage, rack, fungsi, status) 
                     VALUES (:asset_id, :os, :cpu, :ram, :storage, :rack, :fungsi, :status)";
             $stmt = $conn->prepare($sql);
-            $stmt->execute([
+            $sukses_add = $stmt->execute([
                 ':asset_id' => $asset_id,
                 ':os'       => $os,
                 ':cpu'      => $cpu,
@@ -41,6 +41,13 @@ try {
                 ':fungsi'   => $fungsi,
                 ':status'   => $status
             ]);
+
+            // AMBIL ID BARU DAN TULIS LOG AKTIVITAS (CREATE)
+            if ($sukses_add) {
+                $new_server_id = $conn->lastInsertId();
+                write_log($conn, "Menambahkan data server baru (" . $fungsi . ") OS: " . $os, "servers", $new_server_id);
+            }
+
             $_SESSION['msg_success'] = "Server baru berhasil ditambahkan!";
         } else {
             $_SESSION['msg_error'] = "Kolom OS dan CPU wajib diisi!";
@@ -67,7 +74,7 @@ try {
                         storage = :storage, rack = :rack, fungsi = :fungsi, status = :status 
                     WHERE id = :id";
             $stmt = $conn->prepare($sql);
-            $stmt->execute([
+            $sukses_edit = $stmt->execute([
                 ':asset_id' => $asset_id,
                 ':os'       => $os,
                 ':cpu'      => $cpu,
@@ -78,6 +85,12 @@ try {
                 ':status'   => $status,
                 ':id'       => $id
             ]);
+
+            // TULIS LOG AKTIVITAS (UPDATE)
+            if ($sukses_edit) {
+                write_log($conn, "Mengubah informasi data server ID: " . $id . " (" . $fungsi . ")", "servers", $id);
+            }
+
             $_SESSION['msg_success'] = "Data server berhasil diperbarui!";
         } else {
             $_SESSION['msg_error'] = "Gagal memperbarui! Data tidak valid.";
@@ -91,9 +104,22 @@ try {
         $id = (int)($_GET['id'] ?? 0);
 
         if ($id > 0) {
+            // 1. Ambil informasi fungsi server terlebih dahulu untuk log sebelum datanya terhapus
+            $get_info = $conn->prepare("SELECT fungsi, os FROM servers WHERE id = :id");
+            $get_info->execute([':id' => $id]);
+            $server_data = $get_info->fetch(PDO::FETCH_ASSOC);
+            $fungsi_log = $server_data ? $server_data['fungsi'] . " [OS: " . $server_data['os'] . "]" : 'Unknown';
+
+            // 2. Jalankan query hapus data
             $sql = "DELETE FROM servers WHERE id = :id";
             $stmt = $conn->prepare($sql);
-            $stmt->execute([':id' => $id]);
+            $sukses_delete = $stmt->execute([':id' => $id]);
+
+            // TULIS LOG AKTIVITAS (DELETE)
+            if ($sukses_delete) {
+                write_log($conn, "Menghapus data server: " . $fungsi_log, "servers", $id);
+            }
+
             $_SESSION['msg_success'] = "Server berhasil dihapus!";
         } else {
             $_SESSION['msg_error'] = "ID Server tidak ditemukan.";

@@ -14,6 +14,11 @@ try {
 
     $status_msg = '';
 
+    // TRIGGER LOG OTOMATIS GLOBAL: Mencatat log kunjungan halaman
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['action'])) {
+        write_log($conn, "Membuka halaman Password Vault", "password_vaults", null);
+    }
+
     // ========================================================
     // A. LOGIKA TAMBAH DATA (CREATE)
     // ========================================================
@@ -30,7 +35,7 @@ try {
         if (!empty($nama)) {
             $stmt = $conn->prepare("INSERT INTO password_vaults (kategori_id, nama, url, ip, username, password, tipe, catatan) 
                                     VALUES (:kategori_id, :nama, :url, :ip, :username, :password, :tipe, :catatan)");
-            $stmt->execute([
+            $sukses = $stmt->execute([
                 ':kategori_id' => $kategori_id,
                 ':nama'        => $nama,
                 ':url'         => $url,
@@ -40,6 +45,12 @@ try {
                 ':tipe'        => $tipe,
                 ':catatan'     => $catatan
             ]);
+            
+            // AMBIL ID BARU DAN TULIS LOG AKTIVITAS (CREATE)
+            if ($sukses) {
+                $new_id = $conn->lastInsertId();
+                write_log($conn, "Menambahkan data vault password baru: " . $nama, "password_vaults", $new_id);
+            }
             
             header("Location: password_vault.php?status=success_add");
             exit;
@@ -87,7 +98,7 @@ try {
                                     kategori_id = :kategori_id, nama = :nama, url = :url, ip = :ip, 
                                     username = :username, password = :password, tipe = :tipe, catatan = :catatan 
                                     WHERE id = :id");
-            $stmt->execute([
+            $sukses_update = $stmt->execute([
                 ':kategori_id' => $kategori_id,
                 ':nama'        => $nama,
                 ':url'         => $url,
@@ -98,6 +109,11 @@ try {
                 ':catatan'     => $catatan,
                 ':id'          => $id
             ]);
+            
+            // TULIS LOG AKTIVITAS (UPDATE)
+            if ($sukses_update) {
+                write_log($conn, "Mengubah data vault password: " . $nama, "password_vaults", $id);
+            }
             
             header("Location: password_vault.php?status=success_edit");
             exit;
@@ -111,8 +127,19 @@ try {
         $id = intval($_GET['id']);
         
         if ($id > 0) {
+            // 1. Ambil nama vault password terlebih dahulu untuk log sebelum datanya terhapus
+            $get_info = $conn->prepare("SELECT nama FROM password_vaults WHERE id = :id");
+            $get_info->execute([':id' => $id]);
+            $nama_vault = $get_info->fetchColumn() ?: 'Unknown';
+
+            // 2. Jalankan query hapus data
             $stmt = $conn->prepare("DELETE FROM password_vaults WHERE id = :id");
-            $stmt->execute([':id' => $id]);
+            $sukses_delete = $stmt->execute([':id' => $id]);
+            
+            // TULIS LOG AKTIVITAS (DELETE)
+            if ($sukses_delete) {
+                write_log($conn, "Menghapus data vault password: " . $nama_vault, "password_vaults", $id);
+            }
             
             header("Location: password_vault.php?status=success_delete");
             exit;

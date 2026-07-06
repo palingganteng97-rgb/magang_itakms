@@ -14,6 +14,11 @@ try {
 
     $status_msg = '';
 
+    // TRIGGER LOG OTOMATIS GLOBAL: Mencatat log kunjungan halaman
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['action'])) {
+        write_log($conn, "Membuka halaman Password Categories", "password_categories", null);
+    }
+
     // ========================================================
     // A. LOGIKA TAMBAH DATA (CREATE)
     // ========================================================
@@ -22,7 +27,14 @@ try {
         
         if (!empty($nama)) {
             $stmt = $conn->prepare("INSERT INTO password_categories (nama) VALUES (:nama)");
-            $stmt->execute([':nama' => $nama]);
+            $sukses = $stmt->execute([':nama' => $nama]);
+            
+            // AMBIL ID BARU DAN TULIS LOG AKTIVITAS (CREATE)
+            if ($sukses) {
+                $new_id = $conn->lastInsertId();
+                write_log($conn, "Menambahkan kategori password baru: " . $nama, "password_categories", $new_id);
+            }
+
             header("Location: password_categories.php?status=success_add");
             exit;
         }
@@ -37,7 +49,13 @@ try {
         
         if ($id > 0 && !empty($nama)) {
             $stmt = $conn->prepare("UPDATE password_categories SET nama = :nama WHERE id = :id");
-            $stmt->execute([':nama' => $nama, ':id' => $id]);
+            $sukses = $stmt->execute([':nama' => $nama, ':id' => $id]);
+            
+            // TULIS LOG AKTIVITAS (UPDATE)
+            if ($sukses) {
+                write_log($conn, "Mengubah nama kategori password menjadi: " . $nama, "password_categories", $id);
+            }
+
             header("Location: password_categories.php?status=success_edit");
             exit;
         }
@@ -50,8 +68,20 @@ try {
         $id = intval($_GET['id']);
         
         if ($id > 0) {
+            // 1. Ambil nama kategori terlebih dahulu untuk log sebelum datanya terhapus
+            $get_info = $conn->prepare("SELECT nama FROM password_categories WHERE id = :id");
+            $get_info->execute([':id' => $id]);
+            $nama_kategori = $get_info->fetchColumn() ?: 'Unknown';
+
+            // 2. Jalankan query hapus data
             $stmt = $conn->prepare("DELETE FROM password_categories WHERE id = :id");
-            $stmt->execute([':id' => $id]);
+            $sukses = $stmt->execute([':id' => $id]);
+            
+            // TULIS LOG AKTIVITAS (DELETE)
+            if ($sukses) {
+                write_log($conn, "Menghapus kategori password: " . $nama_kategori, "password_categories", $id);
+            }
+
             header("Location: password_categories.php?status=success_delete");
             exit;
         }

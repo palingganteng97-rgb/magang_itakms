@@ -20,6 +20,11 @@ try {
 $message = '';
 $messageType = '';
 
+// TRIGGER LOG OTOMATIS GLOBAL: Mencatat log kunjungan halaman
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['status'])) {
+    write_log($conn, "Membuka halaman Manajemen Pengguna", "users", null);
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // ACTION: TAMBAH USER (CREATE)
@@ -57,14 +62,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $plain_password = $_POST['password'];
+            $username_input = $_POST['username'];
 
             $stmt = $conn->prepare("INSERT INTO users (id, role_id, nama, username, password, email, telepon, foto, status, building_id, floor_id, room_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([
-                $nextId, 1, $_POST['nama'], $_POST['username'], $plain_password, $_POST['email'], 
+            $sukses_add = $stmt->execute([
+                $nextId, 1, $_POST['nama'], $username_input, $plain_password, $_POST['email'], 
                 $_POST['telepon'], $nama_foto, $_POST['status'], 
                 $_POST['building_id'] ?: null, $_POST['floor_id'] ?: null, $_POST['room_id'] ?: null
             ]);
             
+            // AMBIL ID BARU DAN TULIS LOG AKTIVITAS (CREATE)
+            if ($sukses_add) {
+                write_log($conn, "Menambahkan pengguna (user) baru: " . $username_input, "users", $nextId);
+            }
+
             header("Location: user.php?status=success_create");
             exit;
         } catch (\PDOException $e) {
@@ -77,10 +88,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action']) && $_POST['action'] === 'update') {
         try {
             $id = $_POST['id'];
+            $username_input = $_POST['username'];
             
             // Validasi username milik orang lain
             $stmtCheck = $conn->prepare("SELECT COUNT(*) FROM users WHERE username = ? AND id != ?");
-            $stmtCheck->execute([$_POST['username'], $id]);
+            $stmtCheck->execute([$username_input, $id]);
             if ($stmtCheck->fetchColumn() > 0) {
                 header("Location: user.php?status=error_duplicate");
                 exit;
@@ -104,22 +116,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!empty($_POST['password'])) {
                 $plain_password = $_POST['password'];
                 $stmt = $conn->prepare("UPDATE users SET nama=?, username=?, password=?, email=?, telepon=?, foto=?, status=?, building_id=?, floor_id=?, room_id=? WHERE id=?");
-                $stmt->execute([
-                    $_POST['nama'], $_POST['username'], $plain_password, $_POST['email'], 
+                $sukses_edit = $stmt->execute([
+                    $_POST['nama'], $username_input, $plain_password, $_POST['email'], 
                     $_POST['telepon'], $nama_foto, $_POST['status'], 
                     $_POST['building_id'] ?: null, $_POST['floor_id'] ?: null, $_POST['room_id'] ?: null, 
                     $id
                 ]);
             } else {
                 $stmt = $conn->prepare("UPDATE users SET nama=?, username=?, email=?, telepon=?, foto=?, status=?, building_id=?, floor_id=?, room_id=? WHERE id=?");
-                $stmt->execute([
-                    $_POST['nama'], $_POST['username'], $_POST['email'], 
+                $sukses_edit = $stmt->execute([
+                    $_POST['nama'], $username_input, $_POST['email'], 
                     $_POST['telepon'], $nama_foto, $_POST['status'], 
                     $_POST['building_id'] ?: null, $_POST['floor_id'] ?: null, $_POST['room_id'] ?: null, 
                     $id
                 ]);
             }
             
+            // TULIS LOG AKTIVITAS (UPDATE)
+            if ($sukses_edit) {
+                write_log($conn, "Mengubah informasi data akun pengguna: " . $username_input, "users", $id);
+            }
+
             header("Location: user.php?status=success_update");
             exit;
         } catch (\PDOException $e) {
@@ -133,10 +150,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $id = $_POST['id'];
             
-            // 1. Ambil data nama file dari database
-            $stmtOld = $conn->prepare("SELECT foto FROM users WHERE id = ?");
+            // 1. Ambil data nama file dan username dari database sebelum dihapus
+            $stmtOld = $conn->prepare("SELECT username, foto FROM users WHERE id = ?");
             $stmtOld->execute([$id]);
             $oldData = $stmtOld->fetch();
+            $username_log = $oldData['username'] ?? 'Unknown';
             $nama_foto = isset($oldData['foto']) ? trim($oldData['foto']) : '';
 
             // 2. Eksekusi penghapusan file fisik dari folder uploads secara permanen
@@ -149,7 +167,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // 3. Hapus baris data di database
             $stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
-            $stmt->execute([$id]);
+            $sukses_delete = $stmt->execute([$id]);
+
+            // TULIS LOG AKTIVITAS (DELETE)
+            if ($sukses_delete) {
+                write_log($conn, "Menghapus akun pengguna: " . $username_log, "users", $id);
+            }
 
             // 4. Setel ulang mesin Auto Increment database agar sinkron
             $stmtMax = $conn->query("SELECT MAX(id) FROM users");
@@ -177,23 +200,14 @@ if (isset($_GET['status'])) {
     if ($_GET['status'] === 'error_delete') { $message = "Gagal menghapus data user!"; $messageType = "danger"; }
 }
 
-// Ambil data terbaru untuk tabel
-$query = "SELECT u.*, b.nama AS nama_gedung, f.nama AS nama_lantai, r.nama AS nama_ruangan 
-          FROM users u
-          LEFT JOIN buildings b ON u.building_id = b.id
-          LEFT JOIN floors f ON u.floor_id = f.id
-          LEFT JOIN rooms r ON u.room_id = r.id
-          ORDER BY u.id DESC LIMIT 1000";
-$users = $conn->query($query)->fetchAll();
-
-// Ambil semua data opsi dari tabel relasi
-try {
-    $buildingsOpt = $conn->query("SELECT id, nama FROM buildings ORDER BY nama ASC")->fetchAll();
-    $floorsOpt    = $conn->query("SELECT id, nama FROM floors ORDER BY nama ASC")->fetchAll();
-    $roomsOpt     = $conn->query("SELECT id, nama FROM rooms ORDER BY nama ASC")->fetchAll();
-} catch (\PDOException $e) {
-    $buildingsOpt = []; $floorsOpt = []; $roomsOpt = [];
-}
+// Pembacaan Data Akhir (Read)
+$query_read = "SELECT u.*, b.nama AS nama_gedung, f.nama AS nama_lantai, r.nama AS nama_ruangan 
+               FROM users u
+               LEFT JOIN buildings b ON u.building_id = b.id
+               LEFT JOIN floors f ON u.floor_id = f.id
+               LEFT JOIN rooms r ON u.room_id = r.id
+               ORDER BY u.id DESC";
+$users = $conn->query($query_read)->fetchAll();
 ?>
 
 <!DOCTYPE html>

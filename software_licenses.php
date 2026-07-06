@@ -23,14 +23,20 @@ try {
 
 $currentPage = 'software_licenses.php';
 
+// TRIGGER LOG OTOMATIS GLOBAL: Mencatat log kunjungan halaman
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['ajax'])) {
+    write_log($conn, "Membuka halaman Software Licenses", "software_licenses", null);
+}
+
 // 2. PROSES CRUD (CREATE, UPDATE, DELETE)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     try {
         if ($_POST['action'] === 'create') {
+            $nama = $_POST['nama'];
             $stmt = $conn->prepare("INSERT INTO software_licenses (nama, vendor, license_key, expired_at, jumlah_license, digunakan, status) 
                                     VALUES (:nama, :vendor, :license_key, :expired_at, :jumlah_license, :digunakan, :status)");
-            $stmt->execute([
-                ':nama' => $_POST['nama'],
+            $sukses_add = $stmt->execute([
+                ':nama' => $nama,
                 ':vendor' => $_POST['vendor'],
                 ':license_key' => $_POST['license_key'] ?: null,
                 ':expired_at' => $_POST['expired_at'] ?: null,
@@ -38,16 +44,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 ':digunakan' => intval($_POST['digunakan']),
                 ':status' => intval($_POST['status'])
             ]);
+
+            // AMBIL ID BARU DAN TULIS LOG AKTIVITAS (CREATE)
+            if ($sukses_add) {
+                $new_license_id = $conn->lastInsertId();
+                write_log($conn, "Menambahkan lisensi software baru: " . $nama, "software_licenses", $new_license_id);
+            }
+
             $_SESSION['crud_message'] = "success_Tambah data berhasil!";
         }
 
         if ($_POST['action'] === 'update') {
+            $id = intval($_POST['id']);
+            $nama = $_POST['nama'];
             $stmt = $conn->prepare("UPDATE software_licenses SET nama = :nama, vendor = :vendor, license_key = :license_key, 
                                     expired_at = :expired_at, jumlah_license = :jumlah_license, digunakan = :digunakan, status = :status 
                                     WHERE id = :id");
-            $stmt->execute([
-                ':id' => intval($_POST['id']),
-                ':nama' => $_POST['nama'],
+            $sukses_edit = $stmt->execute([
+                ':id' => $id,
+                ':nama' => $nama,
                 ':vendor' => $_POST['vendor'],
                 ':license_key' => $_POST['license_key'] ?: null,
                 ':expired_at' => $_POST['expired_at'] ?: null,
@@ -55,12 +70,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 ':digunakan' => intval($_POST['digunakan']),
                 ':status' => intval($_POST['status'])
             ]);
+
+            // TULIS LOG AKTIVITAS (UPDATE)
+            if ($sukses_edit) {
+                write_log($conn, "Mengubah data lisensi software: " . $nama, "software_licenses", $id);
+            }
+
             $_SESSION['crud_message'] = "success_Ubah data berhasil!";
         }
 
         if ($_POST['action'] === 'delete') {
+            $id = intval($_POST['id']);
+
+            // 1. Ambil nama software sebelum dihapus permanen untuk kebutuhan log
+            $get_info = $conn->prepare("SELECT nama FROM software_licenses WHERE id = :id");
+            $get_info->execute([':id' => $id]);
+            $nama_software = $get_info->fetchColumn() ?: 'Unknown';
+
+            // 2. Jalankan query hapus data
             $stmt = $conn->prepare("DELETE FROM software_licenses WHERE id = :id");
-            $stmt->execute([':id' => intval($_POST['id'])]);
+            $sukses_delete = $stmt->execute([':id' => $id]);
+
+            // TULIS LOG AKTIVITAS (DELETE)
+            if ($sukses_delete) {
+                write_log($conn, "Menghapus lisensi software: " . $nama_software, "software_licenses", $id);
+            }
+
             $_SESSION['crud_message'] = "danger_Data berhasil dihapus!";
         }
         

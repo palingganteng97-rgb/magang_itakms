@@ -16,6 +16,11 @@ if (!is_dir($upload_dir)) {
 $message = '';
 $message_type = '';
 
+// TRIGGER LOG OTOMATIS GLOBAL: Mencatat log kunjungan halaman
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['delete'])) {
+    write_log($conn, "Membuka halaman Standard Operating Procedure (SOP)", "sops", null);
+}
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     // === PROSES TAMBAH DATA (CREATE) ===
@@ -34,8 +39,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         try {
             $sql = "INSERT INTO sops (category_id, judul, isi, lampiran, status) VALUES (?, ?, ?, ?, ?)";
             $stmt = $conn->prepare($sql);
-            $stmt->execute([$category_id, $judul, $isi, $lampiran_name, $status]);
+            $sukses_add = $stmt->execute([$category_id, $judul, $isi, $lampiran_name, $status]);
             
+            // AMBIL ID BARU DAN TULIS LOG AKTIVITAS (CREATE)
+            if ($sukses_add) {
+                $new_sop_id = $conn->lastInsertId();
+                write_log($conn, "Menambahkan data SOP baru: " . $judul, "sops", $new_sop_id);
+            }
+
             // Pengalihan instan tanpa memunculkan alert teks
             echo "<script>window.location.href = 'sops.php';</script>";
             exit();
@@ -65,8 +76,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         try {
             $sql = "UPDATE sops SET category_id = ?, judul = ?, isi = ?, lampiran = ?, status = ? WHERE id = ?";
             $stmt = $conn->prepare($sql);
-            $stmt->execute([$category_id, $judul, $isi, $lampiran_name, $status, $id]);
+            $sukses_edit = $stmt->execute([$category_id, $judul, $isi, $lampiran_name, $status, $id]);
             
+            // TULIS LOG AKTIVITAS (UPDATE)
+            if ($sukses_edit) {
+                write_log($conn, "Mengubah informasi data SOP: " . $judul, "sops", $id);
+            }
+
             echo "<script>window.location.href = 'sops.php';</script>";
             exit();
         } catch (Exception $e) {
@@ -81,18 +97,27 @@ if (isset($_GET['delete'])) {
     $id = $_GET['delete'];
     
     try {
-        $stmt_file = $conn->prepare("SELECT lampiran FROM sops WHERE id = ?");
+        // 1. Ambil judul dan lampiran sebelum datanya terhapus permanen
+        $stmt_file = $conn->prepare("SELECT judul, lampiran FROM sops WHERE id = ?");
         $stmt_file->execute([$id]);
         $sop = $stmt_file->fetch();
         
         if ($sop) {
+            $judul_sop = $sop['judul'] ?? 'Unknown';
+
+            // Hapus file fisik lampiran dari server jika ada
             if (!empty($sop['lampiran']) && file_exists($upload_dir . $sop['lampiran'])) {
                 unlink($upload_dir . $sop['lampiran']);
             }
             
             $sql = "DELETE FROM sops WHERE id = ?";
-            $conn->prepare($sql)->execute([$id]);
+            $sukses_delete = $conn->prepare($sql)->execute([$id]);
             
+            // TULIS LOG AKTIVITAS (DELETE)
+            if ($sukses_delete) {
+                write_log($conn, "Menghapus data SOP: " . $judul_sop, "sops", $id);
+            }
+
             echo "<script>window.location.href = 'sops.php';</script>";
             exit();
         }

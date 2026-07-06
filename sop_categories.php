@@ -12,6 +12,11 @@ $currentPage = 'sop_categories.php';
 $message = '';
 $message_type = '';
 
+// TRIGGER LOG OTOMATIS GLOBAL: Mencatat log kunjungan halaman
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['delete'])) {
+    write_log($conn, "Membuka halaman Kategori SOP", "sop_categories", null);
+}
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     // === PROSES TAMBAH KATEGORI ===
@@ -21,7 +26,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         try {
             $sql = "INSERT INTO sop_categories (nama) VALUES (?)";
             $stmt = $conn->prepare($sql);
-            $stmt->execute([$nama]);
+            $sukses_add = $stmt->execute([$nama]);
+            
+            // AMBIL ID BARU DAN TULIS LOG AKTIVITAS (CREATE)
+            if ($sukses_add) {
+                $new_cat_id = $conn->lastInsertId();
+                write_log($conn, "Menambahkan kategori SOP baru: " . $nama, "sop_categories", $new_cat_id);
+            }
             
             echo "<script>window.location.href = 'sop_categories.php';</script>";
             exit();
@@ -39,7 +50,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         try {
             $sql = "UPDATE sop_categories SET nama = ? WHERE id = ?";
             $stmt = $conn->prepare($sql);
-            $stmt->execute([$nama, $id]);
+            $sukses_edit = $stmt->execute([$nama, $id]);
+            
+            // TULIS LOG AKTIVITAS (UPDATE)
+            if ($sukses_edit) {
+                write_log($conn, "Mengubah nama kategori SOP menjadi: " . $nama, "sop_categories", $id);
+            }
             
             echo "<script>window.location.href = 'sop_categories.php';</script>";
             exit();
@@ -55,8 +71,19 @@ if (isset($_GET['delete'])) {
     $id = $_GET['delete'];
     
     try {
+        // 1. Ambil nama kategori terlebih dahulu untuk log sebelum datanya terhapus
+        $get_info = $conn->prepare("SELECT nama FROM sop_categories WHERE id = ?");
+        $get_info->execute([$id]);
+        $nama_kategori = $get_info->fetchColumn() ?: 'Unknown';
+
+        // 2. Jalankan query hapus data
         $sql = "DELETE FROM sop_categories WHERE id = ?";
-        $conn->prepare($sql)->execute([$id]);
+        $sukses_delete = $conn->prepare($sql)->execute([$id]);
+        
+        // TULIS LOG AKTIVITAS (DELETE)
+        if ($sukses_delete) {
+            write_log($conn, "Menghapus kategori SOP: " . $nama_kategori, "sop_categories", $id);
+        }
         
         echo "<script>window.location.href = 'sop_categories.php';</script>";
         exit();
