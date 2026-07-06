@@ -319,21 +319,24 @@ $categories = $conn->query("SELECT * FROM sop_categories ORDER BY nama ASC")->fe
 
 <!-- AREA UTAMA KONTEN (Gunakan pembungkus ini agar susunan halaman tidak bergeser tertimpa sidebar) -->
 <main class="col-md-8 ms-sm-auto col-lg-9 px-md-4 pt-4 offset-md-4 offset-lg-3">
-
-    <!-- KARTU DAN TABEL UTAMA SOPS -->
     <div class="card shadow-sm border rounded-3">
         <!-- Header Konten Utama -->
         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
             <h5 class="mb-0 text-dark fw-bold">
                 <i class="bi bi-journal-text text-primary me-2"></i> Standard Operating Procedures (SOP)
             </h5>
+            
+            <!-- Fleksibel Otomatis: Hanya tampil jika Role memiliki izin Create ('C') di file ini -->
+            <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'C', $userRole)): ?>
             <!-- Tombol pemicu Modal Tambah Data (Tahap 2) -->
             <button class="btn btn-primary btn-sm px-3 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddSOP">
                 <i class="bi bi-plus-lg me-1"></i> Tambah SOP
             </button>
+            <?php endif; ?>
+            
         </div>
-        
-        <!-- Body Utama Tempat Tabel Data -->
+
+<!-- Body Utama Tempat Tabel Data -->
         <div class="card-body p-4">
             
             <!-- Notifikasi Status Berhasil/Gagal -->
@@ -353,16 +356,21 @@ $categories = $conn->query("SELECT * FROM sop_categories ORDER BY nama ASC")->fe
                             <th width="5%" class="text-center">ID</th>
                             <th width="25%">Judul SOP</th>
                             <th width="15%">Kategori</th>
-                            <th width="30%">Isi Prosedur</th>
+                            <th width="<?= (!in_array($userRole, ['Teknisi', 'Viewer'])) ? '30%' : '40%'; ?>">Isi Prosedur</th>
                             <th width="10%">Lampiran</th>
                             <th width="5%">Status</th>
+                            
+                            <!-- Fleksibel Otomatis: Hanya tampilkan kolom header Aksi jika user bukan Teknisi & Viewer -->
+                            <?php if (!in_array($userRole, ['Teknisi', 'Viewer'])): ?>
                             <th width="10%" class="text-center">Aksi</th>
+                            <?php endif; ?>
+                            
                         </tr>
                     </thead>
                     <tbody>
                         <?php if(count($sops) == 0): ?>
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-5">
+                                <td colspan="<?= (!in_array($userRole, ['Teknisi', 'Viewer'])) ? '7' : '6'; ?>" class="text-center text-muted py-5">
                                     <i class="bi bi-folder-x display-6 d-block mb-2 text-secondary"></i>
                                     Belum ada data SOP yang tersimpan di sistem.
                                 </td>
@@ -398,18 +406,32 @@ $categories = $conn->query("SELECT * FROM sop_categories ORDER BY nama ASC")->fe
                                     : '<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">Non-Aktif</span>'; 
                                 ?>
                             </td>
+                            
+                            <!-- Fleksibel Otomatis: Blok kolom aksi disembunyikan total dari Teknisi & Viewer (X) -->
+                            <?php if (!in_array($userRole, ['Teknisi', 'Viewer'])): ?>
                             <td class="text-center">
                                 <div class="btn-group shadow-sm border rounded bg-white">
+                                    
+                                    <!-- Fleksibel Otomatis: Cek Akses Update ('U') untuk tombol Edit -->
+                                    <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'U', $userRole)): ?>
                                     <!-- Tombol Pemicu Modal Edit (Tahap 3) -->
                                     <button class="btn btn-sm text-warning border-0" data-bs-toggle="modal" data-bs-target="#modalEditSOP<?= $row['id']; ?>" title="Ubah Data">
                                         <i class="bi bi-pencil-fill"></i>
                                     </button>
+                                    <?php endif; ?>
+                                    
+                                    <!-- Fleksibel Otomatis: Cek Akses Delete ('D') untuk tombol Hapus -->
+                                    <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'D', $userRole)): ?>
                                     <!-- Tombol Pemicu Modal Hapus (Tahap 3) -->
                                     <button class="btn btn-sm text-danger border-0 border-start" data-bs-toggle="modal" data-bs-target="#modalDeleteSOP<?= $row['id']; ?>" title="Hapus Data">
                                         <i class="bi bi-trash3-fill"></i>
                                     </button>
+                                    <?php endif; ?>
+                                    
                                 </div>
                             </td>
+                            <?php endif; ?>
+                            
                         </tr>
                         <?php endforeach; ?>
                     </tbody>

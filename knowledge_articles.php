@@ -427,8 +427,13 @@ try {
     <!-- Header Konten -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
         <h2 style="margin: 0; color: #333; font-size: 28px; font-weight: 600;">Knowledge Articles</h2>
+        
+        <!-- Fleksibel Otomatis: Hanya tampil jika Role memiliki izin Create ('C') di file ini -->
+        <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'C', $userRole)): ?>
         <!-- FIX: Mengarah langsung ke berkas halaman mandiri tambah_artikel.php -->
         <a href="tambah_artikel.php" class="btn btn-primary" style="color: #ffffff !important;">+ Tambah Artikel Baru</a> 
+        <?php endif; ?>
+        
     </div>
 
     <!-- Kotak Filter & Pencarian -->
@@ -485,7 +490,7 @@ try {
                                 <?php echo htmlspecialchars($row['judul'] ?? ''); ?>
                             </td>
 
-                            <!-- 4. Isi Konten (PERBAIKAN MUTLAK: Paksa Tebal via CSS Inline) -->
+                            <!-- 4. Isi Konten -->
                             <td style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold !important; color: #334155;">
                                 <?php 
                                     $isi_raw = $row['isi'] ?? '';
@@ -522,9 +527,18 @@ try {
 
                             <!-- 7. Aksi -->
                             <td style="text-align: center; white-space: nowrap;">
+                                <!-- Detail terbuka untuk semua opsi role -->
                                 <a href="detail_artikel.php?id=<?php echo $row['id']; ?>" class="btn-detail" style="text-decoration: none; margin-right: 12px; display: inline-block;">Detail</a>
+                                
+                                <!-- Fleksibel Otomatis: Cek Akses Update ('U') untuk link Edit -->
+                                <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'U', $userRole)): ?>
                                 <a href="edit_artikel.php?id=<?php echo $row['id']; ?>" class="btn-edit" style="text-decoration: none; margin-right: 12px; display: inline-block;">Edit</a>
+                                <?php endif; ?>
+                                
+                                <!-- Fleksibel Otomatis: Cek Akses Delete ('D') untuk button Hapus -->
+                                <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'D', $userRole)): ?>
                                 <button type="button" class="btn-delete" style="cursor: pointer;" onclick="openDeleteModal(<?php echo $row['id']; ?>)">Hapus</button>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>

@@ -285,12 +285,17 @@ $categories = $conn->query("SELECT * FROM sop_categories ORDER BY id DESC")->fet
         <h5 class="mb-0 text-dark fw-bold">
             <i class="bi bi-tags-fill text-primary me-2"></i> Kategori SOP
         </h5>
+        
+        <!-- Fleksibel Otomatis: Hanya tampil jika Role memiliki izin Create ('C') di file ini -->
+        <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'C', $userRole)): ?>
         <button class="btn btn-primary btn-sm px-3 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddCategory">
             <i class="bi bi-plus-lg me-1"></i> Tambah Kategori
         </button>
+        <?php endif; ?>
+        
     </div>
-    
-    <!-- Body Utama / Tempat Tabel Data Kategori -->
+
+<!-- Body Utama / Tempat Tabel Data Kategori -->
     <div class="card-body p-4">
         
         <!-- Notifikasi Status CRUD -->
@@ -308,14 +313,19 @@ $categories = $conn->query("SELECT * FROM sop_categories ORDER BY id DESC")->fet
                 <thead class="table-light text-muted small text-uppercase">
                     <tr>
                         <th width="10%" class="text-center">ID</th>
-                        <th width="75%">Nama Kategori</th>
+                        <th width="<?= (!in_array($userRole, ['Teknisi', 'Viewer'])) ? '75%' : '90%'; ?>">Nama Kategori</th>
+                        
+                        <!-- Fleksibel Otomatis: Hanya tampilkan kolom header Aksi jika user bukan Teknisi & Viewer -->
+                        <?php if (!in_array($userRole, ['Teknisi', 'Viewer'])): ?>
                         <th width="15%" class="text-center">Aksi</th>
+                        <?php endif; ?>
+                        
                     </tr>
                 </thead>
                 <tbody>
                     <?php if(count($categories) == 0): ?>
                         <tr>
-                            <td colspan="3" class="text-center text-muted py-5">
+                            <td colspan="<?= (!in_array($userRole, ['Teknisi', 'Viewer'])) ? '3' : '2'; ?>" class="text-center text-muted py-5">
                                 <i class="bi bi-folder-x display-6 d-block mb-2 text-secondary"></i>
                                 Belum ada data kategori SOP yang tersimpan.
                             </td>
@@ -326,18 +336,30 @@ $categories = $conn->query("SELECT * FROM sop_categories ORDER BY id DESC")->fet
                     <tr>
                         <td class="text-center"><span class="text-muted fw-bold">#<?= $row['id']; ?></span></td>
                         <td class="fw-semibold text-dark"><?= htmlspecialchars($row['nama']); ?></td>
+                        
+                        <!-- Fleksibel Otomatis: Blok kolom aksi disembunyikan total dari Teknisi & Viewer (X) -->
+                        <?php if (!in_array($userRole, ['Teknisi', 'Viewer'])): ?>
                         <td class="text-center">
                             <div class="btn-group shadow-sm border rounded bg-white">
-                                <!-- Tombol Edit -->
+                                
+                                <!-- Fleksibel Otomatis: Cek Akses Update ('U') untuk tombol Edit -->
+                                <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'U', $userRole)): ?>
                                 <button class="btn btn-sm text-warning border-0" data-bs-toggle="modal" data-bs-target="#modalEditCategory<?= $row['id']; ?>" title="Ubah Kategori">
                                     <i class="bi bi-pencil-fill"></i>
                                 </button>
-                                <!-- Tombol Hapus -->
+                                <?php endif; ?>
+                                
+                                <!-- Fleksibel Otomatis: Cek Akses Delete ('D') untuk tombol Hapus -->
+                                <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'D', $userRole)): ?>
                                 <button class="btn btn-sm text-danger border-0 border-start" data-bs-toggle="modal" data-bs-target="#modalDeleteCategory<?= $row['id']; ?>" title="Hapus Kategori">
                                     <i class="bi bi-trash3-fill"></i>
                                 </button>
+                                <?php endif; ?>
+                                
                             </div>
                         </td>
+                        <?php endif; ?>
+                        
                     </tr>
 
                     <!-- ========================================== -->

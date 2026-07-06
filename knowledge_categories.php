@@ -329,14 +329,19 @@ try {
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">Knowledge Categories</h1>
         <div class="d-flex align-items-center gap-2">
+            
+            <!-- Fleksibel Otomatis: Hanya tampil jika Role memiliki izin Create ('C') di file ini -->
+            <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'C', $userRole)): ?>
             <!-- Tombol Tambah Data Berhasil Dikembalikan di Sini -->
             <button class="btn btn-primary btn-sm fw-semibold shadow-sm px-3" data-bs-toggle="modal" data-bs-target="#modalKategori" onclick="prepareCreate()">
                 + Tambah Kategori Baru
             </button>
+            <?php endif; ?>
+            
         </div>
     </div>
 
-    <!-- Elemen pembungkus .card ditambahkan kembali di sini agar tabel memiliki latar putih yang rapi -->
+<!-- Elemen pembungkus .card ditambahkan kembali di sini agar tabel memiliki latar putih yang rapi -->
     <div class="card shadow-sm mb-4">
         <div class="card-body">
             <!-- Alert Notifikasi Feedback CRUD -->
@@ -376,13 +381,17 @@ try {
                         <tr>
                             <th width="80" class="text-center">ID</th>
                             <th>Nama Kategori</th>
+                            
+                            <!-- Fleksibel Otomatis: Hanya tampilkan kolom header Aksi jika user bukan Viewer -->
+                            <?php if ($userRole !== 'Viewer'): ?>
                             <th width="180" class="text-center">Aksi / Operasi</th>
+                            <?php endif; ?>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($categories)): ?>
                             <tr>
-                                <td colspan="3" class="text-center py-4 text-muted fs-6">
+                                <td colspan="<?= ($userRole === 'Viewer') ? '2' : '3'; ?>" class="text-center py-4 text-muted fs-6">
                                     Tidak ada data kategori ditemukan.
                                 </td>
                             </tr>
@@ -391,23 +400,33 @@ try {
                                 <tr>
                                     <td class="text-center fw-semibold text-secondary"><?= $cat['id'] ?></td>
                                     <td><?= htmlspecialchars($cat['nama']) ?></td>
+                                    
+                                    <!-- Fleksibel Otomatis: Sembunyikan total blok kolom aksi bagi akun Viewer -->
+                                    <?php if ($userRole !== 'Viewer'): ?>
                                     <td class="text-center">
-                                        <!-- Tombol Edit Tetap -->
+                                        
+                                        <!-- Fleksibel Otomatis: Cek Akses Update ('U') untuk tombol Edit -->
+                                        <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'U', $userRole)): ?>
                                         <button class="btn btn-warning btn-sm me-1 fw-medium" 
                                                 data-bs-toggle="modal" 
                                                 data-bs-target="#modalKategori" 
                                                 onclick="prepareUpdate(<?= $cat['id'] ?>, '<?= htmlspecialchars($cat['nama'], ENT_QUOTES) ?>')">
                                             Edit
                                         </button>
+                                        <?php endif; ?>
 
-                                        <!-- Tombol Pemicu Modal Hapus yang Baru -->
+                                        <!-- Fleksibel Otomatis: Cek Akses Delete ('D') untuk tombol Hapus -->
+                                        <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'D', $userRole)): ?>
                                         <button class="btn btn-outline-danger btn-sm fw-medium" 
                                                 data-bs-toggle="modal" 
                                                 data-bs-target="#modalHapusKategori" 
                                                 onclick="prepareDelete(<?= $cat['id'] ?>, '<?= htmlspecialchars($cat['nama'], ENT_QUOTES) ?>')">
                                             Hapus
                                         </button>
+                                        <?php endif; ?>
+                                        
                                     </td>
+                                    <?php endif; ?>
                                 </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>

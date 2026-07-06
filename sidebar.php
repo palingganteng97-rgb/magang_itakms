@@ -1,7 +1,5 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+// Bagian session_start() sudah dihapus agar tidak bentrok dengan halaman utama
 
 // 1. Ambil role user dari session login secara otomatis
 $userRole = isset($_SESSION['user']['role']) ? $_SESSION['user']['role'] : 'Viewer';
@@ -41,6 +39,80 @@ if (!function_exists('hasMenuAccess')) {
             return in_array($currentRole, $matrix[$fileName]);
         }
         return true;
+    }
+}
+
+// 5. FUNGSI DINAMIS UNTUK CEK HAK AKSES CRUD (TOMBOL AKSI FORM)
+if (!function_exists('hasCrudAccess')) {
+    function hasCrudAccess($fileName, $actionType, $currentRole) {
+        // MATRIKS GLOBAL: Memetakan Hak Akses CRUD berdasarkan isi Dokumen Anda
+        $crudMatrix = [
+            'dashboard.php' => [
+                'Super Admin' => ['R'], 'Admin IT' => ['R'], 'Teknisi' => ['R'], 'Viewer' => ['R']
+            ],
+            'user.php' => [
+                'Super Admin' => ['C', 'R', 'U', 'D'], 'Admin IT' => [], 'Teknisi' => [], 'Viewer' => []
+            ],
+            'roles.php' => [
+                'Super Admin' => ['C', 'R', 'U', 'D'], 'Admin IT' => [], 'Teknisi' => [], 'Viewer' => []
+            ],
+            'relasi.php' => [
+                'Super Admin' => ['C', 'R', 'U', 'D'], 'Admin IT' => ['C', 'R', 'U', 'D'], 'Teknisi' => ['R'], 'Viewer' => ['R']
+            ],
+            'manajemen_asset.php' => [
+                'Super Admin' => ['C', 'R', 'U', 'D'], 'Admin IT' => ['C', 'R', 'U', 'D'], 'Teknisi' => ['R'], 'Viewer' => ['R']
+            ],
+            'assets.php' => [
+                'Super Admin' => ['C', 'R', 'U', 'D'], 'Admin IT' => ['C', 'R', 'U', 'D'], 'Teknisi' => ['R', 'U'], 'Viewer' => ['R']
+            ],
+            'asset_movements.php' => [
+                'Super Admin' => ['C', 'R', 'U', 'D'], 'Admin IT' => ['C', 'R', 'U', 'D'], 'Teknisi' => ['C', 'R'], 'Viewer' => ['R']
+            ],
+            'server.php' => [
+                'Super Admin' => ['C', 'R', 'U', 'D'], 'Admin IT' => ['C', 'R', 'U', 'D'], 'Teknisi' => ['R', 'U'], 'Viewer' => ['R']
+            ],
+            'network_device.php' => [
+                'Super Admin' => ['C', 'R', 'U', 'D'], 'Admin IT' => ['C', 'R', 'U', 'D'], 'Teknisi' => ['R', 'U'], 'Viewer' => ['R']
+            ],
+            'vendors.php' => [
+                'Super Admin' => ['C', 'R', 'U', 'D'], 'Admin IT' => ['C', 'R', 'U', 'D'], 'Teknisi' => ['R'], 'Viewer' => ['R']
+            ],
+            'password_vault.php' => [
+                'Super Admin' => ['C', 'R', 'U', 'D'], 'Admin IT' => ['C', 'R', 'U', 'D'], 'Teknisi' => ['R'], 'Viewer' => []
+            ],
+            'tickets.php' => [
+                'Super Admin' => ['C', 'R', 'U', 'D'], 'Admin IT' => ['C', 'R', 'U', 'D'], 'Teknisi' => ['C', 'R', 'U', 'D'], 'Viewer' => ['C', 'R']
+            ],
+            'maintenance.php' => [
+                'Super Admin' => ['C', 'R', 'U', 'D'], 'Admin IT' => ['C', 'R', 'U', 'D'], 'Teknisi' => ['C', 'R', 'U', 'D'], 'Viewer' => ['R']
+            ],
+            'knowledge_articles.php' => [
+                'Super Admin' => ['C', 'R', 'U', 'D'], 'Admin IT' => ['C', 'R', 'U', 'D'], 'Teknisi' => ['C', 'R', 'U'], 'Viewer' => ['R']
+            ],
+            'knowledge_categories.php' => [
+                'Super Admin' => ['C', 'R', 'U', 'D'], 'Admin IT' => ['C', 'R', 'U', 'D'], 'Teknisi' => ['C', 'R', 'U'], 'Viewer' => ['R']
+            ],
+            'sops.php' => [
+                'Super Admin' => ['C', 'R', 'U', 'D'], 'Admin IT' => ['C', 'R', 'U', 'D'], 'Teknisi' => ['R'], 'Viewer' => ['R']
+            ],
+            'software_licenses.php' => [
+                'Super Admin' => ['C', 'R', 'U', 'D'], 'Admin IT' => ['C', 'R', 'U', 'D'], 'Teknisi' => ['R'], 'Viewer' => ['R']
+            ],
+            'backup_jobs.php' => [
+                'Super Admin' => ['C', 'R', 'U', 'D'], 'Admin IT' => ['C', 'R', 'U', 'D'], 'Teknisi' => ['R', 'U'], 'Viewer' => ['R']
+            ],
+            'daily_checklist.php' => [
+                'Super Admin' => ['C', 'R', 'U', 'D'], 'Admin IT' => ['C', 'R', 'U', 'D'], 'Teknisi' => ['C', 'R', 'U'], 'Viewer' => ['R']
+            ],
+            'activity_logs.php' => [
+                'Super Admin' => ['R'], 'Admin IT' => ['R'], 'Teknisi' => [], 'Viewer' => []
+            ]
+        ];
+
+        if (isset($crudMatrix[$fileName][$currentRole])) {
+            return in_array($actionType, $crudMatrix[$fileName][$currentRole]);
+        }
+        return false;
     }
 }
 ?>

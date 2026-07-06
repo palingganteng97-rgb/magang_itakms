@@ -298,13 +298,17 @@ try {
           <h5 class="mb-0 text-dark fw-bold">
               <i class="bi bi-database-fill-gear text-primary me-2"></i> Jadwal Backup (Backup Jobs)
           </h5>
-            <!-- Tombol pemicu Modal Tambah Data -->
+          
+            <!-- Fleksibel Otomatis: Hanya tampil jika Role memiliki izin Create ('C') di file ini -->
+            <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'C', $userRole)): ?>
             <button class="btn btn-primary btn-sm px-3 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddBackup">
                 <i class="bi bi-plus-lg me-1"></i> Tambah Job
             </button>
+            <?php endif; ?>
+            
         </div>
 
-        <!-- Body Utama Tempat Tabel Data -->
+<!-- Body Utama Tempat Tabel Data -->
         <div class="card-body p-4">
             <!-- Notifikasi Status Berhasil/Gagal -->
             <?php if(!empty($message)): ?>
@@ -327,13 +331,17 @@ try {
                             <th style="width: 20%; min-width: 180px;">Jadwal (Cron/Waktu)</th>
                             <th style="width: 20%; min-width: 180px;">Backup Terakhir</th>
                             <th style="width: 5%; min-width: 90px;" class="text-center">Status</th>
+                            
+                            <!-- Fleksibel Otomatis: Hanya tampilkan kolom header Aksi jika user bukan Viewer -->
+                            <?php if ($userRole !== 'Viewer'): ?>
                             <th style="width: 10%; min-width: 100px;" class="text-center">Aksi</th>
+                            <?php endif; ?>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if(count($backup_jobs) == 0): ?>
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-5">
+                                <td colspan="<?= ($userRole === 'Viewer') ? '6' : '7'; ?>" class="text-center text-muted py-5">
                                     <i class="bi bi-folder-x display-6 d-block mb-2 text-secondary"></i> Belum ada data Backup Job yang tersimpan.
                                 </td>
                             </tr>
@@ -363,20 +371,32 @@ try {
                                 <td class="text-center">
                                     <?= $row['status'] == 1 ? '<span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Aktif</span>' : '<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">Non-Aktif</span>'; ?>
                                 </td>
+                                
+                                <!-- Fleksibel Otomatis: Blok kolom aksi disembunyikan total dari Viewer -->
+                                <?php if ($userRole !== 'Viewer'): ?>
                                 <td class="text-center">
                                     <div class="d-flex justify-content-center">
                                         <div class="btn-group shadow-sm border rounded bg-white">
-                                            <!-- Tombol Pemicu Modal Edit -->
+                                            
+                                            <!-- Fleksibel Otomatis: Cek Akses Update ('U') untuk tombol Edit -->
+                                            <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'U', $userRole)): ?>
                                             <button class="btn btn-sm text-warning border-0" data-bs-toggle="modal" data-bs-target="#modalEditBackup<?= $row['id']; ?>" title="Ubah Data">
                                                 <i class="bi bi-pencil-fill"></i>
                                             </button>
-                                            <!-- Tombol Pemicu Modal Hapus -->
+                                            <?php endif; ?>
+                                            
+                                            <!-- Fleksibel Otomatis: Cek Akses Delete ('D') untuk tombol Hapus -->
+                                            <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'D', $userRole)): ?>
                                             <button class="btn btn-sm text-danger border-0 border-start" data-bs-toggle="modal" data-bs-target="#modalDeleteBackup<?= $row['id']; ?>" title="Hapus Data">
                                                 <i class="bi bi-trash3-fill"></i>
                                             </button>
+                                            <?php endif; ?>
+                                            
                                         </div>
                                     </div>
                                 </td>
+                                <?php endif; ?>
+                                
                             </tr>
                         <?php endforeach; ?>
                     </tbody>

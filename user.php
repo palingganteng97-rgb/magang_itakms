@@ -445,17 +445,20 @@ try {
   
     <?php include __DIR__ . '/sidebar.php'; ?>
 
-<!-- ==================================================================== -->
 <!-- BAGIAN C: PEMBUNGKUS MAIN KONTEN UTAMA (SEKARANG SUDAH DI LUAR)       -->
-<!-- ==================================================================== -->
 <main class="main-content p-3 p-md-4 flex-grow-1 overflow-x-hidden">
     
     <!-- Isi konten User Profil dan Tabel Data Anda -->
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2 mb-0">User Profil</h1>
+        
+        <!-- Fleksibel Otomatis: Hanya tampil jika Role memiliki izin Create ('C') di file ini -->
+        <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'C', $userRole)): ?>
         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#userModal" onclick="window.clearForm()">
             <i class="bi bi-person-plus-fill me-1"></i> Tambah User
         </button>
+        <?php endif; ?>
+        
     </div>
 
     <!-- Notifikasi Alert Merah / Hijau -->
@@ -537,10 +540,16 @@ try {
                                         <!-- KOLOM AKSI BUTTONS -->
                                         <td class="text-center pe-3 py-2">
                                             <div class="d-flex justify-content-center gap-1.5">
+                                                
+                                                <!-- Fleksibel Otomatis: Cek Akses Update ('U') untuk tombol Edit -->
+                                                <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'U', $userRole)): ?>
                                                 <button type="button" class="btn btn-sm btn-light border text-warning p-1 px-2" data-bs-toggle="modal" data-bs-target="#userModal" onclick='window.editUser(<?= json_encode($user, JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'>
                                                     <i class="bi bi-pencil-square"></i>
                                                 </button>
+                                                <?php endif; ?>
                                                 
+                                                <!-- Fleksibel Otomatis: Cek Akses Delete ('D') untuk tombol Hapus -->
+                                                <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'D', $userRole)): ?>
                                                 <form action="user.php" method="POST" class="d-inline mb-0" onsubmit="return confirm('Apakah Anda yakin ingin menghapus user ini?')">
                                                     <input type="hidden" name="action" value="delete">
                                                     <input type="hidden" name="id" value="<?= $user['id'] ?>">
@@ -548,6 +557,8 @@ try {
                                                         <i class="bi bi-trash-fill"></i>
                                                     </button>
                                                 </form>
+                                                <?php endif; ?>
+                                                
                                             </div>
                                         </td>
                                     </tr>

@@ -372,9 +372,12 @@ try {
             </form>
 
             <!-- Tombol Tambah yang Adaptif -->
+            <!-- Fleksibel Otomatis: Hanya tampil jika Role memiliki izin Create ('C') di file ini -->
+            <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'C', $userRole)): ?>
             <button class="btn btn-primary btn-sm px-2 px-md-3 fw-semibold shadow-sm rounded-2" data-bs-toggle="modal" data-bs-target="#modalAddChecklist">
                 <i class="bi bi-plus-lg me-md-1"></i><span class="d-none d-md-inline"> Tambah Item</span>
             </button>
+            <?php endif; ?>
         </div>
 
         <!-- Body Utama Tempat Tabel Data -->
@@ -388,7 +391,7 @@ try {
                 </div>
             <?php endif; ?>
 
-            <!-- Tabel Responsif yang Sejajar -->
+<!-- Tabel Responsif yang Sejajar -->
             <div class="table-responsive">
                 <table class="table table-hover align-middle m-0" style="width: 100%;">
                     <thead class="table-light text-muted small text-uppercase border-bottom">
@@ -398,7 +401,12 @@ try {
                             <th style="width: 44%;">Item Kegiatan</th>
                             <th style="width: 12%;" class="text-center">Status</th>
                             <th style="width: 12%;" class="d-none d-lg-table-cell">Petugas</th>
+                            
+                            <!-- Fleksibel Otomatis: Hanya tampilkan kolom header Aksi jika user bukan Teknisi & Viewer -->
+                            <?php if (!in_array($userRole, ['Teknisi', 'Viewer'])): ?>
                             <th style="width: 10%; min-width: 80px;" class="text-center">Aksi</th>
+                            <?php endif; ?>
+                            
                             <!-- PINDAH KE SINI: Kolom Check berada di paling kanan -->
                             <th style="width: 7%;" class="text-center pe-3">Check</th>
                         </tr>
@@ -406,7 +414,7 @@ try {
                     <tbody>
                         <?php if(count($daily_checklists) == 0): ?>
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-5">
+                                <td colspan="<?= (!in_array($userRole, ['Teknisi', 'Viewer'])) ? '7' : '6'; ?>" class="text-center text-muted py-5">
                                     <i class="bi bi-clipboard-x display-6 d-block mb-2 text-secondary"></i> 
                                     <?= !empty($filter_tanggal) ? 'Tidak ada aktivitas pada tanggal tersebut.' : 'Belum ada aktivitas hari ini.'; ?>
                                 </td>
@@ -447,18 +455,31 @@ try {
                                         <?= htmlspecialchars($row['username'] ?? 'ID: ' . $row['user_id']); ?>
                                     </span>
                                 </td>
-                                <!-- Kolom Aksi (Edit & Hapus) -->
+                                
+                                <!-- Kolom Aksi (Edit & Hapus): Disembunyikan total untuk Teknisi & Viewer (X) -->
+                                <?php if (!in_array($userRole, ['Teknisi', 'Viewer'])): ?>
                                 <td class="text-center">
                                     <div class="d-inline-flex gap-1 justify-content-center w-100">
+                                        
+                                        <!-- Fleksibel Otomatis: Cek Akses Update ('U') -->
+                                        <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'U', $userRole)): ?>
                                         <button class="btn btn-sm btn-light text-warning border-0 p-1 p-md-2" data-bs-toggle="modal" data-bs-target="#modalEditChecklist<?= $row['id']; ?>" title="Ubah Data">
                                             <i class="bi bi-pencil-square fs-6"></i>
                                         </button>
+                                        <?php endif; ?>
+                                        
+                                        <!-- Fleksibel Otomatis: Cek Akses Delete ('D') -->
+                                        <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'D', $userRole)): ?>
                                         <button class="btn btn-sm btn-light text-danger border-0 p-1 p-md-2" data-bs-toggle="modal" data-bs-target="#modalDeleteChecklist<?= $row['id']; ?>" title="Hapus Data">
                                             <i class="bi bi-trash3 fs-6"></i>
                                         </button>
+                                        <?php endif; ?>
+                                        
                                     </div>
                                 </td>
-                                <!-- PINDAH KE SINI: Opsi Tombol Cek Status Instan -->
+                                <?php endif; ?>
+                                
+                                <!-- PINDAH KE SINI: Opsi Tombol Cek Status Instan (Isi Checklist) -->
                                 <td class="text-center pe-3">
                                     <form action="daily_checklist.php" method="POST" class="m-0">
                                         <input type="hidden" name="action" value="toggle_status">
@@ -466,11 +487,13 @@ try {
                                         <input type="hidden" name="current_status" value="<?= $row['status']; ?>">
                                         
                                         <?php if($row['status'] == 1): ?>
-                                            <button type="submit" class="btn btn-link p-0 text-success border-0 shadow-none" title="Tandai Pending">
+                                            <!-- Fleksibel: Kunci tombol submit jika role adalah Viewer -->
+                                            <button type="submit" class="btn btn-link p-0 text-success border-0 shadow-none" title="Tandai Pending" <?= ($userRole === 'Viewer') ? 'disabled' : ''; ?>>
                                                 <i class="bi bi-check-square-fill fs-5"></i>
                                             </button>
                                         <?php else: ?>
-                                            <button type="submit" class="btn btn-link p-0 text-secondary border-0 shadow-none" title="Tandai Selesai">
+                                            <!-- Fleksibel: Kunci tombol submit jika role adalah Viewer -->
+                                            <button type="submit" class="btn btn-link p-0 text-secondary border-0 shadow-none" title="Tandai Selesai" <?= ($userRole === 'Viewer') ? 'disabled' : ''; ?>>
                                                 <i class="bi bi-square fs-5"></i>
                                             </button>
                                         <?php endif; ?>

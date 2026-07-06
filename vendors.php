@@ -261,7 +261,6 @@ try {
     </div>
   <?php endif; ?>
 
-<!-- Bagian Atas Tabel: Judul & Tombol Tambah -->
 <!-- PERUBAHAN: d-flex dengan d-md-flex memastikan distribusi ruang horizontal membagi elemen ke kiri dan kanan -->
 <div class="d-flex justify-content-between align-items-center gap-2 mb-3 mb-md-4">
   
@@ -270,12 +269,13 @@ try {
     <i class="bi bi-building-fill me-2 text-primary"></i> Rekanan Penyedia Barang
   </h5>
   
-  <!-- Sisi Kanan: Tombol Tambah Vendor -->
+  <!-- Fleksibel Otomatis: Hanya tampil jika Role memiliki izin Create ('C') di file ini -->
+  <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'C', $userRole)): ?>
   <!-- PERUBAHAN FIX: Menggunakan w-auto agar tombol menciut pas di desktop, dan d-inline-flex untuk mengunci ukuran konten -->
   <button type="button" class="btn btn-primary btn-sm rounded-3 px-3 py-2 py-sm-1.5 d-inline-flex align-items-center justify-content-center gap-2 shadow-sm w-auto" data-bs-toggle="modal" data-bs-target="#modalAddVendor">
       <i class="bi bi-plus-lg"></i> Tambah Vendor
   </button>
-
+  <?php endif; ?>
 </div>
 
 <!-- Tabel Data Vendors (Responsif Total & Terkunci w-100) -->
@@ -291,16 +291,31 @@ try {
             <th>No. Telepon</th>
             <th>Alamat Email / Website</th>
             <th>Status</th>
+            
+            <!-- Fleksibel Otomatis: Hanya tampilkan kolom header Aksi jika user bukan Teknisi & Viewer -->
+            <?php if (!in_array($userRole, ['Teknisi', 'Viewer'])): ?>
             <th class="text-center" style="width: 100px;">Aksi</th>
+            <?php endif; ?>
+            
             <th class="text-center" style="width: 140px;">Vendor Contacts</th>
+            
+            <!-- Fleksibel Otomatis: Kolom header API disembunyikan khusus untuk akun Viewer (Akses X) -->
+            <?php if ($userRole !== 'Viewer'): ?>
             <th class="text-center pe-3" style="width: 120px;">Vendor API</th>
+            <?php endif; ?>
+            
           </tr>
         </thead>
         <tbody>
           <?php if (empty($vendors)): ?>
               <tr>
-                <!-- PERUBAHAN: Nilai colspan diubah menjadi 9 agar penuh menutup seluruh kolom baru -->
-                <td colspan="9" class="text-center text-muted py-5" style="white-space: normal;">
+                <!-- Fleksibel Otomatis: Nilai colspan menyesuaikan jumlah kolom yang tampil berdasarkan role -->
+                <?php 
+                  $colspan = 9;
+                  if (in_array($userRole, ['Teknisi', 'Viewer'])) $colspan--;
+                  if ($userRole === 'Viewer') $colspan--;
+                ?>
+                <td colspan="<?= $colspan; ?>" class="text-center text-muted py-5" style="white-space: normal;">
                   <i class="bi bi-building-exclamation display-4 d-block mb-3 text-secondary opacity-50"></i>
                   <span class="d-block fw-semibold text-dark mb-1">Belum Ada Data Vendor</span>
                   <span class="small text-muted">Klik tombol "+ Tambah Vendor" untuk memasukkan data rekanan pertama Anda.</span>
@@ -324,10 +339,12 @@ try {
                   <?php endif; ?>
                 </td>
                 
-                <!-- KOLOM 7: Aksi Utama (Edit & Hapus) -->
+                <!-- KOLOM 7: Aksi Utama (Edit & Hapus) - Disembunyikan total dari Teknisi & Viewer (X) -->
+                <?php if (!in_array($userRole, ['Teknisi', 'Viewer'])): ?>
                 <td class="text-center">
                   <div class="btn-group btn-group-sm">
-                    <!-- Tombol Edit Data -->
+                    <!-- Fleksibel Otomatis: Cek Akses Update ('U') untuk tombol Edit -->
+                    <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'U', $userRole)): ?>
                     <button type="button" class="btn btn-outline-warning border-0" 
                             data-bs-toggle="modal" 
                             data-bs-target="#modalEditVendor"
@@ -341,29 +358,36 @@ try {
                             title="Ubah Data Vendor">
                         <i class="bi bi-pencil-square"></i>
                     </button>
-                    <!-- Tombol Hapus Data -->
+                    <?php endif; ?>
+                    
+                    <!-- Fleksibel Otomatis: Cek Akses Delete ('D') untuk tombol Hapus -->
+                    <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'D', $userRole)): ?>
                     <a href="proses_vendor.php?action=delete&id=<?= $v['id']; ?>" 
                        class="btn btn-outline-danger border-0" 
                        onclick="return confirm('Apakah Anda yakin ingin menghapus data vendor ini?')" 
                        title="Hapus Vendor">
                         <i class="bi bi-trash3"></i>
                     </a>
+                    <?php endif; ?>
                   </div>
                 </td>
+                <?php endif; ?>
 
-                <!-- PERUBAHAN: KOLOM 8: Tombol Akses Vendor Contacts -->
+                <!-- KOLOM 8: Tombol Akses Vendor Contacts (Terbuka untuk semua role) -->
                 <td class="text-center">
                   <a href="vendor_contacts.php?vendor_id=<?= $v['id']; ?>" class="btn btn-sm btn-primary rounded-3 px-3 shadow-sm d-inline-flex align-items-center gap-1">
                     <i class="bi bi-person-lines-fill"></i> Kontak
                   </a>
                 </td>
 
-                <!-- PERUBAHAN: KOLOM 9: Tombol Akses Vendor API -->
+                <!-- KOLOM 9: Tombol Akses Vendor API - Otomatis tersembunyi jika role adalah Viewer (Akses X) -->
+                <?php if ($userRole !== 'Viewer'): ?>
                 <td class="text-center pe-3">
                   <a href="vendor_apis.php?vendor_id=<?= $v['id']; ?>" class="btn btn-sm text-white rounded-3 px-3 shadow-sm d-inline-flex align-items-center gap-1" style="background-color: #6f42c1;">
                     <i class="bi bi-code-slash"></i> API
                   </a>
                 </td>
+                <?php endif; ?>
 
               </tr>
           <?php endforeach; endif; ?>
@@ -374,9 +398,6 @@ try {
   </div> <!-- /.card -->
 
 </main> <!-- Penutup tag main Anda -->
-
-  </div> <!-- Penutup tag row bawaan template sidebar Anda -->
-</div> <!-- Penutup tag container-fluid bawaan template sidebar Anda -->
 
 <!-- ========================================== -->
 <!-- REVISI: MODAL TAMBAH VENDOR YANG RAPI     -->

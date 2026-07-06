@@ -2,16 +2,26 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
-// Konfigurasi Database sesuai dashboard Anda
+// 1. Konfigurasi Database sesuai dashboard Anda
 $host = "10.10.6.59";
 $username = "root_host";
 $password = "password";
 $database = "magang_itakms";
 
+// Ambil role user dinamis dari session login asli Anda beserta ID-nya
+$userRole = isset($_SESSION['user']['role']) ? $_SESSION['user']['role'] : 'Viewer';
+$current_user_id = $_SESSION['user']['id'] ?? 0;
+
 // Pagination
 $perPage = 50;
 $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $offset = ($page - 1) * $perPage;
+
+// Inisialisasi awal variabel agar tabel HTML tidak memicu error fatal jika database bermasalah
+$tickets = []; 
+$rooms = [];
+$users = [];
+$totalPages = 1;
 
 try {
     $conn = new PDO("mysql:host=$host;dbname=$database", $username, $password);
@@ -21,26 +31,52 @@ try {
     $rooms = $conn->query("SELECT id, nama FROM rooms")->fetchAll(PDO::FETCH_ASSOC);
     $users = $conn->query("SELECT id, username FROM users")->fetchAll(PDO::FETCH_ASSOC);
 
-    // Ambil total data untuk pagination
-    $stmtCount = $conn->query("SELECT COUNT(*) FROM tickets");
-    $totalTickets = $stmtCount->fetchColumn();
-    $totalPages = ceil($totalTickets / $perPage);
+    // =========================================================================
+    // LOGIKA PENYARINGAN DATA SESUAI MATRIKS (DINAMIS UNTUK VIEWERS)
+    // =========================================================================
+    if ($userRole === 'Viewer') {
+        // Opsi Viewers: Hitung total tiket MILIK SENDIRI saja
+        $stmtCount = $conn->prepare("SELECT COUNT(*) FROM tickets WHERE pelapor = :user_id");
+        $stmtCount->execute([':user_id' => $current_user_id]);
+        $totalTickets = $stmtCount->fetchColumn();
+        $totalPages = ceil($totalTickets / $perPage);
 
-    // PERBAIKAN UTAMA: Menggunakan LEFT JOIN ke tabel users untuk mengambil kolom nama asli pelapor
-    $query = "SELECT t.*, u.nama AS nama_pelapor 
-              FROM tickets t 
-              LEFT JOIN users u ON t.pelapor = u.id 
-              ORDER BY t.created_at DESC 
-              LIMIT :limit OFFSET :offset";
+        // Opsi Viewers: Query LEFT JOIN ganda untuk menarik nama pelapor dan nama teknisi asli MILIK SENDIRI
+        $query = "SELECT t.*, u.nama AS nama_pelapor, ut.username AS nama_teknisi 
+                  FROM tickets t 
+                  LEFT JOIN users u ON t.pelapor = u.id 
+                  LEFT JOIN users ut ON t.teknisi = ut.id 
+                  WHERE t.pelapor = :user_id
+                  ORDER BY t.created_at DESC 
+                  LIMIT :limit OFFSET :offset";
+                  
+        $stmt = $conn->prepare($query);
+        $stmt->bindValue(':user_id', $current_user_id, PDO::PARAM_INT);
+    } else {
+        // Opsi Admin/Teknisi: Hitung total SEMUA tiket masuk
+        $stmtCount = $conn->query("SELECT COUNT(*) FROM tickets");
+        $totalTickets = $stmtCount->fetchColumn();
+        $totalPages = ceil($totalTickets / $perPage);
+
+        // Opsi Admin/Teknisi: Ambil SEMUA data tiket tanpa batasan WHERE
+        $query = "SELECT t.*, u.nama AS nama_pelapor, ut.username AS nama_teknisi 
+                  FROM tickets t 
+                  LEFT JOIN users u ON t.pelapor = u.id 
+                  LEFT JOIN users ut ON t.teknisi = ut.id 
+                  ORDER BY t.created_at DESC 
+                  LIMIT :limit OFFSET :offset";
+                  
+        $stmt = $conn->prepare($query);
+    }
               
-    $stmt = $conn->prepare($query);
     $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
     $stmt->execute();
     $tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (PDOException $e) {
-    die("Error: " . $e->getMessage());
+    // Jika koneksi gagal, sistem tidak crash total melainkan mencetak pesan eror di log server
+    error_log("Database Error: " . $e->getMessage());
 }
 ?>
 
@@ -225,7 +261,7 @@ try {
   
     <?php include __DIR__ . '/sidebar.php'; ?>
 
-    <!-- AREA UTAMA KONTEN (Gunakan pembungkus ini agar susunan halaman tidak bergeser tertimpa sidebar) -->
+<!-- AREA UTAMA KONTEN (Gunakan pembungkus ini agar susunan halaman tidak bergeser tertimpa sidebar) -->
     <main class="col-md-8 ms-sm-auto col-lg-9 px-md-4 pt-4 offset-md-4 offset-lg-3">
 
       <!-- KONTEN UTAMA (MAIN CONTENT) -->
@@ -235,9 +271,14 @@ try {
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom border-secondary-subtle">
           <h1 class="h2 fw-bold text-dark m-0">Manajemen Tiket</h1>
           <div class="btn-toolbar mb-2 mb-md-0">
+            
+            <!-- Fleksibel Otomatis: Hanya tampil jika Role memiliki izin Create ('C') di file ini -->
+            <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'C', $userRole)): ?>
             <button type="button" class="btn btn-sm btn-primary px-3 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalTambah">
               <i class="bi bi-plus-lg me-2"></i>Buat Tiket Baru
             </button>
+            <?php endif; ?>
+            
           </div>
         </div>
 
@@ -313,14 +354,14 @@ try {
       <h6 class="m-0 font-weight-bold text-dark fw-bold"><i class="bi bi-table me-2 text-secondary"></i>Daftar Antrean Tiket</h6>
     </div>
     
-    <!-- PERBAIKAN UTAMA: Memastikan pembungkus table-responsive terpasang sempurna -->
-    <div class="card-body p-0 table-responsive">
-      <!-- PERBAIKAN: Menambahkan class 'table-bordered' untuk memberikan garis pembatas penuh antar kolom dan baris -->
-      <table class="table table-hover table-striped table-bordered align-middle m-0" style="min-width: 850px;">
+    <!-- PERBAIKAN 1: Memastikan pembungkus tabel responsif yang fleksibel -->
+    <div class="card-body p-0 table-responsive w-100" style="overflow-x: auto;">
+      <!-- PERBAIKAN 2: Membuang table-layout: fixed agar browser menghitung lebar secara dinamis mengikuti jumlah <td> yang nyata -->
+      <table class="table table-hover table-striped table-bordered align-middle m-0" style="min-width: 900px; width: 100%;">
         <thead class="table-light text-nowrap">
           <tr class="text-secondary border-bottom border-secondary-subtle">
-            <th class="ps-4 py-3" style="width: 100px;">Nomor</th>
-            <th class="py-3" style="min-width: 180px;">Judul Kendala</th>
+            <th class="ps-4 py-3">Nomor</th>
+            <th class="py-3">Judul Kendala</th>
             <th class="py-3">Ruangan</th>
             <th class="py-3">Prioritas</th>
             <th class="py-3">Status</th>
@@ -329,41 +370,62 @@ try {
             <th class="text-center pe-4 py-3" style="width: 180px;">Aksi</th>
           </tr>
         </thead>
-        <tbody class="text-nowrap">
+        <tbody> 
           <?php if (count($tickets) > 0): ?>
             <?php foreach ($tickets as $row): ?>
               <tr>
-                <td class="ps-4 fw-bold text-primary"><?= htmlspecialchars($row['nomor']); ?></td>
-                <td class="fw-semibold text-dark text-wrap" style="max-width: 250px;"><?= htmlspecialchars($row['judul']); ?></td>
-                <td>
-                  <!-- PERBAIKAN: Mengubah warna badge Ruangan agar kontras tinggi dengan teks putih tegas -->
+                <!-- 1. Nomor -->
+                <td class="ps-4 fw-bold text-primary text-nowrap"><?= htmlspecialchars($row['nomor']); ?></td>
+                
+                <!-- 2. Judul Kendala -->
+                <td class="fw-semibold text-dark text-wrap text-break" style="white-space: normal !important; min-width: 180px; max-width: 250px;"><?= htmlspecialchars($row['judul']); ?></td>
+                
+                <!-- 3. Ruangan -->
+                <td class="text-nowrap">
                   <span class="badge bg-secondary text-white fw-bold px-2 py-1">ID: <?= htmlspecialchars($row['room_id'] ?? '-'); ?></span>
                 </td>
-                <td>
+                
+                <!-- 4. Prioritas -->
+                <td class="text-nowrap">
                   <?php 
-                    // PERBAIKAN: Menggunakan warna padat kontras teks hitam untuk tingkat Medium
                     if ($row['prioritas'] == 1) echo '<span class="badge bg-light text-dark border border-secondary-subtle px-2 py-1">Low</span>';
                     elseif ($row['prioritas'] == 2) echo '<span class="badge bg-warning text-dark fw-bold px-2 py-1">Medium</span>';
                     else echo '<span class="badge bg-danger text-white fw-bold px-2 py-1">High</span>';
                   ?>
                 </td>
-                <td>
+                
+                <!-- 5. Status -->
+                <td class="text-nowrap">
                   <?php 
-                    // PERBAIKAN: Menggunakan teks hitam (text-dark) pada status In Progress agar tajam di layar putih
                     if ($row['status'] == 1) echo '<span class="badge bg-success text-white fw-bold px-2 py-1">Open</span>';
                     elseif ($row['status'] == 2) echo '<span class="badge bg-info text-dark fw-bold px-2 py-1">In Progress</span>';
                     else echo '<span class="badge bg-secondary text-white fw-bold px-2 py-1">Closed</span>';
                   ?>
                 </td>
-                <!-- PERUBAHAN: Menampilkan Nama Pelapor dengan style teks yang lebih jelas -->
-                <td class="text-dark fw-medium"><?= htmlspecialchars($row['nama_pelapor'] ?? 'Tidak Diketahui'); ?></td>
-                <td><span class="text-dark fw-medium"><?= htmlspecialchars($row['teknisi'] ?? 'Belum Ditunjuk'); ?></span></td>
-                <!-- PERUBAHAN: Tombol Komen diarahkan ke file ticket_comments.php menggunakan tag anchor <a> -->
-                <td class="text-center pe-4">
+                
+                <!-- 6. Pelapor -->
+                <td class="text-dark fw-medium text-wrap" style="white-space: normal !important; min-width: 160px; max-width: 220px;">
+                    <?= htmlspecialchars($row['nama_pelapor'] ?? 'Tidak Diketahui'); ?>
+                </td>
+                
+                <!-- 7. SINKRONISASI MUTLAK: Mengganti $row['teknisi'] menjadi $row['nama_teknisi'] -->
+                <td class="text-dark fw-medium text-wrap" style="white-space: normal !important; min-width: 140px; max-width: 180px;">
+                    <?= !empty($row['nama_teknisi']) ? htmlspecialchars($row['nama_teknisi']) : 'Belum Ditunjuk'; ?>
+                </td>
+                
+                <!-- 8. Aksi (Mengunci lebar tombol aksi) -->
+                <td class="text-center pe-4 text-nowrap" style="width: 180px;">
                   <div class="d-flex justify-content-center gap-2">
-                    <button class="btn btn-sm btn-outline-primary px-2 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalEdit<?= $row['id']; ?>" title="Edit Status/Teknisi">
-                      <i class="bi bi-pencil-square me-1"></i> Detail
-                    </button>
+                    <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'U', $userRole)): ?>
+                        <button class="btn btn-sm btn-outline-primary px-2 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalEdit<?= $row['id']; ?>" title="Edit Status/Teknisi">
+                          <i class="bi bi-pencil-square me-1"></i> Detail
+                        </button>
+                    <?php else: ?>
+                        <button class="btn btn-sm btn-outline-secondary px-2 fw-bold shadow-sm text-dark" data-bs-toggle="modal" data-bs-target="#modalEdit<?= $row['id']; ?>" title="Lihat Informasi Tiket">
+                          <i class="bi bi-eye me-1"></i> Lihat Tiket
+                        </button>
+                    <?php endif; ?>
+
                     <a href="ticket_comments.php?id=<?= $row['id']; ?>" class="btn btn-sm btn-outline-info px-2 fw-bold shadow-sm text-dark" title="Lihat/Tambah Komentar">
                       <i class="bi bi-chat-left-dots me-1"></i> Komen
                     </a>
@@ -398,6 +460,10 @@ try {
 
       <!-- Modal Body -->
       <form action="proses_ticket.php?action=create" method="POST">
+        
+        <!-- Fleksibel Otomatis: Menyisipkan ID Pelapor secara tersembunyi berdasarkan user yang sedang login -->
+        <input type="hidden" name="user_id" value="<?= htmlspecialchars($_SESSION['user']['id'] ?? 0); ?>">
+        
         <div class="modal-body p-4">
           <div class="row g-4">
             
@@ -464,8 +530,8 @@ try {
 
         <!-- Modal Footer -->
         <div class="modal-footer border-top border-light bg-light d-flex justify-content-end p-3">
-          <button type="button" class="btn btn-sm btn-secondary me-2" data-bs-dismiss="modal">Batal</button>
-          <button type="submit" class="btn btn-sm btn-success px-4 py-2 fw-bold">
+          <button type="button" class="btn btn-secondary btn-sm me-2 rounded-2" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-success btn-sm px-4 py-2 fw-bold rounded-2">
             <i class="bi bi-send-fill me-1"></i> Kirim Tiket
           </button>
         </div>
@@ -483,7 +549,12 @@ try {
       <!-- Modal Header -->
       <div class="modal-header border-bottom border-light bg-light">
         <h5 class="modal-title d-flex align-items-center fw-bold text-dark" id="modalEditLabel<?= $row['id']; ?>">
-          <i class="bi bi-pencil-square me-2 text-warning"></i> Perbarui Tiket #<?= htmlspecialchars($row['nomor']); ?>
+          <!-- Fleksibel Otomatis: Ubah ikon dan teks judul jika user adalah Viewer -->
+          <?php if ($userRole === 'Viewer'): ?>
+            <i class="bi bi-info-circle-fill me-2 text-info"></i> Detail Informasi Tiket #<?= htmlspecialchars($row['nomor']); ?>
+          <?php else: ?>
+            <i class="bi bi-pencil-square me-2 text-warning"></i> Perbarui Tiket #<?= htmlspecialchars($row['nomor']); ?>
+          <?php endif; ?>
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
@@ -499,7 +570,8 @@ try {
             <div class="col-md-7 border-end border-light">
               <div class="mb-3">
                 <label class="form-label small fw-bold text-secondary">Judul Kendala / Keluhan</label>
-                <input type="text" name="judul" class="form-control border-secondary-subtle text-dark py-2" value="<?= htmlspecialchars($row['judul']); ?>" required>
+                <!-- Fleksibel: Kunci input judul jika user adalah Viewer -->
+                <input type="text" name="judul" class="form-control border-secondary-subtle text-dark py-2" value="<?= htmlspecialchars($row['judul']); ?>" <?= ($userRole === 'Viewer') ? 'readonly' : ''; ?> required>
               </div>
 
               <div class="mb-3">
@@ -517,7 +589,8 @@ try {
 
               <div class="mb-3">
                 <label class="form-label small fw-bold text-secondary">Status Penanganan</label>
-                <select name="status" class="form-select border-secondary-subtle text-dark py-2" required>
+                <!-- Fleksibel: Kunci pilihan status jika user adalah Viewer -->
+                <select name="status" class="form-select border-secondary-subtle text-dark py-2" <?= ($userRole === 'Viewer') ? 'disabled' : ''; ?> required>
                   <option value="1" <?= $row['status'] == 1 ? 'selected' : ''; ?>>🟢 Open (Belum Ditangani)</option>
                   <option value="2" <?= $row['status'] == 2 ? 'selected' : ''; ?>>🟡 In Progress (Sedang Dikerjakan)</option>
                   <option value="3" <?= $row['status'] == 3 ? 'selected' : ''; ?>>🔴 Closed (Selesai Diselesaikan)</option>
@@ -526,7 +599,8 @@ try {
 
               <div class="mb-3">
                 <label class="form-label small fw-bold text-secondary">Petugas / Teknisi Lapangan</label>
-                <select name="teknisi" class="form-select border-secondary-subtle text-dark py-2">
+                <!-- Fleksibel: Kunci pilihan teknisi jika user adalah Viewer -->
+                <select name="teknisi" class="form-select border-secondary-subtle text-dark py-2" <?= ($userRole === 'Viewer') ? 'disabled' : ''; ?>>
                   <option value="">-- Belum Ditunjuk / Kosong --</option>
                   <?php if (!empty($users)): ?>
                     <?php foreach($users as $u): ?>
@@ -556,10 +630,17 @@ try {
 
         <!-- Modal Footer -->
         <div class="modal-footer border-top border-light bg-light d-flex justify-content-end p-3">
-          <button type="button" class="btn btn-sm btn-secondary me-2" data-bs-dismiss="modal">Batal</button>
-          <button type="submit" class="btn btn-sm btn-warning px-4 py-2 fw-bold text-dark">
+          <button type="button" class="btn btn-sm btn-secondary me-2 rounded-2" data-bs-dismiss="modal">
+            <?= ($userRole === 'Viewer') ? 'Tutup' : 'Batal'; ?>
+          </button>
+          
+          <!-- Fleksibel Otomatis: Hanya munculkan tombol simpan jika user memiliki hak akses Update ('U') -->
+          <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'U', $userRole)): ?>
+          <button type="submit" class="btn btn-sm btn-warning px-4 py-2 fw-bold text-dark rounded-2">
             <i class="bi bi-arrow-clockwise me-1"></i> Simpan Perubahan
           </button>
+          <?php endif; ?>
+          
         </div>
       </form>
 

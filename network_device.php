@@ -2,6 +2,11 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
+// =========================================================================
+// AMBIL DATA ROLE USER DINAMIS DARI DATABASE SESSION (Kunci Utama Hak Akses)
+// =========================================================================
+$userRole = isset($_SESSION['user']['role']) ? $_SESSION['user']['role'] : 'Viewer';
+
 // 1. Konfigurasi Koneksi Database
 $host = "10.10.6.59";
 $username = "root_host";
@@ -304,7 +309,6 @@ try {
     <?php include __DIR__ . '/sidebar.php'; ?>
 
 <!-- AREA UTAMA KONTEN (Gunakan pembungkus ini agar susunan halaman tidak bergeser tertimpa sidebar) -->
-    <!-- PERBAIKAN: Menambahkan kelas 'col-12' agar di layar mobile mengambil porsi penuh 100%, dan mengatur ulang margin start 'ms-md-auto' -->
     <main class="col-12 col-md-8 col-lg-9 ms-sm-auto ms-md-auto px-md-4 pt-4 offset-md-4 offset-lg-3">
 
       <!-- Header Konten Utama -->
@@ -316,7 +320,18 @@ try {
         </button>
       </div>
 
-      <!-- Notifikasi Flash Status CRUD -->
+      <!-- OPSI TOMBOL TAMBAH DATA (FLEKSIBEL OTOMATIS) -->
+      <div class="mb-3">
+          <!-- Fleksibel Otomatis: Hanya tampil jika Role memiliki izin Create ('C') di file ini -->
+          <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'C', $userRole)): ?>
+          <!-- Catatan: Sesuaikan data-bs-target di bawah ini dengan modal tambah Anda yang asli (#addDeviceModal atau #modalAddNetworkDevice) -->
+          <button type="button" class="btn btn-primary btn-sm rounded-2 shadow-sm px-3 py-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#addDeviceModal">
+              <i class="bi bi-plus-circle me-1"></i> Tambah Network Device
+          </button>
+          <?php endif; ?>
+      </div>
+
+      <!-- Notifikasi Feedback Operasi CRUD -->
       <?php if(isset($_GET['status'])): ?>
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <?php
@@ -328,17 +343,8 @@ try {
         </div>
       <?php endif; ?>
 
-      <!-- Tombol Pemicu Modal Tambah (C - Create) -->
-      <div class="mb-3">
-        <button class="btn btn-primary btn-sm btn-md-md" data-bs-toggle="modal" data-bs-target="#addDeviceModal">
-          <i class="bi bi-plus-circle me-1"></i> Tambah Network Device
-        </button>
-      </div>
-
-      <!-- Tabel Data Network Devices (R - Read) -->
-      <!-- PERBAIKAN: Memastikan w-100 (width 100%) dan overflow-x-auto berjalan aktif -->
+<!-- Tabel Data Network Devices (R - Read) -->
       <div class="table-responsive w-100 bg-white p-2 p-md-3 rounded shadow-sm border" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-        <!-- PERBAIKAN: Menambahkan kelas 'text-nowrap' agar susunan kolom terkunci lurus horizontal dan memicu scrollbar saat menyempit -->
         <table class="table table-striped table-hover align-middle mb-0 text-nowrap">
           <thead class="table-dark">
             <tr>
@@ -348,14 +354,18 @@ try {
               <th>Gateway</th>
               <th>DNS</th>
               <th>Management Port</th>
+              
+              <!-- Fleksibel Otomatis: Hanya tampilkan kolom header Aksi jika user bukan Viewer -->
+              <?php if ($userRole !== 'Viewer'): ?>
               <th class="text-center" style="width: 100px;">Aksi</th>
+              <?php endif; ?>
+              
             </tr>
           </thead>
           <tbody>
             <?php if(empty($devices)): ?>
                 <tr>
-                  <!-- PERBAIKAN: Menghapus pembatasan text-wrap khusus pesan kosong agar teksnya tidak melar memaksakan lebar tabel -->
-                  <td colspan="7" class="text-center text-muted py-4" style="white-space: normal;">
+                  <td colspan="<?= ($userRole === 'Viewer') ? '6' : '7'; ?>" class="text-center text-muted py-4" style="white-space: normal;">
                     <i class="bi bi-hdd-network display-6 d-block mb-2 text-secondary"></i>
                     Belum ada data konfigurasi network device terdaftar.
                   </td>
@@ -377,28 +387,42 @@ try {
                       <i class="bi bi-plug-fill me-1"></i> <?= htmlspecialchars($device['management_port'] ?? '-') ?>
                     </span>
                   </td>
+                  
+                  <!-- Fleksibel Otomatis: Blok kolom aksi disembunyikan total dari Viewer (X) -->
+                  <?php if ($userRole !== 'Viewer'): ?>
                   <td class="text-center">
-                    <!-- Tombol Aksi Edit -->
-                    <button class="btn btn-sm btn-warning me-1" 
-                            data-bs-toggle="modal" 
-                            data-bs-target="#editDeviceModal"
-                            data-id="<?= $device['id'] ?>"
-                            data-asset="<?= $device['asset_id'] ?>"
-                            data-vlan="<?= htmlspecialchars($device['vlan'] ?? '') ?>"
-                            data-gateway="<?= htmlspecialchars($device['gateway'] ?? '') ?>"
-                            data-dns="<?= htmlspecialchars($device['dns'] ?? '') ?>"
-                            data-port="<?= htmlspecialchars($device['management_port'] ?? '') ?>"
-                            title="Ubah Data">
-                      <i class="bi bi-pencil-square"></i>
-                    </button>
-                    <!-- Tombol Aksi Hapus -->
-                    <a href="network_device.php?delete=<?= $device['id'] ?>" 
-                       class="btn btn-sm btn-danger" 
-                       onclick="return confirm('Apakah Anda yakin ingin menghapus konfigurasi perangkat jaringan ini?')"
-                       title="Hapus Data">
-                      <i class="bi bi-trash"></i>
-                    </a>
+                    <div class="d-inline-flex gap-1 justify-content-center w-100">
+                        
+                        <!-- Fleksibel Otomatis: Cek Akses Update ('U') untuk tombol Edit Kuning -->
+                        <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'U', $userRole)): ?>
+                        <button class="btn btn-sm btn-warning me-1" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#editDeviceModal"
+                                data-id="<?= $device['id'] ?>"
+                                data-asset="<?= $device['asset_id'] ?>"
+                                data-vlan="<?= htmlspecialchars($device['vlan'] ?? '') ?>"
+                                data-gateway="<?= htmlspecialchars($device['gateway'] ?? '') ?>"
+                                data-dns="<?= htmlspecialchars($device['dns'] ?? '') ?>"
+                                data-port="<?= htmlspecialchars($device['management_port'] ?? '') ?>"
+                                title="Ubah Data">
+                          <i class="bi bi-pencil-square"></i>
+                        </button>
+                        <?php endif; ?>
+                        
+                        <!-- Fleksibel Otomatis: Cek Akses Delete ('D') untuk tombol Hapus Merah -->
+                        <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'D', $userRole)): ?>
+                        <a href="network_device.php?delete=<?= $device['id'] ?>" 
+                           class="btn btn-sm btn-danger" 
+                           onclick="return confirm('Apakah Anda yakin ingin menghapus konfigurasi perangkat jaringan ini?')"
+                           title="Hapus Data">
+                          <i class="bi bi-trash"></i>
+                        </a>
+                        <?php endif; ?>
+                        
+                    </div>
                   </td>
+                  <?php endif; ?>
+                  
                 </tr>
                 <?php endforeach; ?>
             <?php endif; ?>

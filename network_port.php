@@ -326,17 +326,19 @@ try {
   
     <?php include __DIR__ . '/sidebar.php'; ?>
 
-<!-- ==================================================================== -->
-<!-- BAGIAN C: PEMBUNGKUS MAIN KONTEN UTAMA (NETWORK PORT RESPONSIVE)    -->
-<!-- ==================================================================== -->
 <main class="main-content p-3 p-md-4 flex-grow-1 overflow-x-hidden">
 
     <!-- HEADER HALAMAN & TOMBOL AKSI -->
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2 mb-0">Network Ports</h1>
+        
+        <!-- Fleksibel Otomatis: Menumpang hak akses network_device.php untuk mengecek izin Create ('C') -->
+        <?php if (hasCrudAccess('network_device.php', 'C', $userRole)): ?>
         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#portModal" onclick="window.clearFormPort()">
             <i class="bi bi-ethernet me-1"></i> Tambah Port Baru
         </button>
+        <?php endif; ?>
+        
     </div>
 
     <!-- NOTIFIKASI SYSTEM ALERT -->
@@ -347,7 +349,7 @@ try {
         </div>
     <?php endif; ?>
 
-    <!-- AREA DATA TABEL UTAMA -->
+<!-- AREA DATA TABEL UTAMA -->
     <div class="row">
         <div class="col-12">
             <div class="card shadow-sm border-0">
@@ -361,7 +363,12 @@ try {
                                     <th>Nomor Port</th>
                                     <th>Nama / Alokasi Port</th>
                                     <th>Status</th>
+                                    
+                                    <!-- Fleksibel Otomatis: Hanya tampilkan kolom header Aksi jika user bukan Viewer -->
+                                    <?php if ($userRole !== 'Viewer'): ?>
                                     <th class="text-center pe-3">Aksi</th>
+                                    <?php endif; ?>
+                                    
                                 </tr>
                             </thead>
                             <tbody>
@@ -381,20 +388,36 @@ try {
                                                     <?= $row['status'] == 1 ? 'Aktif' : 'Non-Aktif' ?>
                                                 </span>
                                             </td>
+                                            
+                                            <!-- Fleksibel Otomatis: Blok kolom aksi disembunyikan total dari Viewer (X) -->
+                                            <?php if ($userRole !== 'Viewer'): ?>
                                             <td class="text-center pe-3">
-                                                <!-- Tombol Edit (Ikon Pensil Kuning) -->
-                                                <button type="button" class="btn btn-sm btn-outline-warning me-1" data-bs-toggle="modal" data-bs-target="#portModal" onclick='window.editPort(<?= json_encode($row, JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'>
-                                                    <i class="bi bi-pencil-square"></i>
-                                                </button>
-                                                <!-- Tombol Hapus (Ikon Sampah Merah) -->
-                                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deletePortModal" onclick="window.setupDeletePort(<?= $row['id'] ?>, '<?= htmlspecialchars($row['port'], ENT_QUOTES) ?>')">
-                                                    <i class="bi bi-trash-fill"></i>
-                                                </button>
+                                                <div class="d-inline-flex gap-1 justify-content-center w-100">
+                                                    
+                                                    <!-- Fleksibel Otomatis: Cek Akses Update ('U') menumpang pada network_device.php -->
+                                                    <?php if (hasCrudAccess('network_device.php', 'U', $userRole)): ?>
+                                                    <!-- Tombol Edit (Ikon Pensil Kuning) -->
+                                                    <button type="button" class="btn btn-sm btn-outline-warning me-1" data-bs-toggle="modal" data-bs-target="#portModal" onclick='window.editPort(<?= json_encode($row, JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'>
+                                                        <i class="bi bi-pencil-square"></i>
+                                                    </button>
+                                                    <?php endif; ?>
+                                                    
+                                                    <!-- Fleksibel Otomatis: Cek Akses Delete ('D') menumpang pada network_device.php -->
+                                                    <?php if (hasCrudAccess('network_device.php', 'D', $userRole)): ?>
+                                                    <!-- Tombol Hapus (Ikon Sampah Merah) -->
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deletePortModal" onclick="window.setupDeletePort(<?= $row['id'] ?>, '<?= htmlspecialchars($row['port'], ENT_QUOTES) ?>')">
+                                                        <i class="bi bi-trash-fill"></i>
+                                                    </button>
+                                                    <?php endif; ?>
+                                                    
+                                                </div>
                                             </td>
+                                            <?php endif; ?>
+                                            
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>
-                                    <tr><td colspan="6" class="text-center text-muted py-4">Tidak ada data network port ditemukan.</td></tr>
+                                    <tr><td colspan="<?= ($userRole === 'Viewer') ? '5' : '6'; ?>" class="text-center text-muted py-4">Tidak ada data network port ditemukan.</td></tr>
                                 <?php endif; ?>
                             </tbody>
                         </table>

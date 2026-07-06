@@ -307,14 +307,19 @@ try {
     <!-- ROW GRID DATA UTAMA -->
     <div class="row g-4">
         
-        <!-- KOLOM 1: DAFTAR GEDUNG -->
+<!-- KOLOM 1: DAFTAR GEDUNG -->
         <div class="col-12 col-lg-4">
             <div class="card border-0 shadow-sm h-100 rounded-3">
                 <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center pt-3 px-3">
                     <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-building me-2 text-primary"></i>Buildings</h5>
+                    
+                    <!-- Fleksibel Otomatis: Cek Akses Create ('C') untuk halaman ini -->
+                    <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'C', $userRole)): ?>
                     <button class="btn btn-primary btn-sm rounded-circle p-1 d-flex align-items-center justify-content-center" style="width:28px; height:28px;" onclick="bukaModalPaksa('modalAddBuilding')">
                         <i class="bi bi-plus fs-5"></i>
                     </button>
+                    <?php endif; ?>
+                    
                 </div>
                 <div class="card-body px-3 pb-3 pt-2">
                     <div class="list-group list-group-flush border-top border-light">
@@ -328,8 +333,17 @@ try {
                                         <small class="text-muted d-block text-truncate"><?= htmlspecialchars($b['alamat'] ?? '-'); ?></small>
                                     </div>
                                     <div class="d-flex gap-1 flex-shrink-0">
+                                        
+                                        <!-- Fleksibel Otomatis: Cek Akses Update ('U') untuk halaman ini -->
+                                        <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'U', $userRole)): ?>
                                         <button class="btn btn-link btn-sm text-warning p-0" onclick="prosesEditBuilding(<?= $b['id']; ?>, '<?= addslashes($b['nama']); ?>', '<?= addslashes($b['alamat'] ?? ''); ?>')"><i class="bi bi-pencil-square fs-6"></i></button>
+                                        <?php endif; ?>
+                                        
+                                        <!-- Fleksibel Otomatis: Cek Akses Delete ('D') untuk halaman ini -->
+                                        <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'D', $userRole)): ?>
                                         <button class="btn btn-link btn-sm text-danger p-0" onclick="prosesHapusCrud('delete_building', <?= $b['id']; ?>, 'Hapus gedung ini?')"><i class="bi bi-trash3 fs-6"></i></button>
+                                        <?php endif; ?>
+                                        
                                     </div>
                                 </div>
                             <?php endforeach; ?>
@@ -339,14 +353,19 @@ try {
             </div>
         </div>
 
-        <!-- KOLOM 2: DAFTAR LANTAI -->
+<!-- KOLOM 2: DAFTAR LANTAI -->
         <div class="col-12 col-lg-4">
             <div class="card border-0 shadow-sm h-100 rounded-3">
                 <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center pt-3 px-3">
                     <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-layers me-2 text-success"></i>Floors</h5>
+                    
+                    <!-- Fleksibel Otomatis: Cek Akses Create ('C') untuk halaman ini -->
+                    <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'C', $userRole)): ?>
                     <button class="btn btn-success btn-sm rounded-circle p-1 d-flex align-items-center justify-content-center" style="width:28px; height:28px;" onclick="bukaModalPaksa('modalAddFloor')">
                         <i class="bi bi-plus fs-5"></i>
                     </button>
+                    <?php endif; ?>
+                    
                 </div>
                 <div class="card-body px-3 pb-3 pt-2">
                     <div class="list-group list-group-flush border-top border-light">
@@ -360,8 +379,17 @@ try {
                                         <small class="text-muted d-block text-truncate"><i class="bi bi-building me-1"></i><?= htmlspecialchars($f['nama_bangunan'] ?? 'Tanpa Gedung'); ?></small>
                                     </div>
                                     <div class="d-flex gap-1 flex-shrink-0">
+                                        
+                                        <!-- Fleksibel Otomatis: Cek Akses Update ('U') untuk halaman ini -->
+                                        <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'U', $userRole)): ?>
                                         <button class="btn btn-link btn-sm text-warning p-0" onclick="prosesEditFloor(<?= $f['id']; ?>, '<?= addslashes($f['nama']); ?>', <?= (int)$f['building_id']; ?>)"><i class="bi bi-pencil-square fs-6"></i></button>
+                                        <?php endif; ?>
+                                        
+                                        <!-- Fleksibel Otomatis: Cek Akses Delete ('D') untuk halaman ini -->
+                                        <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'D', $userRole)): ?>
                                         <button class="btn btn-link btn-sm text-danger p-0" onclick="prosesHapusCrud('delete_floor', <?= $f['id']; ?>, 'Hapus lantai ini?')"><i class="bi bi-trash3 fs-6"></i></button>
+                                        <?php endif; ?>
+                                        
                                     </div>
                                 </div>
                             <?php endforeach; ?>
@@ -371,15 +399,19 @@ try {
             </div>
         </div>
 
-        <!-- KOLOM 3: MANAJEMEN ROOMS (RUANGAN) -->
+<!-- KOLOM 3: MANAJEMEN ROOMS (RUANGAN) -->
         <div class="col-md-4">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
                     <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-door-open me-2 text-danger"></i> Rooms</h5>
-                    <!-- Tombol Tambah Ruangan -->
+                    
+                    <!-- Fleksibel Otomatis: Cek Akses Create ('C') untuk halaman ini -->
+                    <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'C', $userRole)): ?>
                     <button type="button" class="btn btn-danger btn-sm rounded-circle px-2 py-1" onclick="bukaModalPaksa('modalAddRoom')">
                         <i class="bi bi-plus-lg"></i>
                     </button>
+                    <?php endif; ?>
+                    
                 </div>
                 <div class="card-body p-3 overflow-auto" style="max-height: 500px;">
                     <?php if (empty($rooms)): ?>
@@ -400,8 +432,17 @@ try {
                                     <?php endif; ?>
                                 </div>
                                 <div class="btn-group btn-group-sm">
+                                    
+                                    <!-- Fleksibel Otomatis: Cek Akses Update ('U') untuk halaman ini -->
+                                    <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'U', $userRole)): ?>
                                     <button class="btn btn-outline-warning border-0" onclick="prosesEditRoom(<?= $r['id']; ?>, '<?= addslashes($r['nama']); ?>', <?= (int)$r['floor_id']; ?>, '<?= addslashes($r['kode'] ?? ''); ?>', '<?= addslashes($r['telepon'] ?? ''); ?>')"><i class="bi bi-pencil-square"></i></button>
+                                    <?php endif; ?>
+                                    
+                                    <!-- Fleksibel Otomatis: Cek Akses Delete ('D') untuk halaman ini -->
+                                    <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'D', $userRole)): ?>
                                     <button class="btn btn-outline-danger border-0" onclick="prosesHapusCrud('delete_room', <?= $r['id']; ?>, 'Hapus ruangan ini?')"><i class="bi bi-trash3"></i></button>
+                                    <?php endif; ?>
+                                    
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -410,7 +451,7 @@ try {
             </div>
         </div>
 
-    </div>        
+    </div>
 
 <!-- ========================================== -->
 <!-- MODAL POPUP INPUT DATA (TAMBAH DATA)       -->

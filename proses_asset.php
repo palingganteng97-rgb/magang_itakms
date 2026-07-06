@@ -21,7 +21,41 @@ try {
     die("Koneksi gagal: " . $e->getMessage());
 }
 
-$action = isset($_GET['action']) ? $_GET['action'] : '';
+// Menangkap nilai action, baik dari URL (GET) maupun dari Form Submit (POST)
+$action = isset($_GET['action']) ? $_GET['action'] : (isset($_POST['action']) ? $_POST['action'] : '');
+
+// 1. Ambil data role asli user dari session login
+$userRole = isset($_SESSION['user']['role']) ? $_SESSION['user']['role'] : 'Viewer';
+
+// =========================================================================
+// VALIDASI PROTEKSI BACKEND GLOBAL (FLEKSIBEL SEMUA OPSI ROLE)
+// =========================================================================
+
+// OPSI A: Jika role adalah 'Viewer', tolak semua aksi manipulasi data (C, U, D)
+if ($userRole === 'Viewer' && in_array($action, ['insert', 'update', 'delete', 'add', 'edit'])) {
+    // Tulis ke log aktivitas bahwa ada upaya bypass ilegal (opsional)
+    if (function_exists('write_log')) {
+        write_log($conn, $_SESSION['user']['id'] ?? 0, 'Upaya ilegal manipulasi data asset oleh Viewer', 'assets.php');
+    }
+    echo "<script>
+            alert('Akses Ditolak! Akun Viewer tidak memiliki izin untuk menambah, mengubah, atau menghapus data asset.');
+            window.location='assets.php';
+          </script>";
+    exit();
+}
+
+// OPSI B: Jika role adalah 'Teknisi', tolak aksi Tambah (C) dan Hapus (D)
+// Teknisi hanya diizinkan melakukan Update ('update' / 'edit') Status Asset
+if ($userRole === 'Teknisi' && in_array($action, ['insert', 'delete', 'add'])) {
+    if (function_exists('write_log')) {
+        write_log($conn, $_SESSION['user']['id'] ?? 0, 'Upaya ilegal menambah/menghapus data asset oleh Teknisi', 'assets.php');
+    }
+    echo "<script>
+            alert('Akses Ditolak! Akun Teknisi hanya diizinkan untuk memperbarui status asset saja.');
+            window.location='assets.php';
+          </script>";
+    exit();
+}
 
 // -------------------------------------------------------------------------
 // LOGIKA 1: TAMBAH DATA (CREATE)

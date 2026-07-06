@@ -312,9 +312,14 @@ try {
             </h1>
         </div>
         <div class="col-12 col-md-auto text-start text-md-end">
+            
+            <!-- Fleksibel Otomatis: Hanya tampil jika Role memiliki izin Create ('C') di file ini -->
+            <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'C', $userRole)): ?>
             <button type="button" class="btn btn-primary fw-bold shadow-sm w-100 text-nowrap" data-bs-toggle="modal" data-bs-target="#modalMaintenance" style="max-width: 200px;">
                 <i class="bi bi-plus-lg me-1"></i> Tambah Log Baru
             </button>
+            <?php endif; ?>
+            
         </div>
     </div>
 
@@ -333,7 +338,7 @@ try {
         </div>
     <?php endif; ?>
 
-    <!-- 2. KONTEN TABEL JADI LEBAR PENUH (FULL WIDTH) -->
+<!-- 2. KONTEN TABEL JADI LEBAR PENUH (FULL WIDTH) -->
     <div class="row">
         <div class="col-12">
             <div class="card shadow-sm border-0">
@@ -354,7 +359,11 @@ try {
                             <th>Jenis Pemeliharaan</th>
                             <th>Biaya</th>
                             <th class="text-center">Status</th>
+                            
+                            <!-- Fleksibel Otomatis: Hanya tampilkan kolom header Aksi jika user bukan Viewer -->
+                            <?php if ($userRole !== 'Viewer'): ?>
                             <th class="text-center" style="width: 100px;">Aksi</th>
+                            <?php endif; ?>
                         </tr>
                     </thead>
                     <tbody>
@@ -378,17 +387,31 @@ try {
                                             <span class="badge bg-warning-subtle text-warning-emphasis px-2.5 py-1.5 rounded"><i class="bi bi-clock me-1"></i>Pending</span>
                                         <?php endif; ?>
                                     </td>
+                                    
+                                    <!-- Fleksibel Otomatis: Blok kolom aksi disembunyikan total dari Viewer -->
+                                    <?php if ($userRole !== 'Viewer'): ?>
                                     <td class="text-center pe-3">
                                         <div class="btn-group" role="group">
+                                            
+                                            <!-- Fleksibel Otomatis: Cek Akses Update ('U') untuk tombol Edit -->
+                                            <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'U', $userRole)): ?>
                                             <a href="maintenance.php?action=edit&id=<?= $row['id'] ?>" class="btn btn-sm btn-outline-warning" title="Edit Data"><i class="bi bi-pencil-square"></i></a>
+                                            <?php endif; ?>
+                                            
+                                            <!-- Fleksibel Otomatis: Cek Akses Delete ('D') untuk tombol Hapus -->
+                                            <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'D', $userRole)): ?>
                                             <a href="maintenance.php?action=delete&id=<?= $row['id'] ?>" class="btn btn-sm btn-outline-danger" title="Hapus Data" onclick="return confirm('Apakah Anda yakin ingin menghapus log ini?');"><i class="bi bi-trash"></i></a>
+                                            <?php endif; ?>
+                                            
                                         </div>
                                     </td>
+                                    <?php endif; ?>
+                                    
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="8" class="text-center text-secondary py-5">
+                                <td colspan="<?= ($userRole === 'Viewer') ? '7' : '8'; ?>" class="text-center text-secondary py-5">
                                     <i class="bi bi-info-circle fs-3 d-block mb-2"></i> Belum ada data log pemeliharaan yang tersimpan.
                                 </td>
                             </tr>

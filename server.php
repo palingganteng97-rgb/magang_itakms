@@ -238,16 +238,26 @@ try {
   
     <?php include __DIR__ . '/sidebar.php'; ?>
 
-    <!-- AREA UTAMA KONTEN (Gunakan pembungkus ini agar susunan halaman tidak bergeser tertimpa sidebar) -->
+<!-- AREA UTAMA KONTEN (Gunakan pembungkus ini agar susunan halaman tidak bergeser tertimpa sidebar) -->
     <main class="col-md-8 ms-sm-auto col-lg-9 px-md-4 pt-4 offset-md-4 offset-lg-3">
 
-      <!-- HEADER HALAMAN -->
+      <!-- HEADER HALAMAN & TOMBOL AKSI -->
       <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2"><i class="bi bi-hdd-network me-2"></i> Manajemen Server</h1>
-        <!-- Tombol Menu khusus tampilan Mobile jika Sidebar tertutup -->
-        <button class="btn btn-sm btn-outline-secondary d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar">
-          <i class="bi bi-list"></i> Menu
-        </button>
+        
+        <div class="d-flex align-items-center gap-2">
+            <!-- Fleksibel Otomatis: Hanya tampil jika Role memiliki izin Create ('C') di file ini -->
+            <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'C', $userRole)): ?>
+            <button class="btn btn-primary btn-sm px-3 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddServer">
+                <i class="bi bi-plus-lg me-1"></i> Tambah Server
+            </button>
+            <?php endif; ?>
+
+            <!-- Tombol Menu khusus tampilan Mobile jika Sidebar tertutup -->
+            <button class="btn btn-sm btn-outline-secondary d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar">
+              <i class="bi bi-list"></i> Menu
+            </button>
+        </div>
       </div>
 
       <!-- NOTIFIKASI FLASH ALERT (OTOMATIS SINKRON DENGAN BACKEND PHP) -->
@@ -282,11 +292,16 @@ try {
             <?php endif; ?>
           </form>
         </div>
+        
+        <!-- Fleksibel Otomatis: Hanya tampil jika Role memiliki izin Create ('C') di file ini -->
+        <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'C', $userRole)): ?>
         <div class="col-12 col-md-6 col-lg-8 text-md-end">
           <button class="btn btn-success shadow-sm" type="button" data-bs-toggle="modal" data-bs-target="#modalTambahServer">
             <i class="bi bi-plus-lg me-1"></i> Tambah Server Baru
           </button>
         </div>
+        <?php endif; ?>
+        
       </div>
 
 <!-- TABEL DATA SERVER (SUDAH DIRAPIKAN JARAK KOLOMNYA) -->
@@ -306,7 +321,11 @@ try {
             <th scope="col" class="px-3" style="min-width: 110px;">Rack</th>
             <th scope="col" class="px-3" style="min-width: 250px;">Fungsi</th>
             <th scope="col" class="px-3 text-center" style="width: 100px;">Status</th>
+            
+            <!-- Fleksibel Otomatis: Hanya tampilkan kolom header Aksi jika user bukan Viewer -->
+            <?php if ($userRole !== 'Viewer'): ?>
             <th scope="col" class="px-3 text-center" style="width: 100px;">Aksi</th>
+            <?php endif; ?>
           </tr>
         </thead>
         <tbody>
@@ -331,8 +350,14 @@ try {
                     <span class="badge bg-danger rounded-pill px-3"><i class="bi bi-x-circle me-1"></i> Non-Aktif</span>
                   <?php endif; ?>
                 </td>
+                
+                <!-- Fleksibel Otomatis: Blok kolom aksi disembunyikan total dari Viewer (X) -->
+                <?php if ($userRole !== 'Viewer'): ?>
                 <td class="px-3 text-center">
                   <div class="btn-group" role="group">
+                    
+                    <!-- Fleksibel Otomatis: Cek Akses Update ('U') untuk tombol Edit Kuning -->
+                    <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'U', $userRole)): ?>
                     <button class="btn btn-sm btn-outline-warning btn-edit-server" title="Ubah Data Server"
                             data-id="<?php echo $server['id']; ?>"
                             data-asset="<?php echo htmlspecialchars($server['asset_id'] ?? ''); ?>"
@@ -345,17 +370,25 @@ try {
                             data-status="<?php echo $server['status']; ?>">
                       <i class="bi bi-pencil-square"></i>
                     </button>
+                    <?php endif; ?>
+                    
+                    <!-- Fleksibel Otomatis: Cek Akses Delete ('D') untuk tombol Hapus Merah -->
+                    <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'D', $userRole)): ?>
                     <button class="btn btn-sm btn-outline-danger btn-delete-server" title="Hapus Server"
                             data-id="<?php echo $server['id']; ?>">
                       <i class="bi bi-trash"></i>
                     </button>
+                    <?php endif; ?>
+                    
                   </div>
                 </td>
+                <?php endif; ?>
+                
               </tr>
             <?php endforeach; ?>
           <?php else: ?>
             <tr>
-              <td colspan="10" class="text-center py-5 text-muted">
+              <td colspan="<?= ($userRole === 'Viewer') ? '9' : '10'; ?>" class="text-center py-5 text-muted">
                 <i class="bi bi-inbox fs-1 d-block mb-3 text-secondary"></i> Data server tidak ditemukan atau tabel kosong.
               </td>
             </tr>

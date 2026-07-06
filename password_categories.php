@@ -286,32 +286,35 @@ if (isset($_GET['status'])) {
   
     <?php include __DIR__ . '/sidebar.php'; ?>
 
-    <!-- ========================================== -->
-    <!-- 3. MAIN CONTENT KATEGORI (RESPONSIVE)     -->
-    <!-- ========================================== -->
-    <main class="col-12 col-md-8 col-lg-9 ms-md-auto px-2 px-md-4 py-4" style="min-height: 100vh; background-color: #ffffff !important;">
-      
-      <!-- Header Konten Utama -->
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4 border-bottom border-light-subtle pb-3">
-        <div>
-          <h3 class="fw-bold mb-1 text-dark fs-4 fs-md-3">
-            <i class="bi bi-grid-fill text-primary me-2"></i> Password Categories
-          </h3>
-          <small class="text-secondary d-block">Menampilkan daftar pengelompokan kategori kata sandi sistem</small>
-        </div>
-        <!-- Badge Informasi Total Data Kategori -->
-        <span class="badge bg-primary px-3 py-2 fs-6">
-          Total: <?= count($categories); ?> Kategori
-        </span>
-      </div>
+<!-- ========================================== -->
+<!-- 3. MAIN CONTENT KATEGORI (RESPONSIVE)     -->
+<!-- ========================================== -->
+<main class="col-12 col-md-8 col-lg-9 ms-md-auto px-2 px-md-4 py-4" style="min-height: 100vh; background-color: #ffffff !important;">
+  
+  <!-- Header Konten Utama -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4 border-bottom border-light-subtle pb-3">
+    <div>
+      <h3 class="fw-bold mb-1 text-dark fs-4 fs-md-3">
+        <i class="bi bi-grid-fill text-primary me-2"></i> Password Categories
+      </h3>
+      <small class="text-secondary d-block">Menampilkan daftar pengelompokan kategori kata sandi sistem</small>
+    </div>
+    <!-- Badge Informasi Total Data Kategori -->
+    <span class="badge bg-primary px-3 py-2 fs-6">
+      Total: <?= count($categories); ?> Kategori
+    </span>
+  </div>
 
-      <!-- Menampilkan Alert Status CRUD Jika Ada -->
-      <?php if (!empty($status_msg)) echo $status_msg; ?>
+  <!-- Menampilkan Alert Status CRUD Jika Ada -->
+  <?php if (!empty($status_msg)) echo $status_msg; ?>
 
-      <!-- Tombol Tambah Data -->
-      <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#modalTambahKategori">
-          <i class="bi bi-plus-lg me-1"></i> Tambah Kategori
-      </button>
+  <!-- Tombol Tambah Data -->
+  <!-- Fleksibel Otomatis: Hanya tampil jika Role memiliki izin Create ('C') di file ini -->
+  <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'C', $userRole)): ?>
+  <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#modalTambahKategori">
+      <i class="bi bi-plus-lg me-1"></i> Tambah Kategori
+  </button>
+  <?php endif; ?>
 
       <!-- Card Box untuk Tabel Data -->
       <div class="card bg-white text-dark border-light-subtle shadow-sm mb-4">
@@ -354,15 +357,21 @@ if (isset($_GET['status'])) {
                       </td>
                       <td class="text-center">
                         <!-- Grouping tombol aksi agar sejajar rapi horizontal -->
-                        <div class="d-inline-flex gap-1">
+                          <div class="d-inline-flex gap-1">
+                          <!-- Fleksibel Otomatis: Cek Akses Update ('U') untuk tombol Edit -->
+                          <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'U', $userRole)): ?>
                           <!-- Tombol Edit -->
                           <button class="btn btn-warning btn-sm fw-medium" data-bs-toggle="modal" data-bs-target="#modalEditKategori<?= $cat['id']; ?>">
                             <i class="bi bi-pencil-square"></i> Edit
                           </button>
+                          <?php endif; ?>
+                          <!-- Fleksibel Otomatis: Cek Akses Delete ('D') untuk tombol Hapus -->
+                          <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'D', $userRole)): ?>
                           <!-- Tombol Hapus -->
                           <a href="password_categories.php?action=delete&id=<?= $cat['id']; ?>" class="btn btn-danger btn-sm fw-medium" onclick="return confirm('Apakah Anda yakin ingin menghapus kategori ini?')">
                             <i class="bi bi-trash"></i> Hapus
                           </a>
+                          <?php endif; ?>
                         </div>
                       </td>
                     </tr>

@@ -353,13 +353,24 @@ if (isset($_GET['status'])) {
   
     <?php include __DIR__ . '/sidebar.php'; ?>
 
-    <!-- ========================================== -->
+<?php
+// =========================================================================
+// PROTEKSI HALAMAN BACKEND: Mencegah Viewer menembak URL langsung lewat browser
+// =========================================================================
+if ($userRole === 'Viewer') {
+    echo "<script>
+            alert('Akses Ditolak! Akun Viewer tidak diizinkan mengakses modul Password Vault.');
+            window.location='dashboard.php';
+          </script>";
+    exit();
+}
+?>
+
+<!-- ========================================== -->
     <!-- 3. MAIN CONTENT VAULT (FULL WIDTH & RAPI)  -->
     <!-- ========================================== -->
-    <!-- FIX: Menggunakan flex-grow-1 agar konten melebar luas mengisi sisa ruang desktop -->
     <main class="col-12 col-md-8 col-lg-9 ms-md-auto px-2 px-md-4 py-4" style="background-color: #ffffff !important; min-height: 100vh; overflow-x: hidden;">
       
-      <!-- Header Konten Utama -->
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4 border-bottom border-light-subtle pb-3">
         <div>
           <h3 class="fw-bold mb-1 text-dark fs-4 fs-md-3">
@@ -367,19 +378,20 @@ if (isset($_GET['status'])) {
           </h3>
           <small class="text-secondary d-block">Menampilkan daftar data kredensial dan kata sandi aman sistem</small>
         </div>
-        <!-- Badge Informasi Total Data Vault -->
         <span class="badge bg-primary px-3 py-2 fs-6">
           Total: <?= count($vaults); ?> Vault
         </span>
       </div>
 
-      <!-- Menampilkan Alert Status CRUD Jika Ada -->
       <?php if (!empty($status_msg)) echo $status_msg; ?>
 
       <!-- Tombol Tambah Data -->
+      <!-- Fleksibel Otomatis: Hanya tampil jika Role memiliki izin Create ('C') di file ini -->
+      <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'C', $userRole)): ?>
       <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#modalTambah">
           <i class="bi bi-plus-lg me-1"></i> Tambah Kredensial
       </button>
+      <?php endif; ?>
 
       <!-- Card Box untuk Tabel Data -->
       <div class="card bg-white text-dark border-light-subtle shadow-sm mb-4">
@@ -455,20 +467,25 @@ if (isset($_GET['status'])) {
                       </td>
                       <td class="text-center p-3">
                         <div class="d-inline-flex gap-1">
+                          <!-- Fleksibel Otomatis: Cek Akses Update ('U') untuk tombol Edit -->
+                          <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'U', $userRole)): ?>
                           <button class="btn btn-warning btn-sm fw-medium" data-bs-toggle="modal" data-bs-target="#modalEdit<?= $row['id']; ?>">
                             <i class="bi bi-pencil-square"></i> Edit
                           </button>
+                          <?php endif; ?>
+                          <!-- Fleksibel Otomatis: Cek Akses Delete ('D') untuk tombol Hapus -->
+                          <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'D', $userRole)): ?>
                           <a href="password_vault.php?action=delete&id=<?= $row['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus data kredensial ini?')">
                             <i class="bi bi-trash"></i> Hapus
                           </a>
+                          <?php endif; ?>
+                          <!-- Tombol Riwayat: Tetap tampil untuk Super Admin, Admin IT, dan Teknisi (akses 'R') -->
                           <button class="btn btn-outline-secondary btn-sm fw-medium" data-bs-toggle="modal" data-bs-target="#modalRiwayat<?= $row['id']; ?>" onclick="loadHistory(<?= $row['id']; ?>)">
                             <i class="bi bi-clock-history"></i> Riwayat
                           </button>
                         </div>
                       </td>
                     </tr>
-
-                    <!-- [MODAL EDIT DINAMIS ANDA TETAP BERADA DI SINI] -->
 
                     <!-- ========================================== -->
                     <!-- MODAL RIWAYAT POP-UP (DINAMIS PER BARIS)   -->
@@ -511,106 +528,106 @@ if (isset($_GET['status'])) {
   </div>
 </div>
 
-                    <!-- MODAL EDIT DATA (Tampilan Menyamping / Horizontal) -->
-                    <div class="modal fade text-wrap" id="modalEdit<?= $row['id']; ?>" tabindex="-1" aria-labelledby="modalEditLabel<?= $row['id']; ?>" aria-hidden="true">
-                      <div class="modal-dialog modal-lg modal-dialog-centered">
-                        <div class="modal-content bg-white text-dark shadow">
-                          
-                          <!-- Header Modal -->
-                          <div class="modal-header bg-light border-bottom">
-                            <h5 class="modal-title fw-bold text-primary" id="modalEditLabel<?= $row['id']; ?>">
-                              <i class="bi bi-pencil-square me-2"></i>Edit Kredensial Vault
-                            </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                          </div>
-                          
-                          <!-- Form Input Kirim ke CRUD PHP -->
-                          <form action="password_vault.php" method="POST">
-                            <input type="hidden" name="action" value="update">
-                            <input type="hidden" name="id" value="<?= $row['id']; ?>">
-                            
-                            <div class="modal-body p-4">
-                              <div class="row">
-                                
-                                <!-- === KOLOM KIRI === -->
-                                <div class="col-12 col-md-6 border-end-md pb-3 pb-md-0">
-                                  <!-- 1. Nama Akun / Layanan -->
-                                  <div class="mb-3">
-                                    <label class="form-label fw-semibold text-secondary small">Nama Akun / Layanan <span class="text-danger">*</span></label>
-                                    <input type="text" name="nama" class="form-control" value="<?= htmlspecialchars($row['nama']); ?>" required>
-                                  </div>
+  <!-- MODAL EDIT DATA (Tampilan Menyamping / Horizontal) -->
+  <div class="modal fade text-wrap" id="modalEdit<?= $row['id']; ?>" tabindex="-1" aria-labelledby="modalEditLabel<?= $row['id']; ?>" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content bg-white text-dark shadow">
+        
+        <!-- Header Modal -->
+        <div class="modal-header bg-light border-bottom">
+          <h5 class="modal-title fw-bold text-primary" id="modalEditLabel<?= $row['id']; ?>">
+            <i class="bi bi-pencil-square me-2"></i>Edit Kredensial Vault
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        
+        <!-- Form Input Kirim ke CRUD PHP -->
+        <form action="password_vault.php" method="POST">
+          <input type="hidden" name="action" value="update">
+          <input type="hidden" name="id" value="<?= $row['id']; ?>">
+          
+          <div class="modal-body p-4">
+            <div class="row">
+              
+              <!-- === KOLOM KIRI === -->
+              <div class="col-12 col-md-6 border-end-md pb-3 pb-md-0">
+                <!-- 1. Nama Akun / Layanan -->
+                <div class="mb-3">
+                  <label class="form-label fw-semibold text-secondary small">Nama Akun / Layanan <span class="text-danger">*</span></label>
+                  <input type="text" name="nama" class="form-control" value="<?= htmlspecialchars($row['nama']); ?>" required>
+                </div>
 
-                                  <!-- 2. Dropdown Pilihan Kategori Relasional -->
-                                  <div class="mb-3">
-                                    <label class="form-label fw-semibold text-secondary small">Kategori Kelompok</label>
-                                    <select name="kategori_id" class="form-select">
-                                      <option value="">-- Tanpa Kategori --</option>
-                                      <?php foreach ($categories as $cat): ?>
-                                        <option value="<?= $cat['id']; ?>" <?= ($cat['id'] == $row['kategori_id']) ? 'selected' : ''; ?>>
-                                          <?= htmlspecialchars($cat['nama']); ?>
-                                        </option>
-                                      <?php endforeach; ?>
-                                    </select>
-                                  </div>
+                <!-- 2. Dropdown Pilihan Kategori Relasional -->
+                <div class="mb-3">
+                  <label class="form-label fw-semibold text-secondary small">Kategori Kelompok</label>
+                  <select name="kategori_id" class="form-select">
+                    <option value="">-- Tanpa Kategori --</option>
+                    <?php foreach ($categories as $cat): ?>
+                      <option value="<?= $cat['id']; ?>" <?= ($cat['id'] == $row['kategori_id']) ? 'selected' : ''; ?>>
+                        <?= htmlspecialchars($cat['nama']); ?>
+                      </option>
+                    <?php endforeach; ?>
+                  </select>
+                </div>
 
-                                  <!-- 3. Tipe Layanan -->
-                                  <div class="mb-3">
-                                    <label class="form-label fw-semibold text-secondary small">Tipe Infrastruktur</label>
-                                    <select name="tipe" class="form-select">
-                                      <option value="">-- Pilih Tipe --</option>
-                                      <option value="1" <?= ($row['tipe'] == 1) ? 'selected' : ''; ?>>Server</option>
-                                      <option value="2" <?= ($row['tipe'] == 2) ? 'selected' : ''; ?>>Network Device</option>
-                                      <option value="3" <?= ($row['tipe'] == 3) ? 'selected' : ''; ?>>Lainnya</option>
-                                    </select>
-                                  </div>
+                <!-- 3. Tipe Layanan -->
+                <div class="mb-3">
+                  <label class="form-label fw-semibold text-secondary small">Tipe Infrastruktur</label>
+                  <select name="tipe" class="form-select">
+                    <option value="">-- Pilih Tipe --</option>
+                    <option value="1" <?= ($row['tipe'] == 1) ? 'selected' : ''; ?>>Server</option>
+                    <option value="2" <?= ($row['tipe'] == 2) ? 'selected' : ''; ?>>Network Device</option>
+                    <option value="3" <?= ($row['tipe'] == 3) ? 'selected' : ''; ?>>Lainnya</option>
+                  </select>
+                </div>
 
-                                  <!-- 4. URL / Link Akses -->
-                                  <div class="mb-3 mb-md-0">
-                                    <label class="form-label fw-semibold text-secondary small">URL / Link Web</label>
-                                    <input type="url" name="url" class="form-control" value="<?= htmlspecialchars($row['url']); ?>" placeholder="https://">
-                                  </div>
-                                </div>
+                <!-- 4. URL / Link Akses -->
+                <div class="mb-3 mb-md-0">
+                  <label class="form-label fw-semibold text-secondary small">URL / Link Web</label>
+                  <input type="url" name="url" class="form-control" value="<?= htmlspecialchars($row['url']); ?>" placeholder="https://">
+                </div>
+              </div>
 
-                                <!-- === KOLOM KANAN === -->
-                                <div class="col-12 col-md-6 ps-md-custom">
-                                  <!-- 5. IP Address -->
-                                  <div class="mb-3">
-                                    <label class="form-label fw-semibold text-secondary small">IP Address</label>
-                                    <input type="text" name="ip" class="form-control" value="<?= htmlspecialchars($row['ip']); ?>" placeholder="10.10.X.X">
-                                  </div>
+              <!-- === KOLOM KANAN === -->
+              <div class="col-12 col-md-6 ps-md-custom">
+                <!-- 5. IP Address -->
+                <div class="mb-3">
+                  <label class="form-label fw-semibold text-secondary small">IP Address</label>
+                  <input type="text" name="ip" class="form-control" value="<?= htmlspecialchars($row['ip']); ?>" placeholder="10.10.X.X">
+                </div>
 
-                                  <!-- 6. Username -->
-                                  <div class="mb-3">
-                                    <label class="form-label fw-semibold text-secondary small">Username</label>
-                                    <input type="text" name="username" class="form-control" value="<?= htmlspecialchars($row['username']); ?>">
-                                  </div>
+                <!-- 6. Username -->
+                <div class="mb-3">
+                  <label class="form-label fw-semibold text-secondary small">Username</label>
+                  <input type="text" name="username" class="form-control" value="<?= htmlspecialchars($row['username']); ?>">
+                </div>
 
-                                  <!-- 7. Password -->
-                                  <div class="mb-3">
-                                    <label class="form-label fw-semibold text-secondary small">Password / Sandi</label>
-                                    <input type="text" name="password" class="form-control" value="<?= htmlspecialchars($row['password']); ?>">
-                                  </div>
+                <!-- 7. Password -->
+                <div class="mb-3">
+                  <label class="form-label fw-semibold text-secondary small">Password / Sandi</label>
+                  <input type="text" name="password" class="form-control" value="<?= htmlspecialchars($row['password']); ?>">
+                </div>
 
-                                  <!-- 8. Catatan Tambahan -->
-                                  <div class="mb-0">
-                                    <label class="form-label fw-semibold text-secondary small">Catatan Deskripsi</label>
-                                    <textarea name="catatan" class="form-control" rows="1" style="min-height: 38px;" placeholder="Detail login..."><?= htmlspecialchars($row['catatan']); ?></textarea>
-                                  </div>
-                                </div>
+                <!-- 8. Catatan Tambahan -->
+                <div class="mb-0">
+                  <label class="form-label fw-semibold text-secondary small">Catatan Deskripsi</label>
+                  <textarea name="catatan" class="form-control" rows="1" style="min-height: 38px;" placeholder="Detail login..."><?= htmlspecialchars($row['catatan']); ?></textarea>
+                </div>
+              </div>
 
-                              </div>
-                            </div>
+            </div>
+          </div>
 
-                            <!-- Footer Tombol Aksi Modal -->
-                            <div class="modal-footer bg-light border-top flex-nowrap">
-                              <button type="button" class="btn btn-sm btn-secondary w-50" data-bs-dismiss="modal">Batal</button>
-                              <button type="submit" class="btn btn-sm btn-warning w-50 fw-semibold text-dark"><i class="bi bi-check-circle me-1"></i>Simpan</button>
-                            </div>
-                          </form>
+          <!-- Footer Tombol Aksi Modal -->
+          <div class="modal-footer bg-light border-top flex-nowrap">
+            <button type="button" class="btn btn-sm btn-secondary w-50" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-sm btn-warning w-50 fw-semibold text-dark"><i class="bi bi-check-circle me-1"></i>Simpan</button>
+          </div>
+        </form>
 
-                        </div>
-                      </div>
-                    </div>
+      </div>
+    </div>
+  </div>
 
 <!-- MODAL TAMBAH DATA (Tampilan Menyamping / Horizontal) -->
 <div class="modal fade text-wrap" id="modalTambah" tabindex="-1" aria-labelledby="modalTambahLabel" aria-hidden="true">

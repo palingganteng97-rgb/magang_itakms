@@ -362,18 +362,13 @@ try {
     <?php include __DIR__ . '/sidebar.php'; ?>
 
 <!-- AREA UTAMA KONTEN (Gunakan pembungkus ini agar susunan halaman tidak bergeser) -->
-    <!-- PERBAIKAN: Menggunakan col-12 agar lebar konten penuh 100% pada tampilan ponsel pintar -->
     <main class="col-12 col-md-8 col-lg-9 ms-sm-auto ms-md-auto px-md-4 pt-4 offset-md-4 offset-lg-3">
-
-    <!-- 1. Banner Header Halaman & Tombol Tab -->
-    <!-- PERBAIKAN: Mengatur gap dan susunan kolom agar rapi saat bertumpuk vertikal di HP -->
     <div class="row align-items-center mb-4 g-3">
         <div class="col-md-6">
             <h1 class="h3 fw-bold text-dark m-0 fs-4 fs-md-3">Master Data Asset</h1>
             <p class="text-muted small m-0 d-none d-sm-block">Kelola informasi merek, kategori, dan status operasional aset sistem ITAKMS.</p>
         </div>
         <div class="col-md-6 text-md-end">
-            <!-- Navigasi Tab Gaya Modern -->
             <div class="nav nav-pills d-inline-flex flex-wrap gap-1 bg-white p-1 rounded-3 shadow-sm" id="masterDataTabs" role="tablist">
                 <button class="nav-link active rounded-3 px-2 py-1.5 px-md-3 py-md-2 fw-bold small" id="tab-brand" data-bs-toggle="tab" data-bs-target="#content-brand" type="button" role="tab">
                     <i class="bi bi-tag me-1"></i> Brands
@@ -387,22 +382,20 @@ try {
             </div>
         </div>
     </div>
-
-    <!-- 2. Wadah Konten Tabel Utama -->
     <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4">
         <div class="tab-content">
-            
-            <!-- ========================================== -->
-            <!-- PANEL TAB 1: ASSET BRANDS                  -->
-            <!-- ========================================== -->
-            <div class="tab-pane fade show active" id="content-brand" role="tabpanel">
+                <div class="tab-pane fade show active" id="content-brand" role="tabpanel">
                 <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <h5 class="mb-0 text-dark fw-bold fs-6 fs-md-5"><i class="bi bi-tag-fill me-2 text-primary"></i> Daftar Komponen Merek</h5>
+                    
+                    <!-- Fleksibel Otomatis: Hanya tampil jika Role memiliki izin Create ('C') di file ini -->
+                    <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'C', $userRole)): ?>
                     <button type="button" class="btn btn-primary btn-sm rounded-3 px-3 d-flex align-items-center gap-2" onclick="bukaModalPaksa('modalAddBrand')">
                         <i class="bi bi-plus-lg"></i> Tambah Brand
                     </button>
+                    <?php endif; ?>
                 </div>
-                <!-- PERBAIKAN: Menambahkan aturan lebar penuh dan overflow-x agar tabel brand bisa di-scroll horizontal -->
+
                 <div class="table-responsive w-100" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
                     <table class="table table-hover align-middle mb-0 text-nowrap">
                         <thead class="table-light">
@@ -441,18 +434,17 @@ try {
                     </table>
                 </div>
             </div>
-
-            <!-- ========================================== -->
-            <!-- PANEL TAB 2: ASSET CATEGORIES (SAMBUNGAN)  -->
-            <!-- ========================================== -->
             <div class="tab-pane fade" id="content-category" role="tabpanel">
-                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <h5 class="mb-0 text-dark fw-bold fs-6 fs-md-5"><i class="bi bi-grid-fill me-2 text-success"></i> Daftar Kategori Asset</h5>
+                    
+                    <!-- Fleksibel Otomatis: Hanya tampil jika Role memiliki izin Create ('C') di file ini -->
+                    <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'C', $userRole)): ?>
                     <button type="button" class="btn btn-success btn-sm rounded-3 px-3 d-flex align-items-center gap-2" onclick="bukaModalPaksa('modalAddCategory')">
                         <i class="bi bi-plus-lg"></i> Tambah Kategori
                     </button>
+                    <?php endif; ?>
                 </div>
-                <!-- PERBAIKAN: Menambahkan aturan lebar penuh dan overflow-x agar tabel kategori bisa di-scroll horizontal -->
                 <div class="table-responsive w-100" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
                     <table class="table table-hover align-middle mb-0 text-nowrap">
                         <thead class="table-light">
@@ -480,7 +472,6 @@ try {
                                     </td>
                                     <td class="text-end pe-4">
                                         <div class="btn-group btn-group-sm">
-                                            <!-- BERHASIL DISAMBUNGKAN -->
                                             <button type="button" class="btn btn-outline-warning border-0" onclick="prosesEditCategory(<?= $c['id']; ?>, '<?= addslashes($c['nama']); ?>', '<?= addslashes($c['icon'] ?? ''); ?>', '<?= addslashes($c['warna'] ?? ''); ?>')">
                                                 <i class="bi bi-pencil-square"></i>
                                             </button>
@@ -495,18 +486,16 @@ try {
                     </table>
                 </div>
             </div>
-
-            <!-- ========================================== -->
-            <!-- PANEL TAB 3: ASSET STATUSES                -->
-            <!-- ========================================== -->
             <div class="tab-pane fade" id="content-status" role="tabpanel">
                 <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <h5 class="mb-0 text-dark fw-bold"><i class="bi bi-info-circle-fill me-2 text-info"></i> Daftar Status Operasional</h5>
+                    <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'C', $userRole)): ?>
                     <button type="button" class="btn btn-info btn-sm text-white rounded-3 px-3 d-flex align-items-center gap-2" onclick="bukaModalPaksa('modalAddStatus')">
                         <i class="bi bi-plus-lg"></i> Tambah Status
                     </button>
+                    <?php endif; ?>
                 </div>
-                <!-- PERBAIKAN RESPONSIVE MOBILE: Ditambahkan text-nowrap agar kolom stabil saat di-scroll -->
+
                 <div class="table-responsive w-100" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
                     <table class="table table-hover align-middle mb-0 text-nowrap">
                         <thead class="table-light">
@@ -550,11 +539,9 @@ try {
                     </table>
                 </div>
             </div>
-
-        </div> <!-- /.tab-content -->
-    </div> <!-- /.card -->
-
-</main> <!-- /PERBAIKAN: Tag penutup area utama konten -->
+        </div>
+    </div>
+</main>
 <!-- ========================================================================= -->
 <!-- TAHAP 5: MODAL POPUP INPUT DATA (TAMBAH DATA MASTER ASSET)                -->
 <!-- ========================================================================= -->

@@ -310,9 +310,14 @@ try {
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
       <h1 class="h2">Daftar Assets</h1>
       <div class="btn-toolbar mb-2 mb-md-0">
+        
+        <!-- Fleksibel Otomatis: Hanya tampil jika Role memiliki izin Create ('C') di file ini -->
+        <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'C', $userRole)): ?>
         <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addAssetModal">
           <i class="bi bi-plus-lg me-1"></i> Tambah Asset
         </button>
+        <?php endif; ?>
+        
       </div>
     </div>
 
@@ -406,7 +411,9 @@ try {
               <!-- KOLOM PERPINDAHAN: Tombol Pindahkan & Riwayat Berjejer Rapi -->
               <td class="text-center">
                 <div class="d-flex justify-content-center gap-1">
-                  <!-- Tombol Pindahkan -->
+                  
+                  <!-- Fleksibel Otomatis: Tombol Pindahkan hilang khusus untuk Viewer -->
+                  <?php if ($userRole !== 'Viewer'): ?>
                   <button type="button" class="btn btn-xs btn-outline-dark px-2 py-1 btn-pindah" 
                           data-bs-toggle="modal" 
                           data-bs-target="#moveAssetModal"
@@ -417,8 +424,9 @@ try {
                           title="Pindahkan Ruangan Asset">
                     <i class="bi bi-box-arrow-right me-1"></i> Pindahkan
                   </button>
+                  <?php endif; ?>
 
-                  <!-- Tombol Riwayat -->
+                  <!-- Tombol Riwayat (Semua role boleh akses) -->
                   <button type="button" class="btn btn-xs btn-secondary text-white px-2 py-1 btn-riwayat" 
                           data-bs-toggle="modal" 
                           data-bs-target="#historyAssetModal"
@@ -433,14 +441,18 @@ try {
 
               <td class="text-center">
                 <div class="btn-group gap-1">
-                  <!-- Tombol Detail -->
+                  <!-- Tombol Detail (Semua role boleh akses) -->
                   <button type="button" class="btn btn-xs btn-info text-white btn-detail" data-bs-toggle="modal" data-bs-target="#assetDetailModal" data-id="<?= $asset['id'] ?>" data-kode="<?= htmlspecialchars($asset['kode_asset'] ?? '-') ?>" data-nama="<?= htmlspecialchars($asset['nama_asset'] ?? '-') ?>" data-serial="<?= htmlspecialchars($asset['serial_number'] ?? '-') ?>" data-hostname="<?= htmlspecialchars($asset['hostname'] ?? '-') ?>" data-ip="<?= htmlspecialchars($asset['ip_address'] ?? '-') ?>" data-mac="<?= htmlspecialchars($asset['mac_address'] ?? '-') ?>" data-tgl="<?= htmlspecialchars($asset['tanggal_beli'] ?? '-') ?>" data-garansi="<?= htmlspecialchars($asset['garansi'] ?? '-') ?>" data-foto="<?= htmlspecialchars($asset['foto'] ?? 'default.jpg') ?>" data-manual="<?= htmlspecialchars($asset['manual_book'] ?? '-') ?>" data-spek="<?= htmlspecialchars($asset['spesifikasi'] ?? '-') ?>" title="Lihat Detail"><i class="bi bi-eye-fill"></i></button>
 
-                  <!-- Tombol Edit -->
+                  <!-- Fleksibel Otomatis: Cek Akses Update ('U') untuk halaman ini -->
+                  <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'U', $userRole)): ?>
                   <button type="button" class="btn btn-xs btn-warning text-dark btn-edit" data-bs-toggle="modal" data-bs-target="#editAssetModal" data-id="<?= $asset['id'] ?>" data-kategori="<?= $asset['kategori_id'] ?>" data-brand="<?= $asset['brand_id'] ?>" data-room="<?= $asset['room_id'] ?>" data-status="<?= $asset['status_id'] ?>" data-kode="<?= htmlspecialchars($asset['kode_asset'] ?? '-') ?>" data-nama="<?= htmlspecialchars($asset['nama_asset'] ?? '-') ?>" data-serial="<?= htmlspecialchars($asset['serial_number'] ?? '-') ?>" data-hostname="<?= htmlspecialchars($asset['hostname'] ?? '-') ?>" data-ip="<?= htmlspecialchars($asset['ip_address'] ?? '-') ?>" data-mac="<?= htmlspecialchars($asset['mac_address'] ?? '-') ?>" data-tgl="<?= htmlspecialchars($asset['tanggal_beli'] ?? '-') ?>" data-garansi="<?= htmlspecialchars($asset['garansi'] ?? '-') ?>" data-spek="<?= htmlspecialchars($asset['spesifikasi'] ?? '-') ?>" title="Ubah Data"><i class="bi bi-pencil-square"></i></button>
+                  <?php endif; ?>
 
-                  <!-- Tombol Hapus -->
+                  <!-- Fleksibel Otomatis: Cek Akses Delete ('D') untuk halaman ini -->
+                  <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'D', $userRole)): ?>
                   <a href="proses_asset.php?action=delete&id=<?= $asset['id'] ?>" class="btn btn-xs btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus asset <?= htmlspecialchars($asset['nama_asset'] ?? '') ?> ini?');" title="Hapus Data"><i class="bi bi-trash-fill"></i></a>
+                  <?php endif; ?>
                 </div>
               </td>
             </tr>

@@ -2,6 +2,22 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
+// =========================================================================
+// AMBIL DATA ROLE USER DINAMIS DARI DATABASE SESSION (Kunci Utama Hak Akses)
+// =========================================================================
+$userRole = isset($_SESSION['user']['role']) ? $_SESSION['user']['role'] : 'Viewer';
+
+// =========================================================================
+// PROTEKSI HALAMAN BACKEND: Akun Viewer bertanda 'X' (Akses Dilarang Total!)
+// =========================================================================
+if ($userRole === 'Viewer') {
+    echo "<script>
+            alert('Akses Ditolak! Akun Viewer tidak memiliki izin untuk melihat data Integrasi API Vendor.');
+            window.location='dashboard.php';
+          </script>";
+    exit();
+}
+
 // 1. Konfigurasi Database
 $host = "10.10.6.59";
 $username = "root_host";
@@ -40,6 +56,7 @@ try {
     die("Koneksi atau Query Database Gagal: " . $e->getMessage());
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -107,13 +124,17 @@ try {
             <i class="bi bi-code-slash me-2 text-purple" style="color: #6f42c1;"></i> 
             Daftar API: <span class="text-primary ms-1"><?= htmlspecialchars($vendorMain['nama']); ?></span>
           </h5>
+          
+          <!-- Fleksibel Otomatis: Hanya tampil jika Role memiliki izin Create ('C') di file ini -->
+          <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'C', $userRole)): ?>
           <!-- PERUBAHAN: w-100 di mobile agar tombol penuh mudah ditekan jempol, w-auto di desktop -->
           <button type="button" class="btn btn-primary btn-sm text-white rounded-3 px-3 py-2 py-sm-1 shadow-sm d-flex align-items-center justify-content-center gap-2 w-100 w-sm-auto ms-0" style="background-color: #6f42c1; border-color: #6f42c1;" data-bs-toggle="modal" data-bs-target="#modalAddApi">
               <i class="bi bi-plus-lg"></i> Tambah API
           </button>
+          <?php endif; ?>
+          
         </div>
 
-        <!-- Tabel Data Endpoint APIs -->
         <!-- PERUBAHAN: Penegasan properti pembungkus agar container tabel tidak merusak grid luar col-12 -->
         <div class="table-responsive w-100 rounded-3 border" style="overflow-x: auto; -webkit-overflow-scrolling: touch; display: block;">
           <table class="table table-striped table-hover align-middle mb-0 text-nowrap w-100">
@@ -147,7 +168,6 @@ try {
   </div> <!-- /.row -->
 </div> <!-- /.container-fluid -->
 
-<!-- MODAL TAMBAH VENDOR API (MELEBAR KE KANAN) -->
 <!-- PERUBAHAN: Mengganti modal-lg menjadi modal-xl agar ruang horizontal lebih luas -->
 <div class="modal fade" id="modalAddApi" tabindex="-1" aria-labelledby="modalAddApiLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered">
@@ -242,7 +262,6 @@ try {
   </div>
 </div>
 
-<!-- MODAL EDIT VENDOR API (MELEBAR KE KANAN) -->
 <!-- PERUBAHAN: Mengganti modal-lg menjadi modal-xl agar ruang horizontal lebih luas -->
 <div class="modal fade" id="modalEditApi" tabindex="-1" aria-labelledby="modalEditApiLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered">
@@ -338,9 +357,7 @@ try {
   </div>
 </div>
 
-<!-- ========================================== -->
 <!-- 3. JAVASCRIPT BINDING DATA UNTUK MODAL EDIT -->
-<!-- ========================================== -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const modalEditApi = document.getElementById('modalEditApi');

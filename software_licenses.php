@@ -315,12 +315,17 @@ try {
     <!-- Bagian Kepala Halaman (Header Konten) -->
     <div class="d-flex justify-content-between align-items-center pb-2 mb-3 border-bottom">
         <h1 class="h2"><i class="bi bi-key-fill me-2"></i> Kelola Lisensi Software</h1>
+        
+        <!-- Fleksibel Otomatis: Hanya tampil jika Role memiliki izin Create ('C') di file ini -->
+        <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'C', $userRole)): ?>
         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalLicense" onclick="setupModal('create')">
             <i class="bi bi-plus-lg me-1"></i> Tambah Lisensi
         </button>
+        <?php endif; ?>
+        
     </div>
 
-    <!-- Tabel Data Utama -->
+<!-- Tabel Data Utama -->
     <div class="card shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -334,7 +339,12 @@ try {
                             <th>Masa Berlaku</th>
                             <th class="text-center">Kapasitas</th>
                             <th class="text-center">Status</th>
+                            
+                            <!-- Fleksibel Otomatis: Hanya tampilkan kolom header Aksi jika user bukan Teknisi & Viewer -->
+                            <?php if (!in_array($userRole, ['Teknisi', 'Viewer'])): ?>
                             <th class="text-center" style="width: 15%;">Aksi</th>
+                            <?php endif; ?>
+                            
                         </tr>
                     </thead>
                     <tbody>
@@ -351,11 +361,21 @@ try {
                             <td class="text-center">
                                 <?= ($row['status'] == 1) ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-danger">Expired</span>' ?>
                             </td>
+                            
+                            <!-- Fleksibel Otomatis: Blok kolom aksi disembunyikan total dari Teknisi & Viewer (X) -->
+                            <?php if (!in_array($userRole, ['Teknisi', 'Viewer'])): ?>
                             <td class="text-center">
+                                
+                                <!-- Fleksibel Otomatis: Cek Akses Update ('U') untuk tombol Edit -->
+                                <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'U', $userRole)): ?>
                                 <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalLicense" 
                                     onclick="setupModal('update', <?= htmlspecialchars(json_encode($row)) ?>)">
                                     <i class="bi bi-pencil"></i>
                                 </button>
+                                <?php endif; ?>
+                                
+                                <!-- Fleksibel Otomatis: Cek Akses Delete ('D') untuk tombol Hapus -->
+                                <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'D', $userRole)): ?>
                                 <form action="" method="POST" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus data ini?')">
                                     <input type="hidden" name="action" value="delete">
                                     <input type="hidden" name="id" value="<?= $row['id'] ?>">
@@ -365,7 +385,11 @@ try {
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
+                                <?php endif; ?>
+                                
                             </td>
+                            <?php endif; ?>
+                            
                         </tr>
                         <?php endforeach; ?>
                     </tbody>
