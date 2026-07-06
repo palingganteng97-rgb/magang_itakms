@@ -1,5 +1,16 @@
 <?php
-// 1. KONFIGURASI DATABASE UTAMA
+// =========================================================================
+// 1. KUNCI UTAMA: MUAT PENGAMAN AUTH AGAR LOGIN & MENU UTUH (SINKRON)
+// =========================================================================
+require_once __DIR__ . '/auth.php';
+require_login(); 
+
+// Variabel pengaman halaman aktif untuk digunakan oleh sidebar.php
+$currentFile = basename($_SERVER['PHP_SELF']);
+
+// =========================================================================
+// 2. KONFIGURASI DATABASE UTAMA
+// =========================================================================
 $host = "10.10.6.59";
 $username = "root_host";
 $password = "password";
@@ -13,7 +24,7 @@ try {
     $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // 2. STATISTIK CEPAT AGREGAT TUNGGAL (Sama seperti Dashboard Anda)
+    // 3. STATISTIK CEPAT AGREGAT TUNGGAL (Sama seperti Dashboard Anda)
     $stmtStats = $conn->query("
         SELECT 
             (SELECT COUNT(*) FROM buildings) AS total_b,
@@ -26,14 +37,12 @@ try {
     $total_floors = (int)($stats['total_f'] ?? 0);
     $total_rooms = (int)($stats['total_r'] ?? 0);
 
-    // 3. AMBIL DATA DENGAN QUERY TUNGGAL (ANTI-LEMOT: TANPA LEFT JOIN DI SISI SQL)
-    // Trik ini membuat server database 10.10.6.59 merespons instan dalam hitungan milidetik
+    // 4. AMBIL DATA DENGAN QUERY TUNGGAL (ANTI-LEMOT: TANPA LEFT JOIN DI SISI SQL)
     $buildings = $conn->query("SELECT id, nama, alamat FROM buildings ORDER BY id DESC LIMIT $perPage OFFSET $offset")->fetchAll(PDO::FETCH_ASSOC) ?: [];
     $raw_floors = $conn->query("SELECT id, nama, building_id FROM floors ORDER BY id DESC LIMIT $perPage OFFSET $offset")->fetchAll(PDO::FETCH_ASSOC) ?: [];
     $raw_rooms = $conn->query("SELECT id, nama, kode, telepon, floor_id FROM rooms ORDER BY id DESC LIMIT $perPage OFFSET $offset")->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
-    // 4. LOGIKA PEMBANTU (Mencocokkan Nama Gedung & Lantai di Memori Lokal Laptop Anda)
-    // Membuat array indeks agar pencarian nama secepat kilat
+    // 5. LOGIKA PEMBANTU (Mencocokkan Nama Gedung & Lantai di Memori Lokal Laptop Anda)
     $building_list = [];
     foreach ($buildings as $b) {
         $building_list[$b['id']] = $b['nama'];
@@ -45,7 +54,7 @@ try {
             'id' => $rf['id'],
             'nama' => $rf['nama'],
             'building_id' => $rf['building_id'],
-            'nama_bangunan' => $building_list[$rf['building_id']] ?? 'Gedung A' // Nama fallback jika data belum sinkron
+            'nama_bangunan' => $building_list[$rf['building_id']] ?? 'Gedung A'
         ];
     }
 
@@ -62,7 +71,7 @@ try {
             'kode' => $rr['kode'],
             'telepon' => $rr['telepon'],
             'floor_id' => $rr['floor_id'],
-            'nama_lantai' => $floor_list[$rr['floor_id']] ?? 'Lantai 1' // Nama fallback jika data belum sinkron
+            'nama_lantai' => $floor_list[$rr['floor_id']] ?? 'Lantai 1'
         ];
     }
 

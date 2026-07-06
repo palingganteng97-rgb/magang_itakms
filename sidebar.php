@@ -1,11 +1,10 @@
 <?php
-// Bagian session_start() sudah dihapus agar tidak bentrok dengan halaman utama
-
-// ==================== PERBAIKAN OTOMATIS ====================
-// 1. Ambil angka role_id dari session login (Super Admin = 1)
+// =========================================================================
+// 1. OTENTIKASI & TRANSLASI ID ROLE MENJADI TEKS DINAMIS
+// =========================================================================
+// session_start() SUDAH DIHAPUS SEPENUHNYA DARI SINI AGAR TIDAK BENTROK DENGAN AUTH.PHP
 $sessionRoleId = isset($_SESSION['user']['role_id']) ? (int)$_SESSION['user']['role_id'] : 4;
 
-// 2. Terjemahkan angka ID menjadi Nama Role teks agar dibaca oleh matriks di bawah
 $roleMapping = [
     1 => 'Super Admin',
     2 => 'Admin IT',
@@ -14,16 +13,18 @@ $roleMapping = [
 ];
 
 $userRole = isset($roleMapping[$sessionRoleId]) ? $roleMapping[$sessionRoleId] : 'Viewer';
-// ===========================================================
 
-// 2. Variabel pengaman untuk mendeteksi halaman aktif saat ini
+// Menangkap nama file aktif saat ini untuk pencocokan kelas active-style
 $currentFile = basename($_SERVER['PHP_SELF']);
 
-// 3. KONFIGURASI MATRIKS HAK AKSES MENU (Sesuai dokumen Anda)
+// =========================================================================
+// 2. MATRIKS HAK AKSES MENU UTAMA (Sesuai Aturan Resmi Dokumen Anda)
+// =========================================================================
 $menuPermissions = [
+
     'dashboard.php'            => ['Super Admin', 'Admin IT', 'Teknisi', 'Viewer'],
-    'user.php'                 => ['Super Admin'],
-    'roles.php'                => ['Super Admin'],
+    'user.php'                 => ['Super Admin'], 
+    'roles.php'                => ['Super Admin'], 
     'relasi.php'               => ['Super Admin', 'Admin IT', 'Teknisi', 'Viewer'],
     'manajemen_asset.php'      => ['Super Admin', 'Admin IT', 'Teknisi', 'Viewer'],
     'assets.php'               => ['Super Admin', 'Admin IT', 'Teknisi', 'Viewer'],
@@ -31,8 +32,8 @@ $menuPermissions = [
     'server.php'               => ['Super Admin', 'Admin IT', 'Teknisi', 'Viewer'],
     'network_device.php'       => ['Super Admin', 'Admin IT', 'Teknisi', 'Viewer'],
     'vendors.php'              => ['Super Admin', 'Admin IT', 'Teknisi', 'Viewer'],
-    'password_categories.php'  => ['Super Admin', 'Admin IT', 'Teknisi'], // Viewer: X
-    'password_vault.php'       => ['Super Admin', 'Admin IT', 'Teknisi'], // Viewer: X
+    'password_categories.php'  => ['Super Admin', 'Admin IT', 'Teknisi'], 
+    'password_vault.php'       => ['Super Admin', 'Admin IT', 'Teknisi'], 
     'tickets.php'              => ['Super Admin', 'Admin IT', 'Teknisi', 'Viewer'],
     'maintenance.php'          => ['Super Admin', 'Admin IT', 'Teknisi', 'Viewer'],
     'knowledge_articles.php'   => ['Super Admin', 'Admin IT', 'Teknisi', 'Viewer'],
@@ -41,10 +42,12 @@ $menuPermissions = [
     'software_licenses.php'    => ['Super Admin', 'Admin IT', 'Teknisi', 'Viewer'],
     'backup_jobs.php'          => ['Super Admin', 'Admin IT', 'Teknisi', 'Viewer'],
     'daily_checklist.php'      => ['Super Admin', 'Admin IT', 'Teknisi', 'Viewer'],
-    'activity_logs.php'        => ['Super Admin', 'Admin IT'] // Teknisi & Viewer: X
+    'activity_logs.php'        => ['Super Admin', 'Admin IT'] 
 ];
 
-// 4. FUNGSI CEK ELEMEN MENU APAKAH BOLEH TAMPIL
+// =========================================================================
+// 4. FUNGSI UTILITAS PENGECEKAN HAK AKSES DAN KELAS AKTIF VISUAL
+// =========================================================================
 if (!function_exists('hasMenuAccess')) {
     function hasMenuAccess($fileName, $currentRole, $matrix) {
         if (isset($matrix[$fileName])) {
@@ -54,10 +57,30 @@ if (!function_exists('hasMenuAccess')) {
     }
 }
 
-// 5. FUNGSI DINAMIS UNTUK CEK HAK AKSES CRUD (TOMBOL AKSI FORM)
+if (!function_exists('checkActiveMenu')) {
+    function checkActiveMenu($fileName, $currentFile) {
+        $buildingPages = ['relasi.php', 'relasi_gedung.php', 'relasi_lantai.php', 'relasi_ruangan.php'];
+        if (in_array($fileName, $buildingPages) && in_array($currentFile, $buildingPages)) {
+            return 'active-style';
+        }
+        return ($fileName === $currentFile) ? 'active-style' : '';
+    }
+}
+
+// =========================================================================
+// 5. MATRIKS GLOBAL OTORISASI CRUD (Pencegah Fatal Error)
+// =========================================================================
 if (!function_exists('hasCrudAccess')) {
     function hasCrudAccess($fileName, $actionType, $currentRole) {
-        // MATRIKS GLOBAL: Memetakan Hak Akses CRUD berdasarkan isi Dokumen Anda
+        $cleanFileName = basename($fileName);
+        
+        if (in_array($cleanFileName, ['relasi_gedung.php', 'relasi_lantai.php', 'relasi_ruangan.php'])) {
+            $cleanFileName = 'relasi.php';
+        }
+        if ($cleanFileName === 'vendor_apis.php') {
+            $cleanFileName = 'vendors.php';
+        }
+
         $crudMatrix = [
             'dashboard.php' => [
                 'Super Admin' => ['R'], 'Admin IT' => ['R'], 'Teknisi' => ['R'], 'Viewer' => ['R']
@@ -121,20 +144,25 @@ if (!function_exists('hasCrudAccess')) {
             ]
         ];
 
-        if (isset($crudMatrix[$fileName][$currentRole])) {
-            return in_array($actionType, $crudMatrix[$fileName][$currentRole]);
+        if (isset($crudMatrix[$cleanFileName][$currentRole])) {
+            return in_array($actionType, $crudMatrix[$cleanFileName][$currentRole]);
         }
         return false;
     }
 }
 
-// LOGIKA AUTO-OPEN DROPDOWN COLLAPSE SIDEBAR
+// =========================================================================
+// 6. LOGIKA AUTO-OPEN DROPDOWN COLLAPSE SIDEBAR
+// =========================================================================
 $isUserGroupActive      = in_array($currentFile, ['user.php', 'roles.php']);
 $isAssetGroupActive     = in_array($currentFile, ['manajemen_asset.php', 'assets.php', 'asset_movements.php']);
 $isNetworkGroupActive   = in_array($currentFile, ['server.php', 'network_device.php', 'network_port.php']);
 $isPasswordGroupActive  = in_array($currentFile, ['password_categories.php', 'password_vault.php']);
 $isKnowledgeGroupActive = in_array($currentFile, ['knowledge_categories.php', 'knowledge_articles.php']);
 $isSopGroupActive       = in_array($currentFile, ['sop_categories.php', 'sops.php']);
+
+$buildingPages          = ['relasi.php', 'relasi_gedung.php', 'relasi_lantai.php', 'relasi_ruangan.php'];
+$isBuildingActive       = in_array($currentFile, $buildingPages);
 ?>
 
 <!-- 1. DASHBOARD -->
@@ -145,6 +173,7 @@ $isSopGroupActive       = in_array($currentFile, ['sop_categories.php', 'sops.ph
     </a>
 </li>
 <?php endif; ?>
+
 <!-- 2 & 3. GRUP USER -->
 <?php if (hasMenuAccess('user.php', $userRole, $menuPermissions) || hasMenuAccess('roles.php', $userRole, $menuPermissions)): ?>
 <li class="nav-item mb-1">
@@ -173,14 +202,23 @@ $isSopGroupActive       = in_array($currentFile, ['sop_categories.php', 'sops.ph
     </div>
 </li>
 <?php endif; ?>
-<!-- 4. MANAJEMEN BANGUNAN & RUANG -->
+
+<!-- 4. MANAJEMEN BANGUNAN & RUANG (FIX: Menyamakan kelas ke active-style) -->
+<?php 
+// Daftarkan semua file yang berhubungan dengan manajemen Gedung/Lantai/Ruangan
+$buildingPages = ['relasi.php', 'relasi_gedung.php', 'relasi_lantai.php', 'relasi_ruangan.php'];
+$isBuildingActive = in_array($currentFile, $buildingPages);
+?>
+
 <?php if (hasMenuAccess('relasi.php', $userRole, $menuPermissions)): ?>
 <li class="nav-item mb-1">
-    <a href="relasi.php" class="nav-link <?= checkActiveMenu('relasi.php', $currentFile) ?> rounded d-flex align-items-center">
+    <!-- PERUBAHAN: Kelas diubah dari 'active' menjadi 'active-style' agar sesuai dengan standar CSS sidebar Anda -->
+    <a href="relasi.php" class="nav-link <?= $isBuildingActive ? 'active-style' : '' ?> rounded d-flex align-items-center">
         <i class="bi bi-building me-3"></i> Gedung/Lantai/Ruangan
     </a>
 </li>
 <?php endif; ?>
+
 <!-- 5, 6, 7. GRUP ASSET -->
 <?php if (hasMenuAccess('manajemen_asset.php', $userRole, $menuPermissions) || hasMenuAccess('assets.php', $userRole, $menuPermissions) || hasMenuAccess('asset_movements.php', $userRole, $menuPermissions)): ?>
 <li class="nav-item mb-1">
