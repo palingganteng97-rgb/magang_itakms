@@ -1,8 +1,20 @@
 <?php
 // Bagian session_start() sudah dihapus agar tidak bentrok dengan halaman utama
 
-// 1. Ambil role user dari session login secara otomatis
-$userRole = isset($_SESSION['user']['role']) ? $_SESSION['user']['role'] : 'Viewer';
+// ==================== PERBAIKAN OTOMATIS ====================
+// 1. Ambil angka role_id dari session login (Super Admin = 1)
+$sessionRoleId = isset($_SESSION['user']['role_id']) ? (int)$_SESSION['user']['role_id'] : 4;
+
+// 2. Terjemahkan angka ID menjadi Nama Role teks agar dibaca oleh matriks di bawah
+$roleMapping = [
+    1 => 'Super Admin',
+    2 => 'Admin IT',
+    3 => 'Teknisi',
+    4 => 'Viewer'
+];
+
+$userRole = isset($roleMapping[$sessionRoleId]) ? $roleMapping[$sessionRoleId] : 'Viewer';
+// ===========================================================
 
 // 2. Variabel pengaman untuk mendeteksi halaman aktif saat ini
 $currentFile = basename($_SERVER['PHP_SELF']);

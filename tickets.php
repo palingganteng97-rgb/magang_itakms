@@ -39,10 +39,10 @@ try {
         $stmtCount = $conn->prepare("SELECT COUNT(*) FROM tickets WHERE pelapor = :user_id");
         $stmtCount->execute([':user_id' => $current_user_id]);
         $totalTickets = $stmtCount->fetchColumn();
-        $totalPages = ceil($totalTickets / $perPage);
+        $totalPages = max(1, ceil($totalTickets / $perPage));
 
-        // Opsi Viewers: Query LEFT JOIN ganda untuk menarik nama pelapor dan nama teknisi asli MILIK SENDIRI
-        $query = "SELECT t.*, u.nama AS nama_pelapor, ut.username AS nama_teknisi 
+        // PERBAIKAN: Mengubah u.nama menjadi u.username agar tidak error (disesuaikan dengan isi tabel users Anda)
+        $query = "SELECT t.*, u.username AS nama_pelapor, ut.username AS nama_teknisi 
                   FROM tickets t 
                   LEFT JOIN users u ON t.pelapor = u.id 
                   LEFT JOIN users ut ON t.teknisi = ut.id 
@@ -56,10 +56,10 @@ try {
         // Opsi Admin/Teknisi: Hitung total SEMUA tiket masuk
         $stmtCount = $conn->query("SELECT COUNT(*) FROM tickets");
         $totalTickets = $stmtCount->fetchColumn();
-        $totalPages = ceil($totalTickets / $perPage);
+        $totalPages = max(1, ceil($totalTickets / $perPage));
 
-        // Opsi Admin/Teknisi: Ambil SEMUA data tiket tanpa batasan WHERE
-        $query = "SELECT t.*, u.nama AS nama_pelapor, ut.username AS nama_teknisi 
+        // PERBAIKAN: Mengubah u.nama menjadi u.username
+        $query = "SELECT t.*, u.username AS nama_pelapor, ut.username AS nama_teknisi 
                   FROM tickets t 
                   LEFT JOIN users u ON t.pelapor = u.id 
                   LEFT JOIN users ut ON t.teknisi = ut.id 
@@ -75,7 +75,10 @@ try {
     $tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (PDOException $e) {
-    // Jika koneksi gagal, sistem tidak crash total melainkan mencetak pesan eror di log server
+    // Memunculkan pesan error langsung di layar browser Anda jika database bermasalah
+    echo "<div style='color:red; background:#fff3f3; border:1px solid red; padding:15px; margin:20px; font-family:sans-serif;'>
+            <strong>Database Error:</strong> " . htmlspecialchars($e->getMessage()) . "
+          </div>";
     error_log("Database Error: " . $e->getMessage());
 }
 ?>

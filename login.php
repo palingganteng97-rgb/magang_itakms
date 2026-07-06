@@ -14,9 +14,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($username === '' || $password === '') {
         $errors[] = 'Username dan password wajib diisi.';
     } else {
-        // Kolom password & status menyesuaikan struktur tabel users.
-        // Pastikan di DB: nama kolom password adalah `password`.
-        $stmt = $conn->prepare('SELECT id, nama, username, status, password FROM users WHERE username = :username LIMIT 1');
+        // 1. TAMBAHKAN KOLOM role_id DI DALAM SELECT QUERY
+        $stmt = $conn->prepare('SELECT id, nama, username, role_id, status, password FROM users WHERE username = :username LIMIT 1');
         $stmt->execute([':username' => $username]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -45,11 +44,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif ((int)($user['status'] ?? 0) !== 1) {
                 $errors[] = 'Akun tidak aktif.';
             } else {
-                // Set array session data user
+                // 2. TAMBAHKAN role_id KE DALAM ARRAY SESSION $_SESSION['user']
                 $_SESSION['user'] = [
                     'id' => (int)$user['id'],
                     'nama' => $user['nama'],
-                    'username' => $user['username']
+                    'username' => $user['username'],
+                    'role_id' => (int)$user['role_id'] // <-- Ini wajib ada agar halaman lain bisa membaca rolenya
                 ];
 
                 // AMBIL ID USER DAN TULIS LOG AKTIVITAS (LOGIN BERHASIL)

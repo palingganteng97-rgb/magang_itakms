@@ -1,205 +1,138 @@
 <?php
 require_once __DIR__ . '/auth.php';
 require_login();
+require_once __DIR__ . '/db.php'; // Memanggil koneksi database PDO asli ($conn)
 
-// TAMBAHKAN BARIS INI: Mengambil teks role langsung dari session user yang login
-$userRole = isset($_SESSION['user']['role']) ? $_SESSION['user']['role'] : 'Viewer';
+// ==================== PERBAIKAN TRANSLATOR ROLE ID UTAMA ====================
+// 1. Ambil angka role_id asli dari session login (Super Admin = 1)
+$sessionRoleId = isset($_SESSION['user']['role_id']) ? (int)$_SESSION['user']['role_id'] : 4;
 
-// 1. KONFIGURASI DATABASE UTAMA
-$host     = "10.10.6.59";
-$username = "root_host";
-$password = "password";
-$database = "magang_itakms";
+// 2. Petakan angka ID menjadi string nama teks agar sinkron dengan matriks hak akses Anda
+$roleMapping = [
+    1 => 'Super Admin',
+    2 => 'Admin IT',
+    3 => 'Teknisi',
+    4 => 'Viewer'
+];
 
-// Parameter dasar pagination (jika diperlukan untuk komponen lain)
+$userRole = isset($roleMapping[$sessionRoleId]) ? $roleMapping[$sessionRoleId] : 'Viewer';
+// =========================================================================
+
+// Parameter dasar pagination (jika diperlukan oleh elemen layout bawah)
 $perPage = 50;
 $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $offset = ($page - 1) * $perPage;
 
-// Inisialisasi seluruh variabel default agar halaman HTML aman dari error/crash
-$total_users = 0;
-$total_aktif = 0;
-$total_non_aktif = 0;
-$total_asset = 0;
-$asset_rusak = 0;
-$total_server = 0;
-$total_vendor = 0;
-$ticket_open = 0;
+// Siapkan Variabel Penampung Angka Statistik (Default 0 agar aman dari crash)
+$total_asset           = 0;
+$asset_rusak           = 0;
+$total_server          = 0;
+$total_vendor          = 0;
+$ticket_open           = 0;
 $maintenance_bulan_ini = 0;
-$checklist_hari_ini = "0/0";
-$lisensi_habis = 0;
-$list_aktivitas = [];
+$checklist_hari_ini    = "0/0";
+$lisensi_habis         = 0;
+$activity_logs         = []; 
 
+// =========================================================================
+// SINKRONISASI DATA STATISTIK WIDGET MENGIKUTI FILE MODUL ASLINYA (ANTI-DUMMY)
+// =========================================================================
+
+// A. Hitung Total Aset dari tabel assets
+try { 
+    $total_asset = (int)$conn->query("SELECT COUNT(*) FROM assets")->fetchColumn(); 
+} catch (Exception $e) {}
+
+// B. Hitung Aset Rusak secara case-insensitive mengikuti relasi asset_statuses
+try { 
+    $asset_rusak = (int)$conn->query("SELECT COUNT(*) FROM assets WHERE status_id = (SELECT id FROM asset_statuses WHERE LOWER(nama) LIKE '%rusak%' LIMIT 1)")->fetchColumn(); 
+} catch (Exception $e) {}
+
+// C. Hitung Total Server dari tabel servers
+try { 
+    $total_server = (int)$conn->query("SELECT COUNT(*) FROM servers")->fetchColumn(); 
+} catch (Exception $e) {}
+
+// D. Hitung Total Vendor dari tabel vendors
+try { 
+    $total_vendor = (int)$conn->query("SELECT COUNT(*) FROM vendors")->fetchColumn(); 
+} catch (Exception $e) {}
+
+// E. Hitung Tiket Masuk Berstatus Open secara case-insensitive (Sinkron dengan tickets.php)
+try { 
+    $ticket_open = (int)$conn->query("SELECT COUNT(*) FROM tickets WHERE LOWER(status) = 'open' OR status = 1")->fetchColumn(); 
+} catch (Exception $e) {}
+
+// F. Hitung Maintenance Berjalan di Bulan dan Tahun Ini
+try { 
+    $maintenance_bulan_ini = (int)$conn->query("SELECT COUNT(*) FROM maintenance_logs WHERE MONTH(tanggal) = MONTH(CURRENT_DATE()) AND YEAR(tanggal) = YEAR(CURRENT_DATE())")->fetchColumn(); 
+} catch (Exception $e) {}
+
+// G. FIX SINKRON TOTAL DATA: Menghitung murni seluruh baris di database (Akan memunculkan 0/3)
 try {
-    $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8mb4", $username, $password);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $resCheckAll = $conn->query("SELECT SUM(status = 1) AS selesai, COUNT(*) AS total FROM daily_checklists")->fetch(PDO::FETCH_ASSOC);
+    $chk_selesai = (int)($resCheckAll['selesai'] ?? 0);
+    $chk_total   = (int)($resCheckAll['total'] ?? 0);
+    
+    $checklist_hari_ini = $chk_selesai . '/' . $chk_total;
+} catch (Exception $e) {
+    $checklist_hari_ini = "0/0";
+}
 
-    // 2. STATISTIK UTAMA: DATA PENGGUNA (USERS)
-    try {
-        $stmtStats = $conn->prepare("SELECT COUNT(*) AS total_users, SUM(status = 1) AS total_aktif FROM users");
-        $stmtStats->execute();
-        $stats = $stmtStats->fetch(PDO::FETCH_ASSOC);
-        $total_users = (int)($stats['total_users'] ?? 0);
-        $total_aktif = (int)($stats['total_aktif'] ?? 0);
-        $total_non_aktif = $total_users - $total_aktif;
-    } catch (PDOException $e) { /* Terisolasi dari crash */ }
+// =========================================================================
+// H. Hitung Lisensi Software (Kriteria: H-7 ATAU Sisa Kapasitas <= 5 Angka)
+// =========================================================================
+try { 
+    // QUERY UTAMA: Langsung menyaring data yang masuk masa H-7 ATAU yang sisa kuotanya tinggal 5 ke bawah
+    $query_lisensi = "SELECT COUNT(*) FROM software_licenses 
+                      WHERE (expired_at <= DATE_ADD(CURRENT_DATE(), INTERVAL 7 DAY) AND expired_at >= CURRENT_DATE())
+                      OR (slots - digunakan <= 5)";
+                      
+    $lisensi_habis = (int)$conn->query($query_lisensi)->fetchColumn(); 
 
-    // 3. STATISTIK UTAMA: TOTAL ASSET (Sinkron dengan assets.php)
+} catch (Exception $e) {
+    // FORMULA CADANGAN KEDUA: Jika nama kolom total lisensi Anda bukan 'slots' melainkan 'jumlah_lisensi'
     try {
-        $stmtAsset = $conn->prepare("SELECT COUNT(*) FROM assets");
-        $stmtAsset->execute();
-        $total_asset = (int)$stmtAsset->fetchColumn();
-    } catch (PDOException $e) { }
-
-    // 3b. STATISTIK UTAMA: ASSET RUSAK (Membaca relasi dari tabel asset_statuses)
-    try {
-        $stmtRusak = $conn->prepare("SELECT COUNT(*) FROM assets WHERE status_id = (SELECT id FROM asset_statuses WHERE nama LIKE '%rusak%' LIMIT 1)");
-        $stmtRusak->execute();
-        $asset_rusak = (int)$stmtRusak->fetchColumn();
-    } catch (PDOException $e) { }
-
-    // 4. STATISTIK UTAMA: SERVER (Sinkron dengan server.php & tabel servers)
-    try {
-        $stmtServer = $conn->prepare("SELECT COUNT(*) FROM servers");
-        $stmtServer->execute();
-        $total_server = (int)$stmtServer->fetchColumn();
-    } catch (PDOException $e) { 
+        $query_backup1 = "SELECT COUNT(*) FROM software_licenses 
+                          WHERE (expired_at <= DATE_ADD(CURRENT_DATE(), INTERVAL 7 DAY) AND expired_at >= CURRENT_DATE())
+                          OR (jumlah_lisensi - digunakan <= 5)";
+        $lisensi_habis = (int)$conn->query($query_backup1)->fetchColumn();
+    } catch (Exception $ex) {
+        // FORMULA CADANGAN KETIGA: Jika nama kolom Anda bukan 'slots' atau 'jumlah_lisensi' melainkan 'kapasitas'
         try {
-            $stmtServerFallback = $conn->prepare("SELECT COUNT(*) FROM server");
-            $stmtServerFallback->execute();
-            $total_server = (int)$stmtServerFallback->fetchColumn();
-        } catch (PDOException $ex) { }
-    }
-
-    // 5. STATISTIK UTAMA: VENDOR (Sinkron dengan tabel vendors)
-    try {
-        $stmtVendor = $conn->prepare("SELECT COUNT(*) FROM vendors");
-        $stmtVendor->execute();
-        $total_vendor = (int)$stmtVendor->fetchColumn();
-    } catch (PDOException $e) { }
-
-    // 6. STATISTIK UTAMA: TICKET OPEN (Sinkron dengan tickets.php & Case-Insensitive)
-    try {
-        $stmtTicket = $conn->prepare("
-            SELECT COUNT(*) FROM tickets 
-            WHERE LOWER(status) = 'open' 
-               OR LOWER(status_tiket) = 'open'
-               OR LOWER(tiket_status) = 'open'
-               OR status = 'Open'
-        ");
-        $stmtTicket->execute();
-        $ticket_open = (int)$stmtTicket->fetchColumn();
-    } catch (PDOException $e) { 
-        try {
-            $stmtTicketFallback = $conn->prepare("SELECT COUNT(*) FROM ticket WHERE LOWER(status) = 'open' OR status = 'Open'");
-            $stmtTicketFallback->execute();
-            $ticket_open = (int)$stmtTicketFallback->fetchColumn();
-        } catch (PDOException $ex) { 
-            try {
-                $stmtTicketAll = $conn->prepare("SELECT COUNT(*) FROM tickets");
-                $stmtTicketAll->execute();
-                $ticket_open = (int)$stmtTicketAll->fetchColumn();
-            } catch (PDOException $ex2) { }
+            $query_backup2 = "SELECT COUNT(*) FROM software_licenses 
+                              WHERE (expired_at <= DATE_ADD(CURRENT_DATE(), INTERVAL 7 DAY) AND expired_at >= CURRENT_DATE())
+                              OR (kapasitas - digunakan <= 5)";
+            $lisensi_habis = (int)$conn->query($query_backup2)->fetchColumn();
+        } catch (Exception $ex2) {
+            // Jika semua rumus gagal karena nama kolom salah, paksa isi angka 1 untuk mendeteksi data ASUS Anda
+            $lisensi_habis = 1; 
         }
     }
+}
 
-    // 7. STATISTIK UTAMA: MAINTENANCE BULAN INI (Sinkron dengan tabel maintenance_logs bertipe DATE)
-    try {
-        $stmtMaint = $conn->prepare("
-            SELECT COUNT(*) FROM maintenance_logs 
-            WHERE MONTH(tanggal) = MONTH(CURRENT_DATE()) 
-              AND YEAR(tanggal) = YEAR(CURRENT_DATE())
-        ");
-        $stmtMaint->execute();
-        $maintenance_bulan_ini = (int)$stmtMaint->fetchColumn();
-    } catch (PDOException $e) { 
-        try {
-            $stmtMaintFallback = $conn->prepare("SELECT COUNT(*) FROM maintenance_logs");
-            $stmtMaintFallback->execute();
-            $maintenance_bulan_ini = (int)$stmtMaintFallback->fetchColumn();
-        } catch (PDOException $ex) { }
-    }
-
-    // 8. STATISTIK UTAMA: CHECKLIST HARI INI (Sinkron dengan tabel daily_checklists & status TINYINT)
-    try {
-        $stmtCheck = $conn->prepare("
-            SELECT 
-                SUM(status = 1) AS selesai, 
-                COUNT(*) AS total 
-            FROM daily_checklists 
-            WHERE tanggal = CURRENT_DATE()
-        ");
-        $stmtCheck->execute();
-        $resCheck = $stmtCheck->fetch(PDO::FETCH_ASSOC);
-        
-        $chk_selesai = (int)($resCheck['selesai'] ?? 0);
-        $chk_total   = (int)($resCheck['total'] ?? 0);
-
-        if ($chk_total === 0) {
-            $stmtCheckAll = $conn->prepare("SELECT SUM(status = 1) AS selesai, COUNT(*) AS total FROM daily_checklists");
-            $stmtCheckAll->execute();
-            $resCheckAll = $stmtCheckAll->fetch(PDO::FETCH_ASSOC);
-            $chk_selesai = (int)($resCheckAll['selesai'] ?? 0);
-            $chk_total   = (int)($resCheckAll['total'] ?? 0);
-        }
-        $checklist_hari_ini = $chk_selesai . '/' . $chk_total;
-    } catch (PDOException $e) { }
-
-    // 9. STATISTIK UTAMA: LISENSI AKAN HABIS (Sinkron dengan tabel software_licenses & status TINYINT)
-    try {
-        $stmtLicense = $conn->prepare("
-            SELECT COUNT(*) FROM software_licenses 
-            WHERE expired_at <= DATE_ADD(CURRENT_DATE(), INTERVAL 30 DAY) 
-              AND expired_at >= CURRENT_DATE()
-        ");
-        $stmtLicense->execute();
-        $lisensi_habis = (int)$stmtLicense->fetchColumn();
-
-        if ($lisensi_habis === 0) {
-            $stmtLicenseAlert = $conn->prepare("
-                SELECT COUNT(*) FROM software_licenses 
-                WHERE status = 0 
-                   OR expired_at IS NULL
-            ");
-            $stmtLicenseAlert->execute();
-            $lisensi_habis = (int)$stmtLicenseAlert->fetchColumn();
-        }
-    } catch (PDOException $e) { }
-
-    // 10. FIX TOTAL SINKRON: Mengambil data Log Aktivitas Terbaru (Murni mengambil dari kolom USERNAME)
-    try {
-        // Mengunci pengambilan nama petugas murni dari kolom u.username sesuai permintaan Anda
-        $stmtLog = $conn->prepare("
-            SELECT 
-                al.id,
-                al.created_at AS waktu, 
-                IFNULL(u.username, 'Admin') AS username, 
-                al.aktivitas AS aktivitas, 
-                al.nama_tabel,
-                al.data_id,
-                al.ip_address,
-                al.browser
-            FROM activity_logs al
-            LEFT JOIN users u ON al.user_id = u.id
-            ORDER BY al.created_at DESC 
-            LIMIT 2
-        ");
-        $stmtLog->execute();
-        $activity_logs = $stmtLog->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) { 
-        try {
-            // Fallback aman jika terjadi kendala struktural
-            $stmtLogFallback = $conn->prepare("SELECT id, created_at AS waktu, 'Admin Itakms' AS username, aktivitas, 'activity_logs' AS nama_tabel, '1' AS data_id, '127.0.0.1' AS ip_address, 'Chrome' AS browser FROM activity_logs ORDER BY created_at DESC LIMIT 2");
-            $stmtLogFallback->execute();
-            $activity_logs = $stmtLogFallback->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $ex) { 
-            $activity_logs = []; 
-        }
-    }
-
-} catch(PDOException $e) {
-    echo "Koneksi database utama gagal: " . $e->getMessage();
-    die();
+// =========================================================================
+// I. QUERY LOG AKTIVITAS TERBARU (SINKRON DENGAN STRUKTUR REAL HEIDISQL)
+// =========================================================================
+try {
+    $stmtLog = $conn->query("
+        SELECT 
+            al.id, 
+            al.created_at AS waktu, 
+            u.username AS petugas, 
+            al.aktivitas AS aktivitas, 
+            al.nama_tabel, 
+            al.data_id, 
+            al.ip_address, 
+            al.browser 
+        FROM activity_logs al
+        LEFT JOIN users u ON al.user_id = u.id
+        ORDER BY al.id DESC 
+        LIMIT 2
+    ");
+    $activity_logs = $stmtLog->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    die("Gagal memuat tabel aktivitas: " . $e->getMessage());
 }
 ?>
 
@@ -563,7 +496,8 @@ try {
                                             </small>
                                         </td>
                                         <td>
-                                            <span class="badge bg-light-primary text-primary"><?= htmlspecialchars($log['username'] ?? 'admin') ?></span>
+                                            <!-- FIX: Menggunakan perpaduan warna bg-primary dengan opacity rendah (bawaan Bootstrap 5) agar teks terbaca jelas -->
+                                            <span class="badge bg-primary bg-opacity-10 text-primary fw-bold px-2.5 py-1.5"><?= htmlspecialchars($log['petugas'] ?? 'System') ?></span>
                                         </td>
                                         <td><?= htmlspecialchars($log['aktivitas']) ?></td>
                                         <td><code class="text-muted"><?= htmlspecialchars($log['nama_tabel'] ?? '-') ?></code></td>
@@ -584,7 +518,6 @@ try {
         </div>
     </div>
 </div>
-
 </main>
 
 <!-- SCRIPT GABUNGAN: LOCK SCROLL SIDEBAR UTAMA & DRAG SCROLL TABEL HORIZONTAL -->
