@@ -163,33 +163,34 @@ try {
         }
     } catch (PDOException $e) { }
 
-    // 10. FIX FINAL: Mengambil data Kolom Lengkap untuk Dashboard (Variabel disamakan $activity_logs)
+    // 10. FIX TOTAL SINKRON: Mengambil data Log Aktivitas Terbaru (Murni mengambil dari kolom USERNAME)
     try {
+        // Mengunci pengambilan nama petugas murni dari kolom u.username sesuai permintaan Anda
         $stmtLog = $conn->prepare("
             SELECT 
                 al.id,
                 al.created_at AS waktu, 
-                IFNULL(u.username, IFNULL(u.nama, 'Admin')) AS username, 
+                IFNULL(u.username, 'Admin') AS username, 
                 al.aktivitas AS aktivitas, 
                 al.nama_tabel,
                 al.data_id,
                 al.ip_address,
                 al.browser
             FROM activity_logs al
-            LEFT JOIN users u ON al.user_id = u.id OR al.user_id = u.id_user
+            LEFT JOIN users u ON al.user_id = u.id
             ORDER BY al.created_at DESC 
             LIMIT 2
         ");
         $stmtLog->execute();
-        // Nama variabel diubah menjadi $activity_logs agar sinkron dengan HTML tabel di bawah
         $activity_logs = $stmtLog->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) { 
         try {
+            // Fallback aman jika terjadi kendala struktural
             $stmtLogFallback = $conn->prepare("SELECT id, created_at AS waktu, 'Admin Itakms' AS username, aktivitas, 'activity_logs' AS nama_tabel, '1' AS data_id, '127.0.0.1' AS ip_address, 'Chrome' AS browser FROM activity_logs ORDER BY created_at DESC LIMIT 2");
             $stmtLogFallback->execute();
             $activity_logs = $stmtLogFallback->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $ex) { 
-            $activity_logs = []; // Fallback jika tabel benar-benar kosong
+            $activity_logs = []; 
         }
     }
 
