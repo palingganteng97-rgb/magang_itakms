@@ -456,15 +456,15 @@ try {
             </form>
 
 <!-- Tabel Utama Penampil Data Log Aktivitas -->
-<div class="table-responsive" style="overflow-x: auto !important; cursor: grab; user-select: none; -webkit-user-select: none; display: block; width: 100%;">
-    <table class="table table-bordered table-striped table-hover align-middle mb-0 text-nowrap" style="min-width: 1400px !important;">
-
-<thead class="table-dark small text-uppercase">
+<!-- FIX: Menambahkan max-height 380px untuk membatasi tampilan maksimal 7 baris data dan mengaktifkan scroll vertikal -->
+<div class="table-responsive" style="max-height: 380px !important; overflow-y: auto !important; overflow-x: auto !important; cursor: grab; user-select: none; -webkit-user-select: none; display: block; width: 100%;">
+    <table class="table table-bordered table-striped table-hover align-middle mb-0 text-nowrap" style="width: 100%; min-width: 1400px !important;">
+        <thead class="table-dark small text-uppercase" style="position: sticky; top: 0; z-index: 1020;">
             <tr>
                 <th width="70" class="text-center">ID</th>
                 <th width="150">Waktu Kejadian</th>
                 <th width="120">Petugas</th>
-                <th style="min-width: 300px !important; white-space: nowrap;">Aktivitas / Deskripsi</th>
+                <th style="min-width: 300px !important;">Aktivitas / Deskripsi</th>
                 <th width="140">Nama Tabel</th>
                 <th width="90" class="text-center">Data ID</th>
                 <th width="130">IP Address</th>

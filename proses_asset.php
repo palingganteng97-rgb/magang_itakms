@@ -67,21 +67,37 @@ if ($action == 'create') {
             VALUES (:kategori_id, :brand_id, :room_id, :status_id, :kode_asset, :nama, :serial_number, :hostname, :ip_address, :mac_address, :tanggal_beli, :garansi, :foto, :manual_book, :spesifikasi, NOW(), NOW())";
     
     $stmt = $conn->prepare($sql);
-    $sukses = $stmt->execute([
-        ':kategori_id' => $kategori_id, ':brand_id' => $brand_id, ':room_id' => $room_id, ':status_id' => $status_id,
-        ':kode_asset' => $kode_asset, ':nama' => $nama, ':serial_number' => $serial_number, ':hostname' => $hostname,
-        ':ip_address' => $ip_address, ':mac_address' => $mac_address, ':tanggal_beli' => $tanggal_beli, ':garansi' => $garansi,
-        ':foto' => $nama_foto, ':manual_book' => $nama_manual_book, ':spesifikasi' => $spesifikasi
-    ]);
 
-    // AMBIL ID BARU DAN TULIS LOG AKTIVITAS (CREATE)
-    if ($sukses) {
-        $new_asset_id = $conn->lastInsertId();
-        write_log($conn, "Menambahkan data asset baru: " . $nama, "assets", $new_asset_id);
+    try {
+        $sukses = $stmt->execute([
+            ':kategori_id' => $kategori_id, ':brand_id' => $brand_id, ':room_id' => $room_id, ':status_id' => $status_id,
+            ':kode_asset' => $kode_asset, ':nama' => $nama, ':serial_number' => $serial_number, ':hostname' => $hostname,
+            ':ip_address' => $ip_address, ':mac_address' => $mac_address, ':tanggal_beli' => $tanggal_beli, ':garansi' => $garansi,
+            ':foto' => $nama_foto, ':manual_book' => $nama_manual_book, ':spesifikasi' => $spesifikasi
+        ]);
+
+        if ($sukses) {
+            $new_asset_id = $conn->lastInsertId();
+            write_log($conn, "Menambahkan data asset baru: " . $nama, "assets", $new_asset_id);
+        }
+
+        header("Location: assets.php");
+        exit();
+
+    } catch (PDOException $e) {
+        if ($e->getCode() == 23000 || strpos($e->getMessage(), '1062') !== false) {
+            if (!empty($nama_foto) && file_exists('uploads/' . $nama_foto)) { unlink('uploads/' . $nama_foto); }
+            if (!empty($nama_manual_book) && file_exists('uploads/' . $nama_manual_book)) { unlink('uploads/' . $nama_manual_book); }
+
+            echo "<script>
+                    alert('Gagal Simpan! Kode Asset \'$kode_asset\' sudah terdaftar di database. Silakan gunakan kode unik yang lain.');
+                    window.history.back();
+                  </script>";
+            exit();
+        } else {
+            die("Kesalahan database: " . $e->getMessage());
+        }
     }
-
-    header("Location: assets.php");
-    exit();
 }
 
 // -------------------------------------------------------------------------
@@ -105,7 +121,7 @@ if ($action == 'update') {
     $garansi       = !empty($_POST['garansi']) ? $_POST['garansi'] : null;
     $spesifikasi   = !empty($_POST['spesifikasi']) ? trim($_POST['spesifikasi']) : null;
 
-    // Ambil berkas lama
+    // Ambil data berkas lama dari database untuk cadangan
     $get_old = $conn->prepare("SELECT foto, manual_book FROM assets WHERE id = :id");
     $get_old->execute([':id' => $id]);
     $old_data = $get_old->fetch(PDO::FETCH_ASSOC);
@@ -113,109 +129,191 @@ if ($action == 'update') {
     $nama_foto = $old_data['foto'] ?? null;
     $nama_manual_book = $old_data['manual_book'] ?? null;
 
-    // Update foto
+    // Flag penanda apakah ada file baru yang berhasil diunggah
+    $foto_terbaru_diupload = false;
+    $manual_terbaru_diupload = false;
+
+    // Proses update foto (Webcam atau File Upload)
     if (!empty($_POST['foto_webcam'])) {
-        if (!empty($nama_foto) && $nama_foto != 'default.jpg') {
-            $path_foto_lama = 'uploads/' . $nama_foto;
-            if (file_exists($path_foto_lama)) { unlink($path_foto_lama); }
-        }
         $raw_base64 = $_POST['foto_webcam'];
         list($type, $raw_data) = explode(';', $raw_base64);
         list(, $raw_data)      = explode(',', $raw_data);
-        $nama_foto = "CAM_" . time() . "_" . rand(100, 999) . ".png";
-        file_put_contents('uploads/' . $nama_foto, base64_decode($raw_data));
+        $nama_foto_baru = "CAM_" . time() . "_" . rand(100, 999) . ".png";
+        if (file_put_contents('uploads/' . $nama_foto_baru, base64_decode($raw_data))) {
+            $nama_foto = $nama_foto_baru;
+            $foto_terbaru_diupload = true;
+        }
     } elseif (isset($_FILES['foto']) && $_FILES['foto']['error'] == 0) {
-        if (!empty($nama_foto) && $nama_foto != 'default.jpg') {
-            $path_foto_lama = 'uploads/' . $nama_foto;
-            if (file_exists($path_foto_lama)) { unlink($path_foto_lama); }
-        }
         $ext_foto  = pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION);
-        $nama_foto = "IMG_" . time() . "_" . rand(100, 999) . "." . $ext_foto;
-        move_uploaded_file($_FILES['foto']['tmp_name'], 'uploads/' . $nama_foto);
-    }
-
-    // Update manual book
-    if (isset($_FILES['manual_book']) && $_FILES['manual_book']['error'] == 0) {
-        if (!empty($nama_manual_book)) {
-            $path_pdf_lama = 'uploads/' . $nama_manual_book;
-            if (file_exists($path_pdf_lama)) { unlink($path_pdf_lama); }
+        $nama_foto_baru = "IMG_" . time() . "_" . rand(100, 999) . "." . $ext_foto;
+        if (move_uploaded_file($_FILES['foto']['tmp_name'], 'uploads/' . $nama_foto_baru)) {
+            $nama_foto = $nama_foto_baru;
+            $foto_terbaru_diupload = true;
         }
-        $ext_pdf          = pathinfo($_FILES['manual_book']['name'], PATHINFO_EXTENSION);
-        $nama_manual_book = "DOC_" . time() . "_" . rand(100, 999) . "." . $ext_pdf;
-        move_uploaded_file($_FILES['manual_book']['tmp_name'], 'uploads/' . $nama_manual_book);
     }
 
-    // Jalankan query update database
+    // Proses update dokumen manual book
+    if (isset($_FILES['manual_book']) && $_FILES['manual_book']['error'] == 0) {
+        $ext_pdf          = pathinfo($_FILES['manual_book']['name'], PATHINFO_EXTENSION);
+        $nama_manual_book_baru = "DOC_" . time() . "_" . rand(100, 999) . "." . $ext_pdf;
+        if (move_uploaded_file($_FILES['manual_book']['tmp_name'], 'uploads/' . $nama_manual_book_baru)) {
+            $nama_manual_book = $nama_manual_book_baru;
+            $manual_terbaru_diupload = true;
+        }
+    }
+
+    // Sambungan Query SQL Utama yang Lengkap dan Utuh
     $sql = "UPDATE assets SET 
                 kategori_id = :kategori_id, brand_id = :brand_id, room_id = :room_id, status_id = :status_id, 
                 kode_asset = :kode_asset, nama = :nama, serial_number = :serial_number, hostname = :hostname,
-                ip_address = :ip_address, mac_address = :mac_address, tanggal_beli = :tanggal_beli, 
-                garansi = :garansi, foto = :foto, manual_book = :manual_book, spesifikasi = :spesifikasi, 
-                updated_at = NOW() 
+                ip_address = :ip_address, mac_address = :mac_address, tanggal_beli = :tanggal_beli, garansi = :garansi,
+                foto = :foto, manual_book = :manual_book, spesifikasi = :spesifikasi, updated_at = NOW()
             WHERE id = :id";
-    
+            
     $stmt = $conn->prepare($sql);
-    $sukses_update = $stmt->execute([
-        ':kategori_id' => $kategori_id, ':brand_id' => $brand_id, ':room_id' => $room_id, ':status_id' => $status_id,
-        ':kode_asset' => $kode_asset, ':nama' => $nama, ':serial_number' => $serial_number, ':hostname' => $hostname,
-        ':ip_address' => $ip_address, ':mac_address' => $mac_address, ':tanggal_beli' => $tanggal_beli, 
-        ':garansi' => $garansi, ':foto' => $nama_foto, ':manual_book' => $nama_manual_book, ':spesifikasi' => $spesifikasi, 
-        ':id' => $id
-    ]);
 
-    // TULIS LOG AKTIVITAS (UPDATE)
-    if ($sukses_update) {
-        write_log($conn, "Mengubah data asset: " . $nama, "assets", $id);
+    try {
+        $sukses = $stmt->execute([
+            ':kategori_id' => $kategori_id, ':brand_id' => $brand_id, ':room_id' => $room_id, ':status_id' => $status_id,
+            ':kode_asset' => $kode_asset, ':nama' => $nama, ':serial_number' => $serial_number, ':hostname' => $hostname,
+            ':ip_address' => $ip_address, ':mac_address' => $mac_address, ':tanggal_beli' => $tanggal_beli, ':garansi' => $garansi,
+            ':foto' => $nama_foto, ':manual_book' => $nama_manual_book, ':spesifikasi' => $spesifikasi, ':id' => $id
+        ]);
+
+        if ($sukses) {
+            // File fisik lama HANYA dihapus dari server jika database sukses diperbarui
+            if ($foto_terbaru_diupload && !empty($old_data['foto']) && $old_data['foto'] != 'default.jpg' && file_exists('uploads/' . $old_data['foto'])) {
+                unlink('uploads/' . $old_data['foto']);
+            }
+            if ($manual_terbaru_diupload && !empty($old_data['manual_book']) && file_exists('uploads/' . $old_data['manual_book'])) {
+                unlink('uploads/' . $old_data['manual_book']);
+            }
+            // Catat ke log aktivitas admin
+            write_log($conn, "Mengubah data asset: " . $nama, "assets", $id);
+        }
+
+        header("Location: assets.php");
+        exit();
+
+    } catch (PDOException $e) {
+        // Mencegah crash halaman jika kode_asset hasil edit ternyata kembar/duplikat
+        if ($e->getCode() == 23000 || strpos($e->getMessage(), '1062') !== false) {
+            // Hapus file baru yang telanjur terupload agar tidak mengotori server
+            if ($foto_terbaru_diupload && file_exists('uploads/' . $nama_foto)) { unlink('uploads/' . $nama_foto); }
+            if ($manual_terbaru_diupload && file_exists('uploads/' . $nama_manual_book)) { unlink('uploads/' . $nama_manual_book); }
+
+            echo "<script>
+                    alert('Gagal Mengubah Data! Kode Asset \'$kode_asset\' sudah terdaftar di aset lain. Silakan gunakan kode unik.');
+                    window.history.back();
+                  </script>";
+            exit();
+        } else {
+            die("Kesalahan database: " . $e->getMessage());
+        }
     }
-
-    header("Location: assets.php");
-    exit();
 }
 
 // -------------------------------------------------------------------------
-// LOGIKA 3: HAPUS DATA (DELETE)
+// LOGIKA 3: PROSES PERPINDAHAN RUANGAN ASSET (UPDATE_ROOM)
+// -------------------------------------------------------------------------
+if ($action == 'update_room') {
+    $asset_id  = isset($_POST['asset_id']) ? intval($_POST['asset_id']) : 0;
+    $room_id   = !empty($_POST['room_id']) ? intval($_POST['room_id']) : null;
+    $alasan    = !empty($_POST['alasan']) ? trim($_POST['alasan']) : 'Tidak ada alasan yang dicantumkan';
+
+    if ($asset_id <= 0 || empty($room_id)) {
+        die("Data mutasi aset tidak valid.");
+    }
+
+    try {
+        // Ambil nama aset dan nama ruangan lama untuk kebutuhan log riwayat
+        $stmtOld = $conn->prepare("
+            SELECT a.nama, r.nama AS nama_ruangan_lama 
+            FROM assets a 
+            LEFT JOIN rooms r ON a.room_id = r.id 
+            WHERE a.id = :id
+        ");
+        $stmtOld->execute([':id' => $asset_id]);
+        $oldAsset = $stmtOld->fetch(PDO::FETCH_ASSOC);
+
+        if (!$oldAsset) { 
+            die("Aset tidak ditemukan."); 
+        }
+
+        $nama_asset        = $oldAsset['nama'];
+        $ruangan_lama_nama = $oldAsset['nama_ruangan_lama'] ?? 'Tanpa Ruangan';
+
+        // Ambil nama ruangan baru yang dituju
+        $stmtNewRoom = $conn->prepare("SELECT nama FROM rooms WHERE id = :id");
+        $stmtNewRoom->execute([':id' => $room_id]);
+        $ruangan_baru_nama = $stmtNewRoom->fetchColumn() ?: 'Ruangan Tidak Diketahui';
+
+        // Update record data ruangan aset di database
+        $sqlMutasi = "UPDATE assets SET room_id = :room_id, updated_at = NOW() WHERE id = :id";
+        $stmtMutasi = $conn->prepare($sqlMutasi);
+        $sukses = $stmtMutasi->execute([':room_id' => $room_id, ':id' => $asset_id]);
+
+        if ($sukses) {
+            // Tulis narasi mutasi log perpindahan ke log aktivitas
+            $pesan_log = "Memindahkan asset '" . $nama_asset . "' dari ruangan [" . $ruangan_lama_nama . "] ke [" . $ruangan_baru_nama . "]. Alasan: " . $alasan;
+            write_log($conn, $pesan_log, "assets", $asset_id);
+        }
+
+        header("Location: assets.php?status=moved");
+        exit();
+
+    } catch (PDOException $e) {
+        die("Gagal memproses mutasi ruangan aset: " . $e->getMessage());
+    }
+}
+
+// -------------------------------------------------------------------------
+// LOGIKA 4: HAPUS DATA ASSET (DELETE)
 // -------------------------------------------------------------------------
 if ($action == 'delete') {
     $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
-    if ($id <= 0) { die("ID Data tidak valid."); }
-
-    try {
-        // 1. Ambil nama asset & berkas lama sebelum datanya terhapus permanen
-        $get_name = $conn->prepare("SELECT nama, foto, manual_book FROM assets WHERE id = :id");
-        $get_name->execute([':id' => $id]);
-        $asset_data = $get_name->fetch(PDO::FETCH_ASSOC);
-
-        if ($asset_data) {
-            $nama_asset = $asset_data['nama'];
-            
-            // 2. Hapus berkas file fisik di direktori uploads jika ada
-            if (!empty($asset_data['foto']) && $asset_data['foto'] != 'default.jpg') {
-                if (file_exists('uploads/' . $asset_data['foto'])) { 
-                    unlink('uploads/' . $asset_data['foto']); 
-                }
-            }
-            if (!empty($asset_data['manual_book'])) {
-                if (file_exists('uploads/' . $asset_data['manual_book'])) { 
-                    unlink('uploads/' . $asset_data['manual_book']); 
-                }
-            }
-
-            // 3. Jalankan query hapus baris tabel
-            $sql_delete = "DELETE FROM assets WHERE id = :id";
-            $stmt_delete = $conn->prepare($sql_delete);
-            $sukses_delete = $stmt_delete->execute([':id' => $id]);
-
-            // 4. Catat ke log aktivitas sistem beserta Data ID-nya
-            if ($sukses_delete) {
-                write_log($conn, "Menghapus data asset: " . $nama_asset, "assets", $id);
-            }
-        }
-    } catch (PDOException $e) {
-        die("Gagal menghapus data: " . $e->getMessage());
+    if ($id <= 0) { 
+        die("ID Data tidak valid."); 
     }
 
-    // 5. Kembalikan secara otomatis ke halaman daftar asset (Mencegah Layar Putih)
-    header("Location: assets.php");
-    exit();
+    try {
+        // 1. Ambil nama dan nama file (foto & manual book) sebelum datanya dihapus
+        $stmtGet = $conn->prepare("SELECT nama, foto, manual_book FROM assets WHERE id = :id");
+        $stmtGet->execute([':id' => $id]);
+        $asset = $stmtGet->fetch(PDO::FETCH_ASSOC);
+
+        if (!$asset) {
+            die("Data aset tidak ditemukan.");
+        }
+
+        $nama_asset = $asset['nama'];
+
+        // 2. Jalankan query hapus data dari database
+        $stmtDel = $conn->prepare("DELETE FROM assets WHERE id = :id");
+        $sukses = $stmtDel->execute([':id' => $id]);
+
+        if ($sukses) {
+            // 3. Jika sukses hapus dari DB, bersihkan file fisik di folder uploads agar hemat memori
+            if (!empty($asset['foto']) && $asset['foto'] != 'default.jpg' && file_exists('uploads/' . $asset['foto'])) {
+                unlink('uploads/' . $asset['foto']);
+            }
+            if (!empty($asset['manual_book']) && file_exists('uploads/' . $asset['manual_book'])) {
+                unlink('uploads/' . $asset['manual_book']);
+            }
+
+            // 4. Catat aktivitas hapus ke log admin
+            write_log($conn, "Menghapus data asset: " . $nama_asset, "assets", $id);
+        }
+
+        header("Location: assets.php?status=deleted");
+        exit();
+
+    } catch (PDOException $e) {
+        die("Gagal menghapus data asset: " . $e->getMessage());
+    }
 }
+
+// Jika parameter action tidak ada yang cocok
+header("Location: assets.php");
+exit();
 ?>

@@ -95,6 +95,28 @@ try {
     
     $list_status   = $conn->query("SELECT id, nama FROM asset_statuses ORDER BY nama ASC")->fetchAll(PDO::FETCH_ASSOC);
 
+    // =========================================================================
+    // GENERATOR KODE ASET OTOMATIS
+    // =========================================================================
+    $tahunSekarang = date('Y'); // Mengambil tahun berjalan (2026)
+    $prefix = "AST-" . $tahunSekarang . "-";
+
+    // Cari kode aset terakhir yang memiliki format tahun aktif saat ini
+    $stmtNextCode = $conn->prepare("SELECT kode_asset FROM assets WHERE kode_asset LIKE :prefix ORDER BY kode_asset DESC LIMIT 1");
+    $stmtNextCode->execute([':prefix' => $prefix . '%']);
+    $lastCode = $stmtNextCode->fetchColumn();
+
+    if ($lastCode) {
+        // Memotong string 3 digit angka terakhir (contoh: dari 'AST-2026-005' diambil integer 5)
+        $lastNumber = (int)substr($lastCode, -3);
+        $nextNumber = $lastNumber + 1;
+    } else {
+        $nextNumber = 1; // Jika belum ada aset terdaftar di tahun aktif ini
+    }
+
+    // Menggabungkan susunan kode baru dengan isian padding nol di kiri (Hasil: AST-2026-006)
+    $next_kode_asset = $prefix . str_pad($nextNumber, 3, "0", STR_PAD_LEFT);
+
 } catch (PDOException $e) {
     die("Koneksi atau query bermasalah: " . $e->getMessage());
 }
