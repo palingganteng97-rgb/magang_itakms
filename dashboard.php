@@ -673,7 +673,8 @@ try {
                                         <td class="text-center fw-bold text-secondary">#<?= $log['id'] ?></td>
                                         <td>
                                             <small class="fw-semibold text-dark">
-                                                <?= !empty($log['created_at']) ? date('d M Y H:i:s', strtotime($log['created_at'])) : '-' ?>
+                                                <!-- FIX SINKRON: Mengubah dari $log['created_at'] menjadi $log['waktu'] sesuai nama kolom query alias -->
+                                                <?= !empty($log['waktu']) ? date('d M Y H:i:s', strtotime($log['waktu'])) : '-' ?>
                                             </small>
                                         </td>
                                         <td>
