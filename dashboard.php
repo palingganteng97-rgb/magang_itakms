@@ -579,7 +579,7 @@ try {
         </div>
     </div>
 
-    <!-- STATISTIC CARDS (Baris 2) -->
+    <!-- STATISTIC CARDS (Baris 2) - FIX TATA LETAK GRID & UKURAN KARTU KONSISTEN -->
     <div class="row mb-4 gx-3">
         <!-- Ticket Open -->
         <div class="col-md-3">
@@ -595,12 +595,12 @@ try {
             </div>
         </div>
 
-        <!-- Maintenance -->
+        <!-- Maintenance (Sudah mengembalikan pembungkus col-md-3 dan mengunci text agar rata) -->
         <div class="col-md-3">
             <div class="card bg-secondary text-white mb-3 shadow-sm card-clickable position-relative">
                 <div class="card-body d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="card-title text-white-50">Maintenance</h6>
+                        <h6 class="card-title text-white-50 small text-nowrap">Maintenance Bulan Ini</h6>
                         <h2 class="card-text fw-bold"><?= $maintenance_bulan_ini ?></h2>
                     </div>
                     <i class="bi bi-tools fs-1 text-white-50"></i>
