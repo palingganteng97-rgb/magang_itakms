@@ -16,6 +16,14 @@ try {
     die("Koneksi database gagal: " . $e->getMessage());
 }
 
+// AMBIL DAFTAR ROLES UNTUK DROPDOWN FORM HTML
+try {
+    $stmtRoles = $conn->query("SELECT id, nama_role FROM roles ORDER BY nama_role ASC");
+    $daftar_roles = $stmtRoles->fetchAll();
+} catch (\PDOException $e) {
+    $daftar_roles = []; 
+}
+
 // 2. Logika Pemrosesan Form CRUD via POST
 $message = '';
 $messageType = '';
@@ -63,10 +71,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $plain_password = $_POST['password'];
             $username_input = $_POST['username'];
+            $role_id_input = $_POST['role_id']; // Mengambil nilai dari dropdown form
 
             $stmt = $conn->prepare("INSERT INTO users (id, role_id, nama, username, password, email, telepon, foto, status, building_id, floor_id, room_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $sukses_add = $stmt->execute([
-                $nextId, 1, $_POST['nama'], $username_input, $plain_password, $_POST['email'], 
+                $nextId, $role_id_input, $_POST['nama'], $username_input, $plain_password, $_POST['email'], 
                 $_POST['telepon'], $nama_foto, $_POST['status'], 
                 $_POST['building_id'] ?: null, $_POST['floor_id'] ?: null, $_POST['room_id'] ?: null
             ]);
@@ -89,6 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $id = $_POST['id'];
             $username_input = $_POST['username'];
+            $role_id_input = $_POST['role_id']; // Mengambil nilai dari dropdown form
             
             // Validasi username milik orang lain
             $stmtCheck = $conn->prepare("SELECT COUNT(*) FROM users WHERE username = ? AND id != ?");
@@ -115,17 +125,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (!empty($_POST['password'])) {
                 $plain_password = $_POST['password'];
-                $stmt = $conn->prepare("UPDATE users SET nama=?, username=?, password=?, email=?, telepon=?, foto=?, status=?, building_id=?, floor_id=?, room_id=? WHERE id=?");
+                $stmt = $conn->prepare("UPDATE users SET role_id=?, nama=?, username=?, password=?, email=?, telepon=?, foto=?, status=?, building_id=?, floor_id=?, room_id=? WHERE id=?");
                 $sukses_edit = $stmt->execute([
-                    $_POST['nama'], $username_input, $plain_password, $_POST['email'], 
+                    $role_id_input, $_POST['nama'], $username_input, $plain_password, $_POST['email'], 
                     $_POST['telepon'], $nama_foto, $_POST['status'], 
                     $_POST['building_id'] ?: null, $_POST['floor_id'] ?: null, $_POST['room_id'] ?: null, 
                     $id
                 ]);
             } else {
-                $stmt = $conn->prepare("UPDATE users SET nama=?, username=?, email=?, telepon=?, foto=?, status=?, building_id=?, floor_id=?, room_id=? WHERE id=?");
+                $stmt = $conn->prepare("UPDATE users SET role_id=?, nama=?, username=?, email=?, telepon=?, foto=?, status=?, building_id=?, floor_id=?, room_id=? WHERE id=?");
                 $sukses_edit = $stmt->execute([
-                    $_POST['nama'], $username_input, $_POST['email'], 
+                    $role_id_input, $_POST['nama'], $username_input, $_POST['email'], 
                     $_POST['telepon'], $nama_foto, $_POST['status'], 
                     $_POST['building_id'] ?: null, $_POST['floor_id'] ?: null, $_POST['room_id'] ?: null, 
                     $id
@@ -189,25 +199,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Menangkap status redirect dari URL untuk menampilkan alert secara dinamis & aman
+// 3. Menangkap Status dari URL untuk Flash Message Notifikasi
 if (isset($_GET['status'])) {
-    if ($_GET['status'] === 'success_create') { $message = "Data user berhasil ditambahkan!"; $messageType = "success"; }
-    if ($_GET['status'] === 'success_update') { $message = "Data user berhasil diperbarui!"; $messageType = "success"; }
-    if ($_GET['status'] === 'success_delete') { $message = "Data user berhasil dihapus!"; $messageType = "success"; }
-    if ($_GET['status'] === 'error_duplicate') { $message = "Gagal memproses data: Username sudah digunakan oleh user lain!"; $messageType = "danger"; }
-    if ($_GET['status'] === 'error_create') { $message = "Gagal menambahkan data baru!"; $messageType = "danger"; }
-    if ($_GET['status'] === 'error_update') { $message = "Gagal memperbarui data user!"; $messageType = "danger"; }
-    if ($_GET['status'] === 'error_delete') { $message = "Gagal menghapus data user!"; $messageType = "danger"; }
+    if ($_GET['status'] === 'success_create') {
+        $message = "Pengguna baru berhasil ditambahkan.";
+        $messageType = "success";
+    } elseif ($_GET['status'] === 'success_update') {
+        $message = "Data pengguna berhasil diperbarui.";
+        $messageType = "success";
+    } elseif ($_GET['status'] === 'success_delete') {
+        $message = "Pengguna berhasil dihapus.";
+        $messageType = "success";
+    } elseif ($_GET['status'] === 'error_duplicate') {
+        $message = "Gagal! Username sudah terdaftar di sistem.";
+        $messageType = "danger";
+    } else {
+        $message = "Terjadi kesalahan sistem saat memproses data.";
+        $messageType = "danger";
+    }
 }
 
-// Pembacaan Data Akhir (Read)
-$query_read = "SELECT u.*, b.nama AS nama_gedung, f.nama AS nama_lantai, r.nama AS nama_ruangan 
-               FROM users u
-               LEFT JOIN buildings b ON u.building_id = b.id
-               LEFT JOIN floors f ON u.floor_id = f.id
-               LEFT JOIN rooms r ON u.room_id = r.id
-               ORDER BY u.id DESC";
-$users = $conn->query($query_read)->fetchAll();
+// 4. QUERY UTAMA: Mengambil data user menggunakan kolom '.nama' sesuai isi relasi.php
+try {
+    $stmtUsers = $conn->query("
+        SELECT 
+            u.*, 
+            r.nama AS nama_role,      -- PERBAIKAN: Menggunakan .nama
+            g.nama AS nama_gedung,    -- PERBAIKAN: Menggunakan .nama
+            l.nama AS nama_lantai,    -- PERBAIKAN: Menggunakan .nama
+            ru.nama AS nama_ruangan   -- PERBAIKAN: Menggunakan .nama
+        FROM users u 
+        LEFT JOIN roles r ON u.role_id = r.id 
+        LEFT JOIN buildings g ON u.building_id = g.id  
+        LEFT JOIN floors l ON u.floor_id = l.id        
+        LEFT JOIN rooms ru ON u.room_id = ru.id        
+        ORDER BY u.id ASC
+    ");
+    $users = $stmtUsers->fetchAll();
+} catch (\PDOException $e) {
+    // Menampilkan error jika masih ada ketidakcocokan nama tabel/kolom lainnya
+    die("Pesan Error Query 4: " . $e->getMessage());
+    $users = [];
+}
+
+// 5. QUERY MASTER DROPDOWN: Menggunakan kolom '.nama' untuk daftar pilihan modal form
+try {
+    $stmtRoles = $conn->query("SELECT id, nama AS nama_role FROM roles ORDER BY nama ASC");
+    $daftar_roles = $stmtRoles->fetchAll();
+
+    $stmtGedung = $conn->query("SELECT id, nama AS nama_gedung FROM buildings ORDER BY nama ASC");
+    $daftar_gedung = $stmtGedung->fetchAll();
+
+    $stmtLantai = $conn->query("SELECT id, building_id, nama AS nama_lantai FROM floors ORDER BY nama ASC");
+    $daftar_lantai = $stmtLantai->fetchAll();
+
+    $stmtRuangan = $conn->query("SELECT id, floor_id, nama AS nama_ruangan FROM rooms ORDER BY nama ASC");
+    $daftar_ruangan = $stmtRuangan->fetchAll();
+} catch (\PDOException $e) {
+    die("Pesan Error Query 5: " . $e->getMessage());
+    $daftar_roles = [];
+    $daftar_gedung = [];
+    $daftar_lantai = [];
+    $daftar_ruangan = [];
+}
 ?>
 
 <!DOCTYPE html>
@@ -531,85 +585,108 @@ $users = $conn->query($query_read)->fetchAll();
         </div>
     <?php endif; ?>
 
-            <!-- TABEL RESPONSIF -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="card shadow-sm border-0">
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th class="ps-3">ID</th>
-                                            <th>Foto</th>
-                                            <th>Nama</th>
-                                            <th>Username</th>
-                                            <th>Email</th>
-                                            <th>Telepon</th>
-                                            <th>Status</th>
-                                            <th>Gedung</th>
-                                            <th>Lantai</th>
-                                            <th>Ruangan</th>
-                                            <th class="text-center pe-3">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php if (count($users) > 0): ?>
-                                            <?php foreach ($users as $user): ?>
-                                                <tr>
-                                                    <td class="ps-3 fw-bold"><?= $user['id'] ?></td>
-                                                    <td>
-                                                        <?php if (!empty($user['foto']) && file_exists(__DIR__ . '/uploads/' . $user['foto'])): ?>
-                                                            <img src="uploads/<?= htmlspecialchars($user['foto']) ?>" alt="Profil" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover; border: 1px solid #dee2e6;">
-                                                        <?php else: ?>
-                                                            <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px; font-size: 0.85rem;">
-                                                                <?= strtoupper(substr($user['nama'] ?? 'U', 0, 2)) ?>
-                                                            </div>
-                                                        <?php endif; ?>
-                                                    </td>
-                                                    <td><?= htmlspecialchars($user['nama']) ?></td>
-                                                    <td><?= htmlspecialchars($user['username']) ?></td>
-                                                    <td><?= htmlspecialchars($user['email']) ?></td>
-                                                    <td><?= htmlspecialchars($user['telepon']) ?></td>
-                                                    <td>
-                                                        <span class="badge <?= $user['status'] == 1 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' ?> rounded-pill px-3">
-                                                            <?= $user['status'] == 1 ? 'Aktif' : 'Non-Aktif' ?>
-                                                        </span>
-                                                    </td>
-                                                    <td><?= htmlspecialchars($user['nama_gedung'] ?? '-') ?></td>
-                                                    <td><?= htmlspecialchars($user['nama_lantai'] ?? '-') ?></td>
-                                                    <td><?= htmlspecialchars($user['nama_ruangan'] ?? '-') ?></td>
-                                                    <td class="text-center pe-3">
-                                                        <button type="button" class="btn btn-sm btn-outline-warning me-1" data-bs-toggle="modal" data-bs-target="#userModal" onclick='window.editUser(<?= json_encode($user, JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'><i class="bi bi-pencil-square"></i></button>
-                                                        <!-- PERBAIKAN FORM HAPUS PADA TABEL ANDA -->
-                                                        <form action="user.php" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus user ini?')">
-                                                            <input type="hidden" name="action" value="delete">
-                                                            <!-- Pastikan baris ini tertulis lengkap untuk mengirim ID target ke PHP -->
-                                                            <input type="hidden" name="id" value="<?= $user['id'] ?>">
-                                                            <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                                <i class="bi bi-trash-fill"></i>
-                                                            </button>
-                                                        </form>
-                                                    </td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        <?php else: ?>
-                                            <tr><td colspan="11" class="text-center text-muted py-4">Tidak ada data user ditemukan.</td></tr>
-                                        <?php endif; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
+<!-- TABEL RESPONSIF SEJAJAR + FOTO DAN NAMA DIPISAH -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle mb-0 text-nowrap w-100">
+                        <thead class="table-light">
+                            <tr class="small text-uppercase text-secondary text-center">
+                                <th class="ps-3 py-3" style="width: 5%;">ID</th>
+                                <th style="width: 7%;">Foto</th> <!-- Kolom Foto Mandiri -->
+                                <th class="text-start" style="width: 15%;">Nama Pengguna</th> <!-- Kolom Nama Mandiri -->
+                                <th style="width: 10%;">Role</th>
+                                <th style="width: 10%;">Username</th>
+                                <th style="width: 15%;">Email</th>
+                                <th style="width: 12%;">Telepon</th>
+                                <th style="width: 8%;">Status</th>
+                                <th style="width: 10%;">Gedung</th>
+                                <th style="width: 5%;">Lantai</th>
+                                <th style="width: 5%;">Ruangan</th>
+                                <th style="width: 5%;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="small">
+                            <?php if (count($users) > 0): ?>
+                                <?php foreach ($users as $user): ?>
+                                    <tr>
+                                        <!-- 1. KOLOM ID -->
+                                        <td class="text-center py-2 fw-bold text-muted">
+                                            <?= $user['id'] ?>
+                                        </td>
+
+                                        <!-- 2. KOLOM FOTO (Terpisah) -->
+                                        <td class="text-center py-2">
+                                            <?php if (!empty($user['foto']) && file_exists(__DIR__ . '/uploads/' . $user['foto'])): ?>
+                                                <img src="uploads/<?= htmlspecialchars($user['foto']) ?>" alt="Profil" class="rounded-circle flex-shrink-0" style="width: 32px; height: 32px; object-fit: cover; border: 1px solid #dee2e6;">
+                                            <?php else: ?>
+                                                <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold mx-auto flex-shrink-0" style="width: 32px; height: 32px; font-size: 0.7rem;">
+                                                    <?= strtoupper(substr($user['nama'] ?? 'U', 0, 2)) ?>
+                                                </div>
+                                            <?php endif; ?>
+                                        </td>
+                                        
+                                        <!-- 3. KOLOM NAMA PENGGUNA (Terpisah) -->
+                                        <td class="py-2 fw-semibold text-dark text-start">
+                                            <?= htmlspecialchars($user['nama']) ?>
+                                        </td>
+                                        
+                                        <!-- 4. KOLOM ROLE -->
+                                        <td class="py-2 text-center">
+                                            <span class="badge bg-secondary-subtle text-secondary border px-2 py-1" style="font-size: 0.75rem;">
+                                                <?= htmlspecialchars($user['nama_role'] ?? 'No Role') ?>
+                                            </span>
+                                        </td>
+
+                                        <!-- KOLOM DATA LAINNYA -->
+                                        <td class="py-2 text-muted text-center"><?= htmlspecialchars($user['username']) ?></td>
+                                        <td class="py-2"><?= htmlspecialchars($user['email']) ?></td>
+                                        <td class="py-2 text-secondary text-center"><?= htmlspecialchars($user['telepon']) ?></td>
+                                        <td class="py-2 text-center">
+                                            <span class="badge <?= $user['status'] == 1 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' ?> rounded-pill px-2.5 py-1" style="font-size: 0.72rem;">
+                                                <?= $user['status'] == 1 ? 'Aktif' : 'Non-Aktif' ?>
+                                            </span>
+                                        </td>
+                                        <td class="py-2 text-center"><?= htmlspecialchars($user['nama_gedung'] ?? '-') ?></td>
+                                        <td class="py-2 text-center"><?= htmlspecialchars($user['nama_lantai'] ?? '-') ?></td>
+                                        <td class="py-2 text-center"><?= htmlspecialchars($user['nama_ruangan'] ?? '-') ?></td>
+                                        
+                                        <!-- KOLOM AKSI BUTTONS -->
+                                        <td class="text-center pe-3 py-2">
+                                            <div class="d-flex justify-content-center gap-1.5">
+                                                <button type="button" class="btn btn-sm btn-light border text-warning p-1 px-2" data-bs-toggle="modal" data-bs-target="#userModal" onclick='window.editUser(<?= json_encode($user, JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'>
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </button>
+                                                
+                                                <form action="user.php" method="POST" class="d-inline mb-0" onsubmit="return confirm('Apakah Anda yakin ingin menghapus user ini?')">
+                                                    <input type="hidden" name="action" value="delete">
+                                                    <input type="hidden" name="id" value="<?= $user['id'] ?>">
+                                                    <button type="submit" class="btn btn-sm btn-light border text-danger p-1 px-2">
+                                                        <i class="bi bi-trash-fill"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <!-- Mengembalikan colspan menjadi 12 kolom karena total kolom sekarang ada 12 -->
+                                <tr><td colspan="12" class="text-center text-muted py-4">Tidak ada data user ditemukan.</td></tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </main>
+        </div>
     </div>
 </div>
+</main>
 
-<!-- MODAL FORM TAMBAH / EDIT -->
+<!-- MODAL FORM TAMBAH / EDIT (TAMPILAN MEMANJANG KE KANAN) -->
 <div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl"> <!-- Mengubah modal-lg menjadi modal-xl agar memanjang ke kanan -->
         <div class="modal-content">
             <form action="user.php" method="POST" id="userForm" enctype="multipart/form-data">
                 <div class="modal-header">
@@ -619,12 +696,18 @@ $users = $conn->query($query_read)->fetchAll();
                 <div class="modal-body">
                     <input type="hidden" name="action" id="formAction" value="create">
                     <input type="hidden" name="id" id="userId">
+                    
                     <div class="row g-3">
-                        <div class="col-md-6"><label class="form-label">Nama Lengkap</label><input type="text" name="nama" id="userNama" class="form-control" required></div>
-                        <div class="col-md-6"><label class="form-label">Username</label><input type="text" name="username" id="userUsername" class="form-control" required></div>
-                        
-                        <!-- Input Password + Tombol Intip Mata -->
-                        <div class="col-md-6">
+                        <!-- BARIS 1: DATA PRIBADI (MEMANJANG) -->
+                        <div class="col-md-4">
+                            <label class="form-label">Nama Lengkap</label>
+                            <input type="text" name="nama" id="userNama" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Username</label>
+                            <input type="text" name="username" id="userUsername" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
                             <label class="form-label">Password</label>
                             <div class="input-group">
                                 <input type="password" name="password" id="userPassword" class="form-control" placeholder="Isi password">
@@ -635,9 +718,25 @@ $users = $conn->query($query_read)->fetchAll();
                             <small class="text-muted id-hint d-none">Kosongkan jika tidak ingin mengubah password lama.</small>
                         </div>
 
-                        <div class="col-md-6"><label class="form-label">Email</label><input type="email" name="email" id="userEmail" class="form-control" required></div>
-                        <div class="col-md-6"><label class="form-label">Telepon</label><input type="text" name="telepon" id="userTelepon" class="form-control" required></div>
-                        <div class="col-md-6">
+                        <!-- BARIS 2: KONTAK & HAK AKSES (MEMANJANG) -->
+                        <div class="col-md-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" id="userEmail" class="form-control" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Telepon</label>
+                            <input type="text" name="telepon" id="userTelepon" class="form-control" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Role Akses</label>
+                            <select name="role_id" id="userRole" class="form-select" required>
+                                <option value="">-- Pilih Role --</option>
+                                <?php foreach ($daftar_roles as $role): ?>
+                                    <option value="<?= $role['id'] ?>"><?= htmlspecialchars($role['nama_role']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
                             <label class="form-label">Status</label>
                             <select name="status" id="userStatus" class="form-select">
                                 <option value="1">Aktif</option>
@@ -645,33 +744,38 @@ $users = $conn->query($query_read)->fetchAll();
                             </select>
                         </div>
                         
-                        <div class="col-md-12"><label class="form-label">Foto Profil</label><input type="file" name="foto" id="userFoto" class="form-control" accept="image/png, image/jpeg, image/jpg"><small class="text-muted image-hint d-none">Kosongkan jika tidak ingin mengganti foto lama.</small></div>
+                        <!-- BARIS 3: BERKAS (FOTO) -->
+                        <div class="col-md-12">
+                            <label class="form-label">Foto Profil</label>
+                            <input type="file" name="foto" id="userFoto" class="form-control" accept="image/png, image/jpeg, image/jpg">
+                            <small class="text-muted image-hint d-none">Kosongkan jika tidak ingin mengganti foto lama.</small>
+                        </div>
 
-                        <!-- Dropdown Relasi Dinamis -->
+                        <!-- BARIS 4: INTERKONEKSI LOKASI (MEMANJANG & DINAMIS) -->
                         <div class="col-md-4">
                             <label class="form-label">Gedung</label>
-                            <select name="building_id" id="userBuilding" class="form-select">
+                            <select name="building_id" id="userBuilding" class="form-select" onchange="filterLantai()">
                                 <option value="">-- Pilih Gedung --</option>
-                                <?php foreach ($buildingsOpt as $b): ?>
-                                    <option value="<?= $b['id'] ?>"><?= htmlspecialchars($b['nama']) ?></option>
+                                <?php foreach ($daftar_gedung as $b): ?>
+                                    <option value="<?= $b['id'] ?>"><?= htmlspecialchars($b['nama_gedung']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Lantai</label>
-                            <select name="floor_id" id="userFloor" class="form-select">
+                            <select name="floor_id" id="userFloor" class="form-select" onchange="filterRuangan()" disabled>
                                 <option value="">-- Pilih Lantai --</option>
-                                <?php foreach ($floorsOpt as $f): ?>
-                                    <option value="<?= $f['id'] ?>"><?= htmlspecialchars($f['nama']) ?></option>
+                                <?php foreach ($daftar_lantai as $f): ?>
+                                    <option value="<?= $f['id'] ?>" data-building="<?= $f['building_id'] ?>"><?= htmlspecialchars($f['nama_lantai']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Ruangan</label>
-                            <select name="room_id" id="userRoom" class="form-select">
+                            <select name="room_id" id="userRoom" class="form-select" disabled>
                                 <option value="">-- Pilih Ruangan --</option>
-                                <?php foreach ($roomsOpt as $r): ?>
-                                    <option value="<?= $r['id'] ?>"><?= htmlspecialchars($r['nama']) ?></option>
+                                <?php foreach ($daftar_ruangan as $r): ?>
+                                    <option value="<?= $r['id'] ?>" data-floor="<?= $r['floor_id'] ?>"><?= htmlspecialchars($r['nama_ruangan']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
