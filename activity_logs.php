@@ -10,7 +10,6 @@ require_once __DIR__ . '/db.php';
 // =========================================================================
 // 1. KONFIGURASI DATABASE & PAGINASI
 // =========================================================================
-// Nilai $host, $username, $password, dan $database otomatis diwarisi dari db.php
 $currentFile = 'activity_logs.php';
 $message = '';
 $message_type = '';
@@ -38,7 +37,7 @@ try {
     }
 
     // TRIGGER LOG OTOMATIS GLOBAL: Berhasil dipanggil tanpa error redeclare
-    if (!isset($_GET['search']) && !isset($_GET['page'])) {
+    if (!isset($_GET['search']) && !isset($_GET['page']) && !isset($_GET['ajax'])) {
         write_log($conn, "Membuka halaman Log Aktivitas Sistem", "activity_logs", null);
     }
 
@@ -78,6 +77,43 @@ try {
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
     $stmt->execute();
     $activity_logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // =========================================================================
+    // INTERSEPTOR AUTOMATIC LOGS REAL-TIME (AJAX HANDLER) - SESUAI HEIDISQL
+    // =========================================================================
+    if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
+        if (empty($activity_logs)) {
+            echo "<tr>
+                    <td colspan='8' class='text-center py-5 text-muted fs-6'>
+                        <i class='bi bi-clipboard-x display-6 d-block mb-2 text-secondary'></i>
+                        Belum ada log aktivitas.
+                    </td>
+                  </tr>";
+        } else {
+            foreach ($activity_logs as $log) {
+                $id           = htmlspecialchars($log['id']);
+                $waktu        = !empty($log['created_at']) ? date('d M Y H:i:s', strtotime($log['created_at'])) : '-';
+                $petugas      = htmlspecialchars($log['username'] ?? 'admin');
+                $aktivitas    = htmlspecialchars($log['aktivitas']);
+                $tabel        = htmlspecialchars($log['nama_tabel']);
+                $data_id      = !empty($log['data_id']) ? htmlspecialchars($log['data_id']) : '-';
+                $ip_address   = htmlspecialchars($log['ip_address']);
+                $browser_short= !empty($log['browser']) ? htmlspecialchars(substr($log['browser'], 0, 15)) : 'Mozilla';
+
+                echo "<tr>
+                        <td class='text-center fw-bold text-secondary'>#{$id}</td>
+                        <td><small class='fw-semibold text-dark'>{$waktu}</small></td>
+                        <td><span class='badge bg-light-primary text-primary'><i class='fa fa-user'></i> {$petugas}</span></td>
+                        <td>{$aktivitas}</td>
+                        <td><code class='text-muted'>{$tabel}</code></td>
+                        <td class='text-center fw-bold text-dark'>{$data_id}</td>
+                        <td><code>{$ip_address}</code></td>
+                        <td><small class='text-muted'>{$browser_short}...</small></td>
+                      </tr>";
+            }
+        }
+        exit; // Hentikan script agar sisa layout HTML di bawah tidak ikut terkirim ke AJAX
+    }
 
 } catch (PDOException $e) {
     die("Koneksi atau Query Log Aktivitas Gagal: " . $e->getMessage());
@@ -419,99 +455,139 @@ try {
                 <?php endif; ?>
             </form>
 
-            <!-- Tabel Utama Penampil Data Log Aktivitas -->
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped table-hover align-middle mb-0 text-nowrap">
-                    <thead class="table-dark small text-uppercase">
-                        <tr>
-                            <th width="70" class="text-center">ID</th>
-                            <th width="150">Waktu Kejadian</th>
-                            <th width="120">Petugas</th>
-                            <th>Aktivitas / Deskripsi</th>
-                            <th width="140">Nama Tabel</th>
-                            <th width="90" class="text-center">Data ID</th>
-                            <th width="130">IP Address</th>
-                            <th width="200">Perangkat / Browser</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (empty($activity_logs)): ?>
-                            <tr>
-                                <td colspan="8" class="text-center py-5 text-muted fs-6">
-                                    <i class="bi bi-clipboard-x display-6 d-block mb-2 text-secondary"></i> Tidak ada riwayat log aktivitas yang ditemukan.
-                                </td>
-                            </tr>
-                        <?php else: ?>
-                            <?php foreach ($activity_logs as $log): ?>
-                                <tr>
-                                    <td class="text-center fw-bold text-secondary">#<?= $log['id'] ?></td>
-                                    <td>
-                                        <small class="fw-semibold text-dark">
-                                            <?= date('d M Y H:i:s', strtotime($log['created_at'])) ?>
-                                        </small>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-light text-dark border px-2 py-1.5">
-                                            <i class="bi bi-person-fill text-primary me-1"></i><?= htmlspecialchars($log['username'] ?? 'Sistem / Anonim') ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div class="text-wrap fw-medium text-dark small" style="max-width: 350px;">
-                                            <?= htmlspecialchars($log['aktivitas']) ?>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <?php if (!empty($log['nama_tabel'])): ?>
-                                            <span class="badge bg-secondary-subtle text-secondary border px-2 py-1">
-                                                <i class="bi bi-table me-1"></i><?= htmlspecialchars($log['nama_tabel']) ?>
-                                            </span>
-                                        <?php else: ?>
-                                            <span class="text-muted small">-</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="text-center fw-bold text-muted small">
-                                        <?= !empty($log['data_id']) ? $log['data_id'] : '-' ?>
-                                    </td>
-                                    <td>
-                                        <small class="font-monospace text-secondary">
-                                            <i class="bi bi-pc-display me-1"></i><?= htmlspecialchars($log['ip_address']) ?>
-                                        </small>
-                                    </td>
-                                    <td>
-                                        <div class="text-truncate small text-muted" style="max-width: 180px;" title="<?= htmlspecialchars($log['browser']) ?>">
-                                            <?= htmlspecialchars($log['browser']) ?>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
+<!-- Tabel Utama Penampil Data Log Aktivitas -->
+<div class="table-responsive" style="overflow-x: auto !important; cursor: grab; user-select: none; -webkit-user-select: none; display: block; width: 100%;">
+    <table class="table table-bordered table-striped table-hover align-middle mb-0 text-nowrap" style="min-width: 1400px !important;">
 
-            <!-- Bagian Paginasi Halaman Konten -->
-            <?php if ($totalPages > 1): ?>
-                <nav class="mt-4">
-                    <ul class="pagination pagination-sm justify-content-center mb-0">
-                        <li class="page-item <?= ($page <= 1) ? 'disabled' : '' ?>">
-                            <a class="page-link" href="?page=<?= $page - 1 ?>&search=<?= urlencode($search) ?>">Previous</a>
-                        </li>
-                        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                            <li class="page-item <?= ($page == $i) ? 'active' : '' ?>">
-                                <a class="page-link" href="?page=<?= $i ?>&search=<?= urlencode($search) ?>"><?= $i ?></a>
-                            </li>
-                        <?php endfor; ?>
-                        <li class="page-item <?= ($page >= $totalPages) ? 'disabled' : '' ?>">
-                            <a class="page-link" href="?page=<?= $page + 1 ?>&search=<?= urlencode($search) ?>">Next</a>
-                        </li>
-                    </ul>
-                </nav>
+<thead class="table-dark small text-uppercase">
+            <tr>
+                <th width="70" class="text-center">ID</th>
+                <th width="150">Waktu Kejadian</th>
+                <th width="120">Petugas</th>
+                <th style="min-width: 300px !important; white-space: nowrap;">Aktivitas / Deskripsi</th>
+                <th width="140">Nama Tabel</th>
+                <th width="90" class="text-center">Data ID</th>
+                <th width="130">IP Address</th>
+                <th width="200">Perangkat / Browser</th>
+            </tr>
+        </thead>
+        <tbody id="logTableBody">
+            <?php if (empty($activity_logs)): ?>
+                <tr>
+                    <td colspan="8" class="text-center py-5 text-muted fs-6">
+                        <i class="bi bi-clipboard-x display-6 d-block mb-2 text-secondary"></i>
+                        Belum ada log aktivitas.
+                    </td>
+                </tr>
+            <?php else: ?>
+                <?php foreach ($activity_logs as $log): ?>
+                    <tr>
+                        <td class="text-center fw-bold text-secondary">#<?= $log['id'] ?></td>
+                        <td>
+                            <small class="fw-semibold text-dark">
+                                <?= !empty($log['created_at']) ? date('d M Y H:i:s', strtotime($log['created_at'])) : '-' ?>
+                            </small>
+                        </td>
+                        <td>
+                            <span class="badge bg-light-primary text-primary"><?= htmlspecialchars($log['username'] ?? 'admin') ?></span>
+                        </td>
+                        <td><?= htmlspecialchars($log['aktivitas']) ?></td>
+                        <td><code class="text-muted"><?= htmlspecialchars($log['nama_tabel']) ?></code></td>
+                        <td class="text-center fw-bold text-dark"><?= !empty($log['data_id']) ? htmlspecialchars($log['data_id']) : '-' ?></td>
+                        <td><code><?= htmlspecialchars($log['ip_address']) ?></code></td>
+                        <td><small class="text-muted"><?= !empty($log['browser']) ? htmlspecialchars(substr($log['browser'], 0, 30)) : 'Mozilla' ?>...</small></td>
+                    </tr>
+                <?php endforeach; ?>
             <?php endif; ?>
+        </tbody>
+    </table>
+</div>
 
-        </div> <!-- Penutup .card-body -->
-    </div> <!-- Penutup .card -->
+<!-- Bagian Paginasi Halaman Konten -->
+<?php if ($totalPages > 1): ?>
+    <nav class="mt-4">
+        <ul class="pagination pagination-sm justify-content-center mb-0">
+            <li class="page-item <?= ($page <= 1) ? 'disabled' : '' ?>">
+                <a class="page-link" href="?page=<?= $page - 1 ?>&search=<?= urlencode($search) ?>">Previous</a>
+            </li>
+            <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                <li class="page-item <?= ($page == $i) ? 'active' : '' ?>">
+                    <a class="page-link" href="?page=<?= $i ?>&search=<?= urlencode($search) ?>"><?= $i ?></a>
+                </li>
+            <?php endfor; ?>
+            <li class="page-item <?= ($page >= $totalPages) ? 'disabled' : '' ?>">
+                <a class="page-link" href="?page=<?= $page + 1 ?>&search=<?= urlencode($search) ?>">Next</a>
+            </li>
+        </ul>
+    </nav>
+<?php endif; ?>
+
+</div> <!-- Penutup .card-body -->
+</div> <!-- Penutup .card -->
 
 </main> <!-- Penutup <main> -->
+
+<!-- SCRIPTS OTOMATIS REAL-TIME & DRAG SCROLL KURSOR -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // 1. PENGATURAN LOG REAL-TIME TANPA REFRESH
+    const searchInput = document.querySelector('input[name="search"]') || document.querySelector('.form-control');
+    
+    function fetchRealtimeLogs() {
+        if (searchInput && document.activeElement === searchInput && searchInput.value.trim() !== "") {
+            return; 
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('ajax', '1');
+
+        fetch('activity_logs.php?' + urlParams.toString())
+            .then(response => response.text())
+            .then(htmlData => {
+                const tableBody = document.getElementById('logTableBody');
+                if (tableBody) {
+                    tableBody.innerHTML = htmlData;
+                }
+            })
+            .catch(error => console.warn('Gagal memuat log waktu nyata:', error));
+    }
+
+    setInterval(fetchRealtimeLogs, 2000);
+
+    // 2. PENGATURAN DRAG TO SCROLL MENGGUNAKAN KURSOR MOUSE
+    const slider = document.querySelector('.table-responsive');
+    let isDown = false;
+    let startX;
+    let scrollLeft;
+
+    if (slider) {
+        slider.addEventListener('mousedown', (e) => {
+            isDown = true;
+            slider.style.cursor = 'grabbing';
+            startX = e.pageX - slider.offsetLeft;
+            scrollLeft = slider.scrollLeft;
+        });
+        
+        slider.addEventListener('mouseleave', () => {
+            isDown = false;
+            slider.style.cursor = 'grab';
+        });
+        
+        slider.addEventListener('mouseup', () => {
+            isDown = false;
+            slider.style.cursor = 'grab';
+        });
+        
+        slider.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - slider.offsetLeft;
+            const walk = (x - startX) * 2; // Mengatur sensitivitas/kecepatan geser tabel
+            slider.scrollLeft = scrollLeft - walk;
+        });
+    }
+});
+</script>
 
 <!-- Script Pengendali Logika Alur Pengisian Form Modal -->
 <script>

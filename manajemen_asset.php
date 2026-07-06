@@ -2,7 +2,7 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
-// 1. KONFIGURASI DATABASE UTAMA (MANDIRI & INSTAN)
+// 1. KONFIGURASI KONEKSI DATABASE UTAMA
 $host = "10.10.6.59";
 $username = "root_host";
 $password = "password";
@@ -20,7 +20,147 @@ try {
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
     ]);
 
-    // 2. EKSEKUSI QUERY TUNGGAL DENGAN LIMIT (SANGAT RINGAN)
+    // =========================================================================
+    // 2. LOGIKA INTERSEPTOR CRUD (DIPINDAHKAN LANGSUNG KE SINI)
+    // =========================================================================
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+        $action = $_POST['action'];
+
+        // --- KELOMPOK: ASSET BRANDS ---
+        if ($action === 'add_brand') {
+            $nama = trim($_POST['nama'] ?? '');
+            $status_raw = isset($_POST['status']) ? trim($_POST['status']) : '1';
+            $status = ($status_raw === 'Aktif' || $status_raw === '1') ? 1 : 0;
+
+            if ($nama !== '') {
+                $stmt = $conn->prepare("INSERT INTO asset_brands (nama, status) VALUES (?, ?)");
+                $sukses = $stmt->execute([$nama, $status]);
+                if ($sukses) {
+                    $new_id = $conn->lastInsertId();
+                    write_log($conn, "Menambahkan merek brand baru: " . $nama, "asset_brands", $new_id);
+                }
+            }
+        }
+        if ($action === 'edit_brand') {
+            $id = (int)$_POST['id'];
+            $nama = trim($_POST['nama'] ?? '');
+            $status_raw = isset($_POST['status']) ? trim($_POST['status']) : '1';
+            $status = ($status_raw === 'Aktif' || $status_raw === '1') ? 1 : 0;
+
+            if ($nama !== '') {
+                $stmt = $conn->prepare("UPDATE asset_brands SET nama = ?, status = ? WHERE id = ?");
+                $sukses = $stmt->execute([$nama, $status, $id]);
+                if ($sukses) {
+                    write_log($conn, "Mengubah informasi data merek brand menjadi: " . $nama, "asset_brands", $id);
+                }
+            }
+        }
+        if ($action === 'delete_brand') {
+            $id = (int)$_POST['id'];
+            $get_name = $conn->prepare("SELECT nama FROM asset_brands WHERE id = ?");
+            $get_name->execute([$id]);
+            $nama_brand = $get_name->fetchColumn() ?: 'Unknown';
+
+            $sukses = $conn->prepare("DELETE FROM asset_brands WHERE id = ?")->execute([$id]);
+            if ($sukses) {
+                write_log($conn, "Menghapus data merek brand: " . $nama_brand, "asset_brands", $id);
+            }
+        }
+
+        // --- KELOMPOK: ASSET CATEGORIES ---
+        if ($action === 'add_category') {
+            $nama = trim($_POST['nama'] ?? '');
+            $icon = trim($_POST['icon'] ?? '');
+            $warna = trim($_POST['warna'] ?? '');
+            $status_raw = isset($_POST['status']) ? trim($_POST['status']) : '1';
+            $status = ($status_raw === 'Aktif' || $status_raw === '1') ? 1 : 0;
+
+            if ($nama !== '') {
+                $stmt = $conn->prepare("INSERT INTO asset_categories (nama, icon, warna, status) VALUES (?, ?, ?, ?)");
+                $sukses = $stmt->execute([$nama, $icon, $warna, $status]);
+                if ($sukses) {
+                    $new_id = $conn->lastInsertId();
+                    write_log($conn, "Menambahkan kategori aset baru: " . $nama, "asset_categories", $new_id);
+                }
+            }
+        }
+        if ($action === 'edit_category') {
+            $id = (int)$_POST['id'];
+            $nama = trim($_POST['nama'] ?? '');
+            $icon = trim($_POST['icon'] ?? '');
+            $warna = trim($_POST['warna'] ?? '');
+            $status_raw = isset($_POST['status']) ? trim($_POST['status']) : '1';
+            $status = ($status_raw === 'Aktif' || $status_raw === '1') ? 1 : 0;
+
+            if ($nama !== '') {
+                $stmt = $conn->prepare("UPDATE asset_categories SET nama = ?, icon = ?, warna = ?, status = ? WHERE id = ?");
+                $sukses = $stmt->execute([$nama, $icon, $warna, $status, $id]);
+                if ($sukses) {
+                    write_log($conn, "Mengubah data kategori aset menjadi: " . $nama, "asset_categories", $id);
+                }
+            }
+        }
+        if ($action === 'delete_category') {
+            $id = (int)$_POST['id'];
+            $get_name = $conn->prepare("SELECT nama FROM asset_categories WHERE id = ?");
+            $get_name->execute([$id]);
+            $nama_kategori = $get_name->fetchColumn() ?: 'Unknown';
+
+            $sukses = $conn->prepare("DELETE FROM asset_categories WHERE id = ?")->execute([$id]);
+            if ($sukses) {
+                write_log($conn, "Menghapus data kategori aset: " . $nama_kategori, "asset_categories", $id);
+            }
+        }
+
+        // --- KELOMPOK: ASSET STATUSES ---
+        if ($action === 'add_status') {
+            $nama = trim($_POST['nama'] ?? '');
+            if ($nama !== '') {
+                $stmt = $conn->prepare("INSERT INTO asset_statuses (nama) VALUES (?)");
+                $sukses = $stmt->execute([$nama]);
+                if ($sukses) {
+                    $new_id = $conn->lastInsertId();
+                    write_log($conn, "Menambahkan status operasional asset baru: " . $nama, "asset_statuses", $new_id);
+                }
+            }
+        }
+        if ($action === 'edit_status') {
+            $id = (int)$_POST['id'];
+            $nama = trim($_POST['nama'] ?? '');
+            if ($nama !== '') {
+                $stmt = $conn->prepare("UPDATE asset_statuses SET nama = ? WHERE id = ?");
+                $sukses = $stmt->execute([$nama, $id]);
+                if ($sukses) {
+                    write_log($conn, "Mengubah status operasional asset menjadi: " . $nama, "asset_statuses", $id);
+                }
+            }
+        }
+        if ($action === 'delete_status') {
+            $id = (int)$_POST['id'];
+            $get_name = $conn->prepare("SELECT nama FROM asset_statuses WHERE id = ?");
+            $get_name->execute([$id]);
+            $nama_status = $get_name->fetchColumn() ?: 'Unknown';
+
+            $sukses = $conn->prepare("DELETE FROM asset_statuses WHERE id = ?")->execute([$id]);
+            if ($sukses) {
+                write_log($conn, "Menghapus status operasional asset: " . $nama_status, "asset_statuses", $id);
+            }
+        }
+
+        // KIRIM RESPONS SUKSES LANGSUNG KEMBALI KE AJAX MODAL JAVASCRIPT
+        http_response_code(200);
+        echo "Sukses";
+        exit;
+    }
+
+    // TRIGGER LOG OTOMATIS GLOBAL: Mencatat log kunjungan halaman Master Data Asset
+    if (!isset($_GET['ajax'])) {
+        write_log($conn, "Membuka halaman Master Data Asset (Brands, Categories, Statuses)", "asset_brands", null);
+    }
+
+    // =========================================================================
+    // 3. EKSEKUSI PEMBACAAN DATA SEPERTI SEMULA (READ)
+    // =========================================================================
     $stmtBrand = $conn->prepare("SELECT id, nama, status FROM asset_brands ORDER BY id DESC LIMIT 50");
     $stmtBrand->execute();
     $brands = $stmtBrand->fetchAll(PDO::FETCH_ASSOC) ?: [];
@@ -34,7 +174,6 @@ try {
     $statuses = $stmtStatus->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
 } catch (PDOException $e) {
-    // Peringatan jika ada masalah query/jaringan tanpa membuat halaman menjadi blank putih
     echo "<div style='background:#fff3cd; color:#664d03; padding:15px; border:1px solid #ffecb5; margin:15px; border-radius:5px; font-family:sans-serif; font-size:14px;'>
             <b>⚠️ Gagal Memuat Data Master Asset:</b> " . htmlspecialchars($e->getMessage()) . "
           </div>";
@@ -720,9 +859,6 @@ try {
     </div>
 </div>
 
-<!-- ========================================================================= -->
-<!-- TAHAP 7: LOGIKA JAVASCRIPT UTAMA AJAX CRUD ASSETS                         -->
-<!-- ========================================================================= -->
 <script>
 // 1. Fungsi Membuka Modal secara Paksa
 function bukaModalPaksa(idModal) {
@@ -768,13 +904,13 @@ document.addEventListener("click", function(e) {
     }
 });
 
-// 3. Fungsi Tambah Data (Create) - Mengarah ke proses_asset.php
+// 3. Fungsi Tambah Data (Create) - DIUBAH MENEMBAK KE manajemen_asset.php
 function prosesTambahAssetCrud(event, aksi) {
     event.preventDefault(); 
     let payload = new FormData(event.target);
     payload.append('action', aksi); 
 
-    fetch('proses_asset.php', {
+    fetch('manajemen_asset.php', {
         method: 'POST',
         body: payload
     })
@@ -788,14 +924,14 @@ function prosesTambahAssetCrud(event, aksi) {
     });
 }
 
-// 4. Fungsi Hapus Data (Delete)
+// 4. Fungsi Hapus Data (Delete) - DIUBAH MENEMBAK KE manajemen_asset.php
 function prosesHapusAssetCrud(aksi, idTarget, teksKonfirmasi) {
     if (!confirm(teksKonfirmasi)) return;
     let payload = new FormData();
     payload.append('action', aksi);
     payload.append('id', idTarget);
 
-    fetch('proses_asset.php', {
+    fetch('manajemen_asset.php', {
         method: 'POST',
         body: payload
     })
@@ -824,13 +960,13 @@ function prosesEditCategory(id, namaLama, iconLama, warnaLama) {
     bukaModalPaksa('modalEditCategory');
 }
 
-// 6. Fungsi Eksekusi Simpan Perubahan Data (Update)
+// 6. Fungsi Eksekusi Simpan Perubahan Data (Update) - DIUBAH MENEMBAK KE manajemen_asset.php
 function simpanEditAssetCrud(event, aksi) {
     event.preventDefault();
     let payload = new FormData(event.target);
     payload.append('action', aksi);
 
-    fetch('proses_asset.php', {
+    fetch('manajemen_asset.php', {
         method: 'POST',
         body: payload
     })
@@ -844,4 +980,4 @@ function simpanEditAssetCrud(event, aksi) {
 }
 </script>
 
-    <?php include 'footer-admin.php'; ?>
+<?php include 'footer-admin.php'; ?>

@@ -17,6 +17,11 @@ try {
     $conn = new PDO("mysql:host=$host;dbname=$database", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+    // TRIGGER LOG OTOMATIS GLOBAL: Mencatat log kunjungan halaman
+    if (!isset($_GET['page']) && !isset($_POST['action']) && !isset($_GET['delete'])) {
+        write_log($conn, "Membuka halaman Dashboard Sistem - Network Devices", "network_devices", null);
+    }
+
     // ===================================================
     // LOGIKA PROSES AKSI FORM CRUD (POST & GET)
     // ===================================================
@@ -30,8 +35,14 @@ try {
         $management_port = $_POST['management_port'];
 
         $stmtInsert = $conn->prepare("INSERT INTO network_devices (asset_id, vlan, gateway, dns, management_port) VALUES (?, ?, ?, ?, ?)");
-        $stmtInsert->execute([$asset_id, $vlan, $gateway, $dns, $management_port]);
+        $sukses_add = $stmtInsert->execute([$asset_id, $vlan, $gateway, $dns, $management_port]);
         
+        // AMBIL ID BARU DAN TULIS LOG AKTIVITAS (CREATE)
+        if ($sukses_add) {
+            $new_device_id = $conn->lastInsertId();
+            write_log($conn, "Menambahkan network device baru dengan VLAN: " . $vlan, "network_devices", $new_device_id);
+        }
+
         header("Location: network_device.php?status=success_add");
         exit;
     }
@@ -46,8 +57,13 @@ try {
         $management_port = $_POST['management_port'];
 
         $stmtUpdate = $conn->prepare("UPDATE network_devices SET asset_id = ?, vlan = ?, gateway = ?, dns = ?, management_port = ? WHERE id = ?");
-        $stmtUpdate->execute([$asset_id, $vlan, $gateway, $dns, $management_port, $id]);
+        $sukses_edit = $stmtUpdate->execute([$asset_id, $vlan, $gateway, $dns, $management_port, $id]);
         
+        // TULIS LOG AKTIVITAS (UPDATE)
+        if ($sukses_edit) {
+            write_log($conn, "Mengubah data network device ID: " . $id . " (VLAN: " . $vlan . ")", "network_devices", $id);
+        }
+
         header("Location: network_device.php?status=success_update");
         exit;
     }
@@ -56,9 +72,20 @@ try {
     if (isset($_GET['delete'])) {
         $idDelete = $_GET['delete'];
 
+        // 1. Ambil info VLAN terlebih dahulu untuk kebutuhan log sebelum datanya dihapus permanen
+        $get_info = $conn->prepare("SELECT vlan FROM network_devices WHERE id = ?");
+        $get_info->execute([$idDelete]);
+        $vlan_log = $get_info->fetchColumn() ?: 'Unknown';
+
+        // 2. Jalankan query hapus data
         $stmtDelete = $conn->prepare("DELETE FROM network_devices WHERE id = ?");
-        $stmtDelete->execute([$idDelete]);
+        $sukses_delete = $stmtDelete->execute([$idDelete]);
         
+        // TULIS LOG AKTIVITAS (DELETE)
+        if ($sukses_delete) {
+            write_log($conn, "Menghapus network device ID: " . $idDelete . " (VLAN: " . $vlan_log . ")", "network_devices", $idDelete);
+        }
+
         header("Location: network_device.php?status=success_delete");
         exit;
     }

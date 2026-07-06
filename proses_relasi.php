@@ -28,7 +28,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $alamat = trim($_POST['alamat'] ?? '');
             if ($nama !== '') {
                 $stmt = $conn->prepare("INSERT INTO buildings (nama, alamat, status) VALUES (?, ?, 1)");
-                $stmt->execute([$nama, $alamat]);
+                $sukses = $stmt->execute([$nama, $alamat]);
+                
+                if ($sukses) {
+                    $new_id = $conn->lastInsertId();
+                    write_log($conn, "Menambahkan data gedung baru: " . $nama, "buildings", $new_id);
+                }
             }
         }
         if ($action === 'edit_building') {
@@ -37,12 +42,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $alamat = trim($_POST['alamat'] ?? '');
             if ($nama !== '') {
                 $stmt = $conn->prepare("UPDATE buildings SET nama = ?, alamat = ? WHERE id = ?");
-                $stmt->execute([$nama, $alamat, $id]);
+                $sukses = $stmt->execute([$nama, $alamat, $id]);
+                
+                if ($sukses) {
+                    write_log($conn, "Mengubah informasi data gedung: " . $nama, "buildings", $id);
+                }
             }
         }
         if ($action === 'delete_building') {
             $id = (int)$_POST['id'];
-            $conn->prepare("DELETE FROM buildings WHERE id = ?")->execute([$id]);
+            
+            // Ambil nama gedung sebelum dihapus demi info log yang detail
+            $get_name = $conn->prepare("SELECT nama FROM buildings WHERE id = ?");
+            $get_name->execute([$id]);
+            $nama_gedung = $get_name->fetchColumn() ?: 'Unknown';
+
+            $sukses = $conn->prepare("DELETE FROM buildings WHERE id = ?")->execute([$id]);
+            
+            if ($sukses) {
+                write_log($conn, "Menghapus data gedung: " . $nama_gedung, "buildings", $id);
+            }
         }
 
         // --- BLOK LOGIKA GABUNGAN: FLOORS (LANTAI) ---
@@ -51,7 +70,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $building_id = (int)$_POST['building_id'];
             if ($nama !== '' && $building_id > 0) {
                 $stmt = $conn->prepare("INSERT INTO floors (nama, building_id, status) VALUES (?, ?, 1)");
-                $stmt->execute([$nama, $building_id]);
+                $sukses = $stmt->execute([$nama, $building_id]);
+                
+                if ($sukses) {
+                    $new_id = $conn->lastInsertId();
+                    write_log($conn, "Menambahkan data lantai baru: " . $nama, "floors", $new_id);
+                }
             }
         }
         if ($action === 'edit_floor') {
@@ -60,12 +84,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $building_id = (int)$_POST['building_id'];
             if ($nama !== '' && $building_id > 0) {
                 $stmt = $conn->prepare("UPDATE floors SET nama = ?, building_id = ? WHERE id = ?");
-                $stmt->execute([$nama, $building_id, $id]);
+                $sukses = $stmt->execute([$nama, $building_id, $id]);
+                
+                if ($sukses) {
+                    write_log($conn, "Mengubah data lantai menjadi: " . $nama, "floors", $id);
+                }
             }
         }
         if ($action === 'delete_floor') {
             $id = (int)$_POST['id'];
-            $conn->prepare("DELETE FROM floors WHERE id = ?")->execute([$id]);
+            
+            // Ambil nama lantai sebelum dihapus demi info log yang detail
+            $get_name = $conn->prepare("SELECT nama FROM floors WHERE id = ?");
+            $get_name->execute([$id]);
+            $nama_lantai = $get_name->fetchColumn() ?: 'Unknown';
+
+            $sukses = $conn->prepare("DELETE FROM floors WHERE id = ?")->execute([$id]);
+            
+            if ($sukses) {
+                write_log($conn, "Menghapus data lantai: " . $nama_lantai, "floors", $id);
+            }
         }
 
         // --- BLOK LOGIKA GABUNGAN: ROOMS (RUANGAN) ---
@@ -77,7 +115,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             
             if ($nama !== '' && $floor_id > 0) {
                 $stmt = $conn->prepare("INSERT INTO rooms (nama, floor_id, kode, telepon, status) VALUES (?, ?, ?, ?, 1)");
-                $stmt->execute([$nama, $floor_id, $kode, $telepon]);
+                $sukses = $stmt->execute([$nama, $floor_id, $kode, $telepon]);
+                
+                if ($sukses) {
+                    $new_id = $conn->lastInsertId();
+                    write_log($conn, "Menambahkan data ruangan baru: " . $nama . " (" . $kode . ")", "rooms", $new_id);
+                }
             }
         }
         if ($action === 'edit_room') {
@@ -89,12 +132,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             
             if ($nama !== '' && $floor_id > 0) {
                 $stmt = $conn->prepare("UPDATE rooms SET nama = ?, floor_id = ?, kode = ?, telepon = ? WHERE id = ?");
-                $stmt->execute([$nama, $floor_id, $kode, $telepon, $id]);
+                $sukses = $stmt->execute([$nama, $floor_id, $kode, $telepon, $id]);
+                
+                if ($sukses) {
+                    write_log($conn, "Mengubah informasi data ruangan: " . $nama . " (" . $kode . ")", "rooms", $id);
+                }
             }
         }
         if ($action === 'delete_room') {
             $id = (int)$_POST['id'];
-            $conn->prepare("DELETE FROM rooms WHERE id = ?")->execute([$id]);
+            
+            // Ambil nama ruangan sebelum dihapus demi info log yang detail
+            $get_name = $conn->prepare("SELECT nama, kode FROM rooms WHERE id = ?");
+            $get_name->execute([$id]);
+            $room_data = $get_name->fetch(PDO::FETCH_ASSOC);
+            $nama_ruangan = $room_data ? $room_data['nama'] . " (" . $room_data['kode'] . ")" : 'Unknown';
+
+            $sukses = $conn->prepare("DELETE FROM rooms WHERE id = ?")->execute([$id]);
+            
+            if ($sukses) {
+                write_log($conn, "Menghapus data ruangan: " . $nama_ruangan, "rooms", $id);
+            }
         }
 
         // KABARKAN KE BROWSER JIKA PROSES BERHASIL
@@ -108,3 +166,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit;
     }
 }
+?>

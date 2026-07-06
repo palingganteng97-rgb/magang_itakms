@@ -49,13 +49,20 @@ try {
         $stmt = $conn->prepare(
             "INSERT INTO roles (nama, keterangan, status) VALUES (:nama, :keterangan, :status)"
         );
-        $stmt->execute([
+        $sukses_create = $stmt->execute([
             ':nama' => $nama,
             ':keterangan' => $keterangan,
             ':status' => $status,
         ]);
 
-        respond(true, 'Role berhasil ditambahkan.', ['id' => (int)$conn->lastInsertId()]);
+        // AMBIL ID BARU DAN TULIS LOG AKTIVITAS (CREATE)
+        if ($sukses_create) {
+            $new_role_id = (int)$conn->lastInsertId();
+            write_log($conn, "Menambahkan data role baru: " . $nama, "roles", $new_role_id);
+            respond(true, 'Role berhasil ditambahkan.', ['id' => $new_role_id]);
+        }
+
+        respond(false, 'Gagal menambahkan role.');
     }
 
     if ($action === 'update') {
@@ -82,14 +89,20 @@ try {
         $stmt = $conn->prepare(
             "UPDATE roles SET nama = :nama, keterangan = :keterangan, status = :status WHERE id = :id"
         );
-        $stmt->execute([
+        $sukses_update = $stmt->execute([
             ':nama' => $nama,
             ':keterangan' => $keterangan,
             ':status' => $status,
             ':id' => $id,
         ]);
 
-        respond(true, 'Role berhasil diupdate.');
+        // TULIS LOG AKTIVITAS (UPDATE)
+        if ($sukses_update) {
+            write_log($conn, "Mengubah informasi data role menjadi: " . $nama, "roles", $id);
+            respond(true, 'Role berhasil diupdate.');
+        }
+
+        respond(false, 'Gagal memperbarui role.');
     }
 
     if ($action === 'delete') {
@@ -98,10 +111,22 @@ try {
             respond(false, 'ID tidak valid.');
         }
 
-        $stmt = $conn->prepare("DELETE FROM roles WHERE id = :id");
-        $stmt->execute([':id' => $id]);
+        // 1. Ambil nama role terlebih dahulu sebelum dihapus permanen untuk kebutuhan teks log
+        $get_name = $conn->prepare("SELECT nama FROM roles WHERE id = :id");
+        $get_name->execute([':id' => $id]);
+        $nama_role = $get_name->fetchColumn() ?: 'Unknown';
 
-        respond(true, 'Role berhasil dihapus.');
+        // 2. Jalankan query hapus data
+        $stmt = $conn->prepare("DELETE FROM roles WHERE id = :id");
+        $sukses_delete = $stmt->execute([':id' => $id]);
+
+        // TULIS LOG AKTIVITAS (DELETE)
+        if ($sukses_delete) {
+            write_log($conn, "Menghapus data role: " . $nama_role, "roles", $id);
+            respond(true, 'Role berhasil dihapus.');
+        }
+
+        respond(false, 'Gagal menghapus role.');
     }
 
     respond(false, 'Unhandled action.');
@@ -109,4 +134,4 @@ try {
 } catch (PDOException $e) {
     respond(false, 'Database error: ' . $e->getMessage());
 }
-
+?>

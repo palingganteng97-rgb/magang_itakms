@@ -33,8 +33,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // Menggunakan variabel $chosen_user_id hasil kiriman form
             $sql = "INSERT INTO daily_checklists (tanggal, item, status, user_id) VALUES (?, ?, ?, ?)";
             $stmt = $conn->prepare($sql);
-            $stmt->execute([$tanggal, $item, $status, $chosen_user_id]);
+            $sukses = $stmt->execute([$tanggal, $item, $status, $chosen_user_id]);
             
+            // AMBIL ID BARU DAN TULIS LOG AKTIVITAS (CREATE)
+            if ($sukses) {
+                $new_checklist_id = $conn->lastInsertId();
+                write_log($conn, "Menambahkan item daily checklist baru: " . $item, "daily_checklists", $new_checklist_id);
+            }
+
             // Pertahankan parameter filter tanggal jika sedang melakukan pencarian saat tambah data
             $redirect_url = !empty($filter_tanggal) ? "daily_checklist.php?search_date=" . urlencode($filter_tanggal) : "daily_checklist.php";
             echo "<script>window.location.href = '$redirect_url';</script>";
@@ -57,8 +63,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // Menyisipkan kolom user_id ke dalam pembaharuan query update database
             $sql = "UPDATE daily_checklists SET tanggal = ?, item = ?, user_id = ? WHERE id = ?";
             $stmt = $conn->prepare($sql);
-            $stmt->execute([$tanggal, $item, $chosen_user_id, $id]);
+            $sukses_update = $stmt->execute([$tanggal, $item, $chosen_user_id, $id]);
             
+            // TULIS LOG AKTIVITAS (UPDATE)
+            if ($sukses_update) {
+                write_log($conn, "Memperbarui item daily checklist: " . $item, "daily_checklists", $id);
+            }
+
             // Pertahankan parameter filter tanggal jika sedang melakukan pencarian saat update data
             $redirect_url = !empty($filter_tanggal) ? "daily_checklist.php?search_date=" . urlencode($filter_tanggal) : "daily_checklist.php";
             echo "<script>window.location.href = '$redirect_url';</script>";
@@ -74,12 +85,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $id = $_POST['id'];
         // Membalikkan status: jika 1 jadi 0, jika 0 jadi 1
         $new_status = $_POST['current_status'] == 1 ? 0 : 1;
+        $status_label = ($new_status == 1) ? 'Selesai' : 'Pending';
 
         try {
             $sql = "UPDATE daily_checklists SET status = ? WHERE id = ?";
             $stmt = $conn->prepare($sql);
-            $stmt->execute([$new_status, $id]);
+            $sukses_toggle = $stmt->execute([$new_status, $id]);
             
+            // TULIS LOG AKTIVITAS (TOGGLE STATUS)
+            if ($sukses_toggle) {
+                write_log($conn, "Mengubah status item daily checklist menjadi " . $status_label, "daily_checklists", $id);
+            }
+
             // Pertahankan parameter filter tanggal jika sedang melakukan pencarian saat klik checkbox
             $redirect_url = !empty($filter_tanggal) ? "daily_checklist.php?search_date=" . urlencode($filter_tanggal) : "daily_checklist.php";
             echo "<script>window.location.href = '$redirect_url';</script>";
@@ -95,10 +112,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $id = $_POST['id'];
         
         try {
+            // 1. Ambil nama item terlebih dahulu untuk kebutuhan log sebelum datanya dihapus permanen
+            $get_item = $conn->prepare("SELECT item FROM daily_checklists WHERE id = ?");
+            $get_item->execute([$id]);
+            $checklist_data = $get_item->fetch(PDO::FETCH_ASSOC);
+            $nama_item = $checklist_data ? $checklist_data['item'] : 'Unknown';
+
+            // 2. Jalankan query hapus data
             $sql = "DELETE FROM daily_checklists WHERE id = ?";
             $stmt = $conn->prepare($sql);
-            $stmt->execute([$id]);
+            $sukses_delete = $stmt->execute([$id]);
             
+            // TULIS LOG AKTIVITAS (DELETE)
+            if ($sukses_delete) {
+                write_log($conn, "Menghapus item daily checklist: " . $nama_item, "daily_checklists", $id);
+            }
+
             // Pertahankan parameter filter tanggal jika sedang melakukan pencarian saat hapus data
             $redirect_url = !empty($filter_tanggal) ? "daily_checklist.php?search_date=" . urlencode($filter_tanggal) : "daily_checklist.php";
             echo "<script>window.location.href = '$redirect_url';</script>";

@@ -7,6 +7,7 @@ error_reporting(E_ALL);
 // FILE PROSES BACKEND: proses_asset.php (CREATE, UPDATE & DELETE MULTI-TABEL)
 // =========================================================================
 session_start();
+require_once 'auth.php'; // HUBUNGKAN DENGAN AUTH.PHP UNTUK MENGAKSES FUNGSI WRITE_LOG()
 
 $host     = "10.10.6.59";
 $username = "root_host";
@@ -66,12 +67,18 @@ if ($action == 'create') {
             VALUES (:kategori_id, :brand_id, :room_id, :status_id, :kode_asset, :nama, :serial_number, :hostname, :ip_address, :mac_address, :tanggal_beli, :garansi, :foto, :manual_book, :spesifikasi, NOW(), NOW())";
     
     $stmt = $conn->prepare($sql);
-    $stmt->execute([
+    $sukses = $stmt->execute([
         ':kategori_id' => $kategori_id, ':brand_id' => $brand_id, ':room_id' => $room_id, ':status_id' => $status_id,
         ':kode_asset' => $kode_asset, ':nama' => $nama, ':serial_number' => $serial_number, ':hostname' => $hostname,
         ':ip_address' => $ip_address, ':mac_address' => $mac_address, ':tanggal_beli' => $tanggal_beli, ':garansi' => $garansi,
         ':foto' => $nama_foto, ':manual_book' => $nama_manual_book, ':spesifikasi' => $spesifikasi
     ]);
+
+    // AMBIL ID BARU DAN TULIS LOG AKTIVITAS (CREATE)
+    if ($sukses) {
+        $new_asset_id = $conn->lastInsertId();
+        write_log($conn, "Menambahkan data asset baru: " . $nama, "assets", $new_asset_id);
+    }
 
     header("Location: assets.php");
     exit();
@@ -148,85 +155,67 @@ if ($action == 'update') {
             WHERE id = :id";
     
     $stmt = $conn->prepare($sql);
-    $stmt->execute([
+    $sukses_update = $stmt->execute([
         ':kategori_id' => $kategori_id, ':brand_id' => $brand_id, ':room_id' => $room_id, ':status_id' => $status_id,
         ':kode_asset' => $kode_asset, ':nama' => $nama, ':serial_number' => $serial_number, ':hostname' => $hostname,
-        ':ip_address' => $ip_address, ':mac_address' => $mac_address, ':tanggal_beli' => $tanggal_beli, ':garansi' => $garansi,
-        ':foto' => $nama_foto, ':manual_book' => $nama_manual_book, ':spesifikasi' => $spesifikasi, ':id' => $id
+        ':ip_address' => $ip_address, ':mac_address' => $mac_address, ':tanggal_beli' => $tanggal_beli, 
+        ':garansi' => $garansi, ':foto' => $nama_foto, ':manual_book' => $nama_manual_book, ':spesifikasi' => $spesifikasi, 
+        ':id' => $id
     ]);
+
+    // TULIS LOG AKTIVITAS (UPDATE)
+    if ($sukses_update) {
+        write_log($conn, "Mengubah data asset: " . $nama, "assets", $id);
+    }
 
     header("Location: assets.php");
     exit();
-} // FIX: Tanda penutup kurung kurawal untuk blok update sudah terpasang rapi di sini
+}
 
 // -------------------------------------------------------------------------
-// LOGIKA 3: HAPUS DATA TOTAL (DELETE DENGAN PEMBERSIHAN MULTI-TABEL RELASI)
+// LOGIKA 3: HAPUS DATA (DELETE)
 // -------------------------------------------------------------------------
 if ($action == 'delete') {
     $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
-    if ($id <= 0) { die("ID Data tidak valid untuk dihapus."); }
+    if ($id <= 0) { die("ID Data tidak valid."); }
 
     try {
-        // 1. Mulai Database Transaction untuk mengunci integritas query multi-tabel
-        $conn->beginTransaction();
+        // 1. Ambil nama asset & berkas lama sebelum datanya terhapus permanen
+        $get_name = $conn->prepare("SELECT nama, foto, manual_book FROM assets WHERE id = :id");
+        $get_name->execute([':id' => $id]);
+        $asset_data = $get_name->fetch(PDO::FETCH_ASSOC);
 
-        // 2. Ambil info file berkas media sebelum baris data dihapus
-        $get_files = $conn->prepare("SELECT nama, foto, manual_book FROM assets WHERE id = :id");
-        $get_files->execute([':id' => $id]);
-        $files = $get_files->fetch(PDO::FETCH_ASSOC);
-
-        if ($files) {
-            $nama_asset_dihapus = $files['nama'] ?? 'Tidak Diketahui';
-
-            // 3. Putus relasi data terkait di tabel anak 'asset_movements'
-            $stmt_mov = $conn->prepare("DELETE FROM asset_movements WHERE asset_id = :id");
-            $stmt_mov->execute([':id' => $id]);
-
-            // 4. Putus relasi data terkait di tabel anak 'network_devices' 
-            $stmt_net = $conn->prepare("UPDATE network_devices SET asset_id = NULL WHERE asset_id = :id");
-            $stmt_net->execute([':id' => $id]);
-
-            // 5. Putus relasi data terkait di tabel anak 'servers'
-            $stmt_srv = $conn->prepare("UPDATE servers SET asset_id = NULL WHERE asset_id = :id");
-            $stmt_srv->execute([':id' => $id]);
-
-            // 6. Setelah semua relasi tabel anak dibersihkan, hapus baris data utama di tabel induk assets
-            $stmt_asset = $conn->prepare("DELETE FROM assets WHERE id = :id");
-            $stmt_asset->execute([':id' => $id]);
-
-            // =========================================================================
-            // KUNCI UTAMA: Tulis Log Aktivitas TEPAT DI SINI sebelum Transaction di-Commit
-            // =========================================================================
-            write_log($conn, "Menghapus total data aset: '" . $nama_asset_dihapus . "' beserta seluruh relasinya", "assets", $id);
-
-            // 7. Commit seluruh rangkaian transaksi database jika tidak terjadi kendala query
-            $conn->commit();
-
-            // 8. Pembersihan Berkas Media (jika bukan gambar default)
-            if (!empty($files['foto']) && $files['foto'] != 'default.jpg') {
-                $path_foto = 'uploads/' . $files['foto'];
-                if (file_exists($path_foto)) { unlink($path_foto); }
+        if ($asset_data) {
+            $nama_asset = $asset_data['nama'];
+            
+            // 2. Hapus berkas file fisik di direktori uploads jika ada
+            if (!empty($asset_data['foto']) && $asset_data['foto'] != 'default.jpg') {
+                if (file_exists('uploads/' . $asset_data['foto'])) { 
+                    unlink('uploads/' . $asset_data['foto']); 
+                }
+            }
+            if (!empty($asset_data['manual_book'])) {
+                if (file_exists('uploads/' . $asset_data['manual_book'])) { 
+                    unlink('uploads/' . $asset_data['manual_book']); 
+                }
             }
 
-            // 9. Hapus file dokumen PDF manual book dari folder uploads
-            if (!empty($files['manual_book'])) {
-                $path_pdf = 'uploads/' . $files['manual_book'];
-                if (file_exists($path_pdf)) { unlink($path_pdf); }
-            }
+            // 3. Jalankan query hapus baris tabel
+            $sql_delete = "DELETE FROM assets WHERE id = :id";
+            $stmt_delete = $conn->prepare($sql_delete);
+            $sukses_delete = $stmt_delete->execute([':id' => $id]);
 
-            $_SESSION['flash_message'] = "Aset beserta seluruh riwayat perpindahan dan relasi sistem terkait berhasil dihapus.";
-        } else {
-            $_SESSION['flash_error'] = "Data aset tidak ditemukan.";
+            // 4. Catat ke log aktivitas sistem beserta Data ID-nya
+            if ($sukses_delete) {
+                write_log($conn, "Menghapus data asset: " . $nama_asset, "assets", $id);
+            }
         }
-
-        // Alihkan halaman ke log aktivitas agar Anda langsung bisa melihat hasilnya tercatat
-        header("Location: activity_logs.php");
-        exit();
-
-    } catch (Exception $e) {
-        $conn->rollBack();
-        die("Gagal menghapus data akibat kendala sistem: " . $e->getMessage());
+    } catch (PDOException $e) {
+        die("Gagal menghapus data: " . $e->getMessage());
     }
-}
 
+    // 5. Kembalikan secara otomatis ke halaman daftar asset (Mencegah Layar Putih)
+    header("Location: assets.php");
+    exit();
+}
 ?>

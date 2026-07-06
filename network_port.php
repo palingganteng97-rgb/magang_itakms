@@ -39,6 +39,11 @@ try {
     $conn = new PDO("mysql:host=$host;dbname=$database", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+    // TRIGGER LOG OTOMATIS GLOBAL: Mencatat log kunjungan halaman
+    if (!isset($_GET['page']) && !isset($_POST['action'])) {
+        write_log($conn, "Membuka halaman Dashboard Sistem - Network Ports", "network_ports", null);
+    }
+
     // ===================================================
     // LOGIKA PROSES AKSI FORM CRUD (POST & GET)
     // ===================================================
@@ -51,8 +56,14 @@ try {
         $status            = $_POST['status']; 
 
         $stmtInsert = $conn->prepare("INSERT INTO network_ports (network_device_id, port, nama, status) VALUES (?, ?, ?, ?)");
-        $stmtInsert->execute([$network_device_id, $port, $nama, $status]);
+        $sukses_add = $stmtInsert->execute([$network_device_id, $port, $nama, $status]);
         
+        // AMBIL ID BARU DAN TULIS LOG AKTIVITAS (CREATE)
+        if ($sukses_add) {
+            $new_port_id = $conn->lastInsertId();
+            write_log($conn, "Menambahkan port jaringan baru: " . $port . " (" . $nama . ")", "network_ports", $new_port_id);
+        }
+
         header("Location: network_port.php?status=success_add");
         exit;
     }
@@ -66,8 +77,13 @@ try {
         $status            = $_POST['status']; 
 
         $stmtUpdate = $conn->prepare("UPDATE network_ports SET network_device_id = ?, port = ?, nama = ?, status = ? WHERE id = ?");
-        $stmtUpdate->execute([$network_device_id, $port, $nama, $status, $id]);
+        $sukses_edit = $stmtUpdate->execute([$network_device_id, $port, $nama, $status, $id]);
         
+        // TULIS LOG AKTIVITAS (UPDATE)
+        if ($sukses_edit) {
+            write_log($conn, "Mengubah data port jaringan ID: " . $id . " (Port: " . $port . ")", "network_ports", $id);
+        }
+
         header("Location: network_port.php?status=success_update");
         exit;
     }
@@ -76,9 +92,21 @@ try {
     if (isset($_POST['action']) && $_POST['action'] == 'delete') {
         $idDelete = $_POST['id'];
 
+        // 1. Ambil nomor port terlebih dahulu sebelum dihapus permanen untuk kebutuhan teks riwayat log
+        $get_info = $conn->prepare("SELECT port, nama FROM network_ports WHERE id = ?");
+        $get_info->execute([$idDelete]);
+        $port_data = $get_info->fetch(PDO::FETCH_ASSOC);
+        $port_log = $port_data ? $port_data['port'] . " (" . $port_data['nama'] . ")" : 'Unknown';
+
+        // 2. Jalankan query hapus data
         $stmtDelete = $conn->prepare("DELETE FROM network_ports WHERE id = ?");
-        $stmtDelete->execute([$idDelete]);
+        $sukses_delete = $stmtDelete->execute([$idDelete]);
         
+        // TULIS LOG AKTIVITAS (DELETE)
+        if ($sukses_delete) {
+            write_log($conn, "Menghapus data port jaringan: " . $port_log, "network_ports", $idDelete);
+        }
+
         header("Location: network_port.php?status=success_delete");
         exit;
     }

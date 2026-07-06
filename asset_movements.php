@@ -1,6 +1,6 @@
 <?php
 // =========================================================================
-// LOGIKA BACKEND UTUH: asset_movements.php (PULIH TOTAL & KILAT)
+// LOGIKA BACKEND UTAMA - ASSET MOVEMENTS VIEW WITH SEARCH
 // =========================================================================
 require_once __DIR__ . '/auth.php';
 require_login();
@@ -26,6 +26,11 @@ try {
                           OR a.kode_asset LIKE :search 
                           OR am.alasan LIKE :search";
         $params[':search'] = "%$search_keyword%";
+    }
+
+    // TRIGGER LOG OTOMATIS GLOBAL: Mencatat log kunjungan halaman
+    if (empty($search_keyword) && !isset($_GET['ajax'])) {
+        write_log($conn, "Membuka halaman Log Riwayat Perpindahan Asset", "asset_movements", null);
     }
 
     // 2. QUERY UTAMA: DITAMBAHKAN GROUP BY am.id AGAR DATA TIDAK GANDA / DOUBLE

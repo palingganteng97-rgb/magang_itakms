@@ -24,8 +24,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         try {
             $sql = "INSERT INTO backup_jobs (server_id, lokasi, jadwal, status, backup_terakhir) VALUES (?, ?, ?, ?, NULL)";
             $stmt = $conn->prepare($sql);
-            $stmt->execute([$server_id, $lokasi, $jadwal, $status]);
+            $sukses = $stmt->execute([$server_id, $lokasi, $jadwal, $status]);
             
+            // AMBIL ID BARU DAN CATAT KE LOG AKTIVITAS (CREATE)
+            if ($sukses) {
+                $new_job_id = $conn->lastInsertId();
+                write_log($conn, "Menambahkan jadwal backup baru untuk Server ID: " . $server_id, "backup_jobs", $new_job_id);
+            }
+
             echo "<script>window.location.href = 'backup_jobs.php';</script>";
             exit();
         } catch (Exception $e) {
@@ -45,8 +51,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         try {
             $sql = "UPDATE backup_jobs SET server_id = ?, lokasi = ?, jadwal = ?, status = ? WHERE id = ?";
             $stmt = $conn->prepare($sql);
-            $stmt->execute([$server_id, $lokasi, $jadwal, $status, $id]);
+            $sukses_update = $stmt->execute([$server_id, $lokasi, $jadwal, $status, $id]);
             
+            // CATAT KE LOG AKTIVITAS (UPDATE)
+            if ($sukses_update) {
+                write_log($conn, "Mengubah jadwal backup Server ID: " . $server_id, "backup_jobs", $id);
+            }
+
             echo "<script>window.location.href = 'backup_jobs.php';</script>";
             exit();
         } catch (Exception $e) {
@@ -61,10 +72,22 @@ if (isset($_GET['delete'])) {
     $id = $_GET['delete'];
     
     try {
+        // 1. Ambil info server terlebih dahulu untuk kebutuhan log sebelum datanya terhapus
+        $get_info = $conn->prepare("SELECT server_id FROM backup_jobs WHERE id = ?");
+        $get_info->execute([$id]);
+        $job_data = $get_info->fetch(PDO::FETCH_ASSOC);
+        $server_id_log = $job_data ? $job_data['server_id'] : 'Unknown';
+
+        // 2. Jalankan query hapus data
         $sql = "DELETE FROM backup_jobs WHERE id = ?";
         $stmt = $conn->prepare($sql);
-        $stmt->execute([$id]);
+        $sukses_delete = $stmt->execute([$id]);
         
+        // 3. Catat ke log aktivitas sistem beserta Data ID-nya (DELETE)
+        if ($sukses_delete) {
+            write_log($conn, "Menghapus jadwal backup Server ID: " . $server_id_log, "backup_jobs", $id);
+        }
+
         echo "<script>window.location.href = 'backup_jobs.php';</script>";
         exit();
     } catch (Exception $e) {
@@ -84,6 +107,7 @@ try {
     $message_type = "danger";
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="id">
 <head>

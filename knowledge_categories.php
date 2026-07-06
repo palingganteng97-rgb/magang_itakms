@@ -37,7 +37,14 @@ try {
             $nama = trim($_POST['nama'] ?? '');
             if (!empty($nama)) {
                 $stmt = $conn->prepare("INSERT INTO knowledge_categories (nama) VALUES (:nama)");
-                $stmt->execute([':nama' => $nama]);
+                $sukses_create = $stmt->execute([':nama' => $nama]);
+                
+                // AMBIL ID BARU DAN TULIS LOG AKTIVITAS (CREATE)
+                if ($sukses_create) {
+                    $new_cat_id = $conn->lastInsertId();
+                    write_log($conn, "Menambahkan kategori knowledge baru: " . $nama, "knowledge_categories", $new_cat_id);
+                }
+                
                 $_SESSION['flash_message'] = "Kategori berhasil ditambahkan.";
             } else {
                 $_SESSION['flash_error'] = "Nama kategori tidak boleh kosong.";
@@ -52,7 +59,13 @@ try {
             $nama = trim($_POST['nama'] ?? '');
             if ($id > 0 && !empty($nama)) {
                 $stmt = $conn->prepare("UPDATE knowledge_categories SET nama = :nama WHERE id = :id");
-                $stmt->execute([':nama' => $nama, ':id' => $id]);
+                $sukses_update = $stmt->execute([':nama' => $nama, ':id' => $id]);
+                
+                // TULIS LOG AKTIVITAS (UPDATE)
+                if ($sukses_update) {
+                    write_log($conn, "Mengubah data kategori knowledge menjadi: " . $nama, "knowledge_categories", $id);
+                }
+                
                 $_SESSION['flash_message'] = "Kategori berhasil diperbarui.";
             } else {
                 $_SESSION['flash_error'] = "Data tidak valid atau nama kosong.";
@@ -65,8 +78,20 @@ try {
         if (isset($_POST['action']) && $_POST['action'] === 'delete') {
             $id = (int)($_POST['id'] ?? 0);
             if ($id > 0) {
+                // 1. Ambil nama kategori terlebih dahulu sebelum dihapus permanen
+                $get_name = $conn->prepare("SELECT nama FROM knowledge_categories WHERE id = :id");
+                $get_name->execute([':id' => $id]);
+                $nama_kategori = $get_name->fetchColumn() ?: 'Unknown';
+
+                // 2. Jalankan query hapus data
                 $stmt = $conn->prepare("DELETE FROM knowledge_categories WHERE id = :id");
-                $stmt->execute([':id' => $id]);
+                $sukses_delete = $stmt->execute([':id' => $id]);
+                
+                // TULIS LOG AKTIVITAS (DELETE)
+                if ($sukses_delete) {
+                    write_log($conn, "Menghapus kategori knowledge: " . $nama_kategori, "knowledge_categories", $id);
+                }
+                
                 $_SESSION['flash_message'] = "Kategori berhasil dihapus.";
             } else {
                 $_SESSION['flash_error'] = "Gagal menghapus data, ID tidak valid.";

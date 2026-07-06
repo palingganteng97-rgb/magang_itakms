@@ -34,10 +34,17 @@ try {
         if ($action == 'add') {
             $stmt = $conn->prepare("INSERT INTO maintenance_logs (asset_id, teknisi, tanggal, jenis, hasil, biaya, status) 
                                     VALUES (:asset_id, :teknisi, :tanggal, :jenis, :hasil, :biaya, :status)");
-            $stmt->execute([
+            $sukses_add = $stmt->execute([
                 ':asset_id' => $asset_id, ':teknisi' => $teknisi, ':tanggal' => $tanggal,
                 ':jenis' => $jenis, ':hasil' => $hasil, ':biaya' => $biaya, ':status' => $status
             ]);
+
+            // AMBIL ID BARU DAN TULIS LOG AKTIVITAS (CREATE)
+            if ($sukses_add) {
+                $new_log_id = $conn->lastInsertId();
+                write_log($conn, "Menambahkan log maintenance baru untuk Asset ID: " . $asset_id, "maintenance_logs", $new_log_id);
+            }
+
             header("Location: maintenance.php?status=success_add");
             exit;
         } elseif ($action == 'edit') {
@@ -46,10 +53,16 @@ try {
                                     asset_id = :asset_id, teknisi = :teknisi, tanggal = :tanggal, 
                                     jenis = :jenis, hasil = :hasil, biaya = :biaya, status = :status 
                                     WHERE id = :id");
-            $stmt->execute([
+            $sukses_edit = $stmt->execute([
                 ':asset_id' => $asset_id, ':teknisi' => $teknisi, ':tanggal' => $tanggal,
                 ':jenis' => $jenis, ':hasil' => $hasil, ':biaya' => $biaya, ':status' => $status, ':id' => $id
             ]);
+
+            // TULIS LOG AKTIVITAS (UPDATE)
+            if ($sukses_edit) {
+                write_log($conn, "Mengubah data log maintenance ID: " . $id . " (Asset ID: " . $asset_id . ")", "maintenance_logs", $id);
+            }
+
             header("Location: maintenance.php?status=success_edit");
             exit;
         }
@@ -57,8 +70,22 @@ try {
 
     if ($action == 'delete' && isset($_GET['id'])) {
         $id = $_GET['id'];
+
+        // 1. Ambil info asset_id terlebih dahulu untuk kebutuhan log sebelum datanya dihapus permanen
+        $get_info = $conn->prepare("SELECT asset_id FROM maintenance_logs WHERE id = :id");
+        $get_info->execute([':id' => $id]);
+        $log_data = $get_info->fetch(PDO::FETCH_ASSOC);
+        $asset_id_log = $log_data ? $log_data['asset_id'] : 'Unknown';
+
+        // 2. Jalankan query hapus data
         $stmt = $conn->prepare("DELETE FROM maintenance_logs WHERE id = :id");
-        $stmt->execute([':id' => $id]);
+        $sukses_delete = $stmt->execute([':id' => $id]);
+
+        // TULIS LOG AKTIVITAS (DELETE)
+        if ($sukses_delete) {
+            write_log($conn, "Menghapus data log maintenance untuk Asset ID: " . $asset_id_log, "maintenance_logs", $id);
+        }
+
         header("Location: maintenance.php?status=success_delete");
         exit;
     }

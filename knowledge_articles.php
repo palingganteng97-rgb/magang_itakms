@@ -36,13 +36,20 @@ try {
 
         $insSql = "INSERT INTO knowledge_articles (category_id, judul, isi, lampiran, status) VALUES (:cat, :judul, :isi, :lampiran, :status)";
         $insStmt = $conn->prepare($insSql);
-        $insStmt->execute([
+        $sukses_create = $insStmt->execute([
             ':cat' => $category_id,
             ':judul' => $judul,
             ':isi' => $isi,
             ':lampiran' => $lampiran,
             ':status' => $status
         ]);
+
+        // AMBIL ID BARU DAN TULIS LOG AKTIVITAS (CREATE)
+        if ($sukses_create) {
+            $new_article_id = $conn->lastInsertId();
+            write_log($conn, "Menambahkan artikel knowledge baru: " . $judul, "knowledge_articles", $new_article_id);
+        }
+
         header("Location: knowledge_articles.php?msg=success_create");
         exit;
     }
@@ -73,7 +80,7 @@ try {
 
         $updSql = "UPDATE knowledge_articles SET category_id = :cat, judul = :judul, isi = :isi, lampiran = :lampiran, status = :status WHERE id = :id";
         $updStmt = $conn->prepare($updSql);
-        $updStmt->execute([
+        $sukses_update = $updStmt->execute([
             ':cat' => $category_id,
             ':judul' => $judul,
             ':isi' => $isi,
@@ -81,6 +88,12 @@ try {
             ':status' => $status,
             ':id' => $id
         ]);
+
+        // TULIS LOG AKTIVITAS (UPDATE)
+        if ($sukses_update) {
+            write_log($conn, "Mengubah data artikel knowledge: " . $judul, "knowledge_articles", $id);
+        }
+
         header("Location: knowledge_articles.php?msg=success_update");
         exit;
     }
@@ -89,17 +102,29 @@ try {
     if (isset($_GET['delete'])) {
         $id = (int)$_GET['delete'];
         
-        $delFileSql = "SELECT lampiran FROM knowledge_articles WHERE id = :id";
+        // Ambil data judul & lampiran artikel sebelum datanya terhapus permanen
+        $delFileSql = "SELECT judul, lampiran FROM knowledge_articles WHERE id = :id";
         $delFileStmt = $conn->prepare($delFileSql);
         $delFileStmt->execute([':id' => $id]);
-        $oldFile = $delFileStmt->fetchColumn();
+        $articleData = $delFileStmt->fetch(PDO::FETCH_ASSOC);
+        
+        $judul_artikel = $articleData ? $articleData['judul'] : 'Unknown';
+        $oldFile = $articleData ? $articleData['lampiran'] : '';
+
+        // Hapus berkas fisik lampiran dari server jika ada
         if (!empty($oldFile) && file_exists('uploads/' . $oldFile)) {
             @unlink('uploads/' . $oldFile);
         }
 
         $delSql = "DELETE FROM knowledge_articles WHERE id = :id";
         $delStmt = $conn->prepare($delSql);
-        $delStmt->execute([':id' => $id]);
+        $sukses_delete = $delStmt->execute([':id' => $id]);
+
+        // TULIS LOG AKTIVITAS (DELETE)
+        if ($sukses_delete) {
+            write_log($conn, "Menghapus artikel knowledge: " . $judul_artikel, "knowledge_articles", $id);
+        }
+
         header("Location: knowledge_articles.php?msg=success_delete");
         exit;
     }
@@ -107,7 +132,6 @@ try {
     // =========================================================================
     // 2. AMBIL DATA KATEGORI UNTUK DROPDOWN MODAL
     // =========================================================================
-    // Mengubah kc.judul menjadi kc.nama
     $catStmt = $conn->query("SELECT id, nama FROM knowledge_categories ORDER BY nama ASC");
     $all_categories = $catStmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -129,7 +153,6 @@ try {
     $totalRows = $countStmt->fetchColumn();
     $totalPages = ceil($totalRows / $perPage);
 
-    // Mengubah kc.judul AS category_name menjadi kc.nama AS category_name
     $sql = "SELECT ka.*, kc.nama AS category_name 
             FROM knowledge_articles ka
             LEFT JOIN knowledge_categories kc ON ka.category_id = kc.id";
