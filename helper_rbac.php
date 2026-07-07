@@ -58,6 +58,7 @@ function check_access_by_table($table_name, $action = 'R') {
         case 'servers':
         case 'network_devices':
         case 'network_port':
+        case 'network_ports':
             if ($role_id === 2) return true;
             if ($role_id === 3 && in_array($action, ['C', 'R', 'U'])) return true; // Teknisi: Tambah, Read, Update
             if ($role_id === 4 && $action === 'R') return true;
@@ -65,6 +66,7 @@ function check_access_by_table($table_name, $action = 'R') {
 
         // Modul: Password Vault
         case 'password_vault':
+        case 'password_vaults':
         case 'password_categories':
         case 'password_histories':
             if ($role_id === 2) return true;
@@ -73,9 +75,11 @@ function check_access_by_table($table_name, $action = 'R') {
 
         // Modul: Maintenance & SOP & Software License
         case 'maintenance':
+        case 'maintenance_logs':
         case 'sop_categories':
+        case 'sops': // FIXED: Case ditambahkan agar halaman sops.php tidak terblokir lagi
         case 'software_licenses':
-            if ($role_id === 2) return true;
+            if ($role_id === 2) return true; // Admin IT (Full)
             if (in_array($role_id, [3, 4]) && $action === 'R') return true; // Teknisi & Viewer: Read
             return false;
 
@@ -143,7 +147,7 @@ function protect_page_by_table($table_name, $action = 'R') {
         
         // Mengubah teks snake_case nama tabel menjadi Capital Case (ex: backup_jobs -> Backup Jobs)
         $nama_modul = ucwords(str_replace('_', ' ', $table_name));
-?>
+        ?>
 
 <!DOCTYPE html>
 <html lang="id">
