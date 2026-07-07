@@ -10,6 +10,20 @@ require_once __DIR__ . '/db.php';
 // SISIPKAN FILE UTAMA RBAC DI SINI
 require_once __DIR__ . '/helper_rbac.php';
 
+// ==================== FIX PENYEBAB TOMBOL AKSI HILANG ====================
+// Menyelaraskan session key pembaca ID peran dengan skrip otentikasi utama auth.php
+$sessionRoleId = isset($_SESSION['user_role_id']) ? (int)$_SESSION['user_role_id'] : (isset($_SESSION['user']['role_id']) ? (int)$_SESSION['user']['role_id'] : 4);
+
+// Petakan ke string nama agar fungsi penilai elemen UI di HTML berjalan normal
+$roleMapping = [
+    1 => 'Super Admin',
+    2 => 'Admin IT',
+    3 => 'Teknisi',
+    4 => 'Viewer'
+];
+$userRole = isset($roleMapping[$sessionRoleId]) ? $roleMapping[$sessionRoleId] : 'Viewer';
+// =========================================================================
+
 $currentPage = 'sop_categories.php';
 
 $message = '';
@@ -348,133 +362,113 @@ $categories = $conn->query("SELECT * FROM sop_categories ORDER BY id DESC")->fet
             </div>
         <?php endif; ?>
 
-        <!-- Tabel Responsif Kategori (table-bordered) -->
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover align-middle m-0">
-                <thead class="table-light text-muted small text-uppercase">
-                    <tr>
-                        <th width="10%" class="text-center">ID</th>
-                        <th width="<?= (!in_array($userRole, ['Teknisi', 'Viewer'])) ? '75%' : '90%'; ?>">Nama Kategori</th>
+<!-- Tabel Responsif Kategori (table-bordered) -->
+<div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle m-0">
+        <thead class="table-light text-muted small text-uppercase">
+            <tr>
+                <th width="10%" class="text-center">ID</th>
+                <th width="<?= (in_array($sessionRoleId, [1, 2])) ? '75%' : '90%'; ?>">Nama Kategori</th>
+                
+                <?php if (in_array($sessionRoleId, [1, 2])): ?>
+                    <th width="15%" class="text-center">Aksi</th>
+                <?php endif; ?>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if(count($categories) == 0): ?>
+                <tr>
+                    <td colspan="<?= (in_array($sessionRoleId, [1, 2])) ? '3' : '2'; ?>" class="text-center text-muted py-5">
+                        <i class="bi bi-folder-x display-6 d-block mb-2 text-secondary"></i>
+                        Belum ada data kategori SOP yang tersimpan.
+                    </td>
+                </tr>
+            <?php endif; ?>
+            
+            <?php foreach($categories as $row): ?>
+            <tr>
+                <td class="text-center"><span class="text-muted fw-bold">#<?= $row['id']; ?></span></td>
+                <td class="fw-semibold text-dark"><?= htmlspecialchars($row['nama']); ?></td>
+                
+                <?php if (in_array($sessionRoleId, [1, 2])): ?>
+                <td class="text-center">
+                    <div class="btn-group shadow-sm border rounded bg-white">
+                        <!-- Tombol Pemicu Modal Edit -->
+                        <button class="btn btn-sm text-warning border-0" data-bs-toggle="modal" data-bs-target="#modalEditCategory<?= $row['id']; ?>" title="Ubah Kategori">
+                            <i class="bi bi-pencil-fill"></i>
+                        </button>
                         
-                        <!-- Fleksibel Otomatis: Hanya tampilkan kolom header Aksi jika user bukan Teknisi & Viewer -->
-                        <?php if (!in_array($userRole, ['Teknisi', 'Viewer'])): ?>
-                        <th width="15%" class="text-center">Aksi</th>
-                        <?php endif; ?>
-                        
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if(count($categories) == 0): ?>
-                        <tr>
-                            <td colspan="<?= (!in_array($userRole, ['Teknisi', 'Viewer'])) ? '3' : '2'; ?>" class="text-center text-muted py-5">
-                                <i class="bi bi-folder-x display-6 d-block mb-2 text-secondary"></i>
-                                Belum ada data kategori SOP yang tersimpan.
-                            </td>
-                        </tr>
-                    <?php endif; ?>
-                    
-                    <?php foreach($categories as $row): ?>
-                    <tr>
-                        <td class="text-center"><span class="text-muted fw-bold">#<?= $row['id']; ?></span></td>
-                        <td class="fw-semibold text-dark"><?= htmlspecialchars($row['nama']); ?></td>
-                        
-                        <!-- Fleksibel Otomatis: Blok kolom aksi disembunyikan total dari Teknisi & Viewer (X) -->
-                        <?php if (!in_array($userRole, ['Teknisi', 'Viewer'])): ?>
-                        <td class="text-center">
-                            <div class="btn-group shadow-sm border rounded bg-white">
-                                
-                                <!-- Fleksibel Otomatis: Cek Akses Update ('U') untuk tombol Edit -->
-                                <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'U', $userRole)): ?>
-                                <button class="btn btn-sm text-warning border-0" data-bs-toggle="modal" data-bs-target="#modalEditCategory<?= $row['id']; ?>" title="Ubah Kategori">
-                                    <i class="bi bi-pencil-fill"></i>
-                                </button>
-                                <?php endif; ?>
-                                
-                                <!-- Fleksibel Otomatis: Cek Akses Delete ('D') untuk tombol Hapus -->
-                                <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'D', $userRole)): ?>
-                                <button class="btn btn-sm text-danger border-0 border-start" data-bs-toggle="modal" data-bs-target="#modalDeleteCategory<?= $row['id']; ?>" title="Hapus Kategori">
-                                    <i class="bi bi-trash3-fill"></i>
-                                </button>
-                                <?php endif; ?>
-                                
-                            </div>
-                        </td>
-                        <?php endif; ?>
-                        
-                    </tr>
+                        <!-- Tombol Pemicu Modal Hapus -->
+                        <button class="btn btn-sm text-danger border-0 border-start" data-bs-toggle="modal" data-bs-target="#modalDeleteCategory<?= $row['id']; ?>" title="Hapus Kategori">
+                            <i class="bi bi-trash3-fill"></i>
+                        </button>
+                    </div>
+                </td>
+                <?php endif; ?>
+            </tr>
 
-                    <!-- ========================================== -->
-                    <!-- MODAL EDIT KATEGORI (HORIZONTAL RATA KIRI)  -->
-                    <!-- ========================================== -->
-                    <div class="modal fade" id="modalEditCategory<?= $row['id']; ?>" tabindex="-1" aria-hidden="true">
-                      <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content border-0 shadow-lg rounded-3">
-                          <form action="sop_categories.php" method="POST">
-                              <input type="hidden" name="action" value="update">
-                              <input type="hidden" name="id" value="<?= $row['id']; ?>">
-                              
-                              <div class="modal-header border-bottom-0 pb-0">
-                                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-pencil-square text-warning me-2"></i> Ubah Kategori</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                              </div>
-                              
-                              <div class="modal-body pt-3">
-                                <div class="row align-items-center">
-                                    <label for="nama_<?= $row['id']; ?>" class="col-4 col-form-label small fw-bold text-secondary text-start">Nama Kategori</label>
-                                    <div class="col-8">
-                                        <input type="text" id="nama_<?= $row['id']; ?>" name="nama" class="form-control form-control-sm text-dark" value="<?= htmlspecialchars($row['nama']); ?>" required>
-                                    </div>
-                                </div>
-                              </div>
-                              
-                              <div class="modal-footer border-top-0 pt-0">
-                                <button type="button" class="btn btn-sm btn-light border px-3" data-bs-dismiss="modal">Tutup</button>
-                                <button type="submit" class="btn btn-sm btn-warning fw-bold text-white px-4 shadow-sm">Update</button>
-                              </div>
-                          </form>
+            <!-- ========================================================================= -->
+            <!-- MODAL EDIT KATEGORI (WAJIB DI DALAM FOREACH AGAR ID ID TERPETA SEMPURNA) -->
+            <!-- ========================================================================= -->
+            <div class="modal fade" id="modalEditCategory<?= $row['id']; ?>" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg rounded-3">
+                  <form action="sop_categories.php" method="POST">
+                      <input type="hidden" name="action" value="update">
+                      <input type="hidden" name="id" value="<?= $row['id']; ?>">
+                      
+                      <div class="modal-header border-bottom-0 pb-0">
+                        <h5 class="modal-title fw-bold text-dark"><i class="bi bi-pencil-square text-warning me-2"></i> Ubah Kategori</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      
+                      <div class="modal-body pt-3">
+                        <div class="row align-items-center">
+                            <label for="nama_<?= $row['id']; ?>" class="col-4 col-form-label small fw-bold text-secondary text-start">Nama Kategori</label>
+                            <div class="col-8">
+                                <input type="text" id="nama_<?= $row['id']; ?>" name="nama" class="form-control form-control-sm text-dark" value="<?= htmlspecialchars($row['nama']); ?>" required>
+                            </div>
                         </div>
                       </div>
-                    </div>
-
-                    <!-- ========================================== -->
-                    <!-- MODAL HAPUS KATEGORI (HORIZONTAL RATA KIRI)-->
-                    <!-- ========================================== -->
-                    <div class="modal fade" id="modalDeleteCategory<?= $row['id']; ?>" tabindex="-1" aria-hidden="true">
-                      <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content border-0 shadow-lg rounded-3">
-                          <div class="modal-header border-bottom-0 pb-0">
-                            <h5 class="modal-title fw-bold text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Konfirmasi Hapus</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                          </div>
-                          <div class="modal-body pt-3">
-                            <div class="row align-items-center">
-                                <div class="col-2 text-start">
-                                    <i class="bi bi-trash3 text-danger display-6"></i>
-                                </div>
-                                <div class="col-10 text-start">
-                                    <p class="mb-1 text-secondary small fw-bold">Hapus kategori berikut?</p>
-                                    <h6 class="fw-bold text-dark mb-0">"<?= htmlspecialchars($row['nama']); ?>"</h6>
-                                </div>
-                            </div>
-                          </div>
-                          <div class="modal-footer border-top-0 pt-2">
-                            <button type="button" class="btn btn-sm btn-light border px-3" data-bs-dismiss="modal">Batal</button>
-                            <a href="sop_categories.php?delete=<?= $row['id']; ?>" class="btn btn-sm btn-danger fw-bold px-4 shadow-sm text-decoration-none">Ya, Hapus</a>
-                          </div>
-                        </div>
+                      
+                      <div class="modal-footer border-top-0 pt-0">
+                        <button type="button" class="btn btn-sm btn-light border px-3" data-bs-dismiss="modal">Tutup</button>
+                        <button type="submit" class="btn btn-sm btn-warning fw-bold text-white px-4 shadow-sm">Update</button>
                       </div>
-                    </div>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
+                  </form>
+                </div>
+              </div>
+            </div>
 
-    </div>
+            <!-- ========================================================================= -->
+            <!-- MODAL HAPUS KATEGORI (WAJIB DI DALAM FOREACH AGAR ID DATA SINKRON)         -->
+            <!-- ========================================================================= -->
+            <div class="modal fade" id="modalDeleteCategory<?= $row['id']; ?>" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg rounded-3">
+                  <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold text-dark"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i> Hapus Kategori</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body text-start pt-3">
+                    <p class="small text-secondary mb-0">Apakah Anda yakin ingin menghapus kategori <strong><?= htmlspecialchars($row['nama']); ?></strong> secara permanen?</p>
+                  </div>
+                  <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-sm btn-light border px-3" data-bs-dismiss="modal">Batal</button>
+                    <a href="sop_categories.php?delete=<?= $row['id']; ?>" class="btn btn-sm btn-danger fw-bold px-4 shadow-sm">Ya, Hapus</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <?php endforeach; ?> <!-- TAG PENUTUP LOOPING FOREACH -->
+        </tbody>
+    </table>
 </div>
 
-<!-- ========================================== -->
-<!-- MODAL TAMBAH KATEGORI (HORIZONTAL RATA KIRI)-->
-<!-- ========================================== -->
+<!-- ========================================================================= -->
+<!-- MODAL TAMBAH KATEGORI (DITARUH DI LUAR TABEL KARENA TIDAK BUTUH DATA ROW)  -->
+<!-- ========================================================================= -->
 <div class="modal fade" id="modalAddCategory" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg rounded-3">
