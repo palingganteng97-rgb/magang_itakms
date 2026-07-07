@@ -1,14 +1,9 @@
 <?php
-// ====================================================================
-// LOGIKA BACKEND UTAMA - DAILY CHECKLISTS WITH USER OPTION SELECT
-// ====================================================================
 
-// FIX: Menghapus session_start() ganda agar tidak bertabrakan dengan auth.php
 require_once __DIR__ . '/auth.php';
 require_login(); 
 require_once __DIR__ . '/db.php'; 
 
-// SISIPKAN FILE UTAMA RBAC DI SINI
 require_once __DIR__ . '/helper_rbac.php';
 
 $currentFile = 'daily_checklist.php';
@@ -42,13 +37,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt = $conn->prepare($sql);
             $sukses = $stmt->execute([$tanggal, $item, $status, $chosen_user_id]);
             
-            // AMBIL ID BARU DAN TULIS LOG AKTIVITAS (CREATE)
             if ($sukses) {
                 $new_checklist_id = $conn->lastInsertId();
                 write_log($conn, "Menambahkan item daily checklist baru: " . $item, "daily_checklists", $new_checklist_id);
             }
 
-            // Pertahankan parameter filter tanggal jika sedang melakukan pencarian saat tambah data
             $redirect_url = !empty($filter_tanggal) ? "daily_checklist.php?search_date=" . urlencode($filter_tanggal) : "daily_checklist.php";
             echo "<script>window.location.href = '$redirect_url';</script>";
             exit();
@@ -58,12 +51,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
-    // === PROSES UBAH DATA (UPDATE) ===
+    // === PROSES UPDATE DATA ===
     if (isset($_POST['action']) && $_POST['action'] == 'update') {
         $id      = $_POST['id'];
         $tanggal = $_POST['tanggal'];
         $item    = $_POST['item'];
-        // KUNCI BARU: Menangkap perubahan user_id hasil pilihan dari elemen select modal edit
         $chosen_user_id = $_POST['user_id']; 
 
         try {
@@ -72,12 +64,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt = $conn->prepare($sql);
             $sukses_update = $stmt->execute([$tanggal, $item, $chosen_user_id, $id]);
             
-            // TULIS LOG AKTIVITAS (UPDATE)
             if ($sukses_update) {
                 write_log($conn, "Memperbarui item daily checklist: " . $item, "daily_checklists", $id);
             }
 
-            // Pertahankan parameter filter tanggal jika sedang melakukan pencarian saat update data
             $redirect_url = !empty($filter_tanggal) ? "daily_checklist.php?search_date=" . urlencode($filter_tanggal) : "daily_checklist.php";
             echo "<script>window.location.href = '$redirect_url';</script>";
             exit();
@@ -87,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
-    // === PROSES TOGGLE STATUS INSTAN (CHECKBOX KLIK DI TABEL) ===
+    // === PROSES TOGGLE STATUS (CENTANG CHECKBOX) ===
     if (isset($_POST['action']) && $_POST['action'] == 'toggle_status') {
         $id = $_POST['id'];
         // Membalikkan status: jika 1 jadi 0, jika 0 jadi 1
@@ -95,16 +85,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $status_label = ($new_status == 1) ? 'Selesai' : 'Pending';
 
         try {
+            // FIXED KUNCI UTAMA: Ambil nama item dari database terlebih dahulu sebelum status diubah
+            $get_item_name = $conn->prepare("SELECT item FROM daily_checklists WHERE id = ?");
+            $get_item_name->execute([$id]);
+            $nama_item_tugas = $get_item_name->fetchColumn() ?: 'Unknown Task';
+
             $sql = "UPDATE daily_checklists SET status = ? WHERE id = ?";
             $stmt = $conn->prepare($sql);
             $sukses_toggle = $stmt->execute([$new_status, $id]);
             
-            // TULIS LOG AKTIVITAS (TOGGLE STATUS)
             if ($sukses_toggle) {
-                write_log($conn, "Mengubah status item daily checklist menjadi " . $status_label, "daily_checklists", $id);
+                // FIXED LOG: Sekarang nama item tugas akan ikut tercatat di deskripsi log aktivitas secara jelas
+                write_log($conn, "Mengubah status item daily checklist [" . $nama_item_tugas . "] menjadi " . $status_label, "daily_checklists", $id);
             }
 
-            // Pertahankan parameter filter tanggal jika sedang melakukan pencarian saat klik checkbox
             $redirect_url = !empty($filter_tanggal) ? "daily_checklist.php?search_date=" . urlencode($filter_tanggal) : "daily_checklist.php";
             echo "<script>window.location.href = '$redirect_url';</script>";
             exit();
@@ -130,7 +124,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt = $conn->prepare($sql);
             $sukses_delete = $stmt->execute([$id]);
             
-            // TULIS LOG AKTIVITAS (DELETE)
             if ($sukses_delete) {
                 write_log($conn, "Menghapus item daily checklist: " . $nama_item, "daily_checklists", $id);
             }
@@ -146,9 +139,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-// ====================================================================
-// PEMBACAAN DATA UTAMA (MENGGUNAKAN LEFT JOIN KE TABEL USERS)
-// ====================================================================
 try {
     if (!empty($filter_tanggal)) {
         // Jika ada filter tanggal, jalankan query WHERE dengan Prepared Statements agar aman dari SQL Injection
