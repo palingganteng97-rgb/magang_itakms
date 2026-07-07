@@ -447,7 +447,9 @@ try {
                 <!-- 8. Aksi (Mengunci lebar tombol aksi) -->
                 <td class="text-center pe-4 text-nowrap" style="width: 180px;">
                   <div class="d-flex justify-content-center gap-2">
-                    <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'U', $userRole)): ?>
+                    
+                    <!-- FIXED LOGIC: Menggunakan sessionRoleId angka (Kunci agar UI tidak crash) -->
+                    <?php if (in_array($sessionRoleId, [1, 2, 3])): ?>
                         <button class="btn btn-sm btn-outline-primary px-2 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalEdit<?= $row['id']; ?>" title="Edit Status/Teknisi">
                           <i class="bi bi-pencil-square me-1"></i> Detail
                         </button>
@@ -463,7 +465,112 @@ try {
                   </div>
                 </td>
               </tr>
-            <?php endforeach; ?>
+
+              <!-- ========================================================================= -->
+              <!-- FIXED POSITION: MODAL EDIT MASUK KE DALAM LOOP SEBELUM ENDFOREACH         -->
+              <!-- ========================================================================= -->
+              <div class="modal fade" id="modalEdit<?= $row['id']; ?>" tabindex="-1" aria-labelledby="modalEditLabel<?= $row['id']; ?>" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-xl">
+                  <div class="modal-content bg-white text-dark border-0 shadow-lg">
+                    
+                    <!-- Modal Header -->
+                    <div class="modal-header border-bottom border-light bg-light">
+                      <h5 class="modal-title d-flex align-items-center fw-bold text-dark" id="modalEditLabel<?= $row['id']; ?>">
+                        <?php if ($sessionRoleId === 4): ?>
+                          <i class="bi bi-info-circle-fill me-2 text-info"></i> Detail Informasi Tiket #<?= htmlspecialchars($row['nomor_tiket'] ?? '-'); ?>
+                        <?php else: ?>
+                          <i class="bi bi-pencil-square me-2 text-warning"></i> Perbarui Tiket #<?= htmlspecialchars($row['nomor_tiket'] ?? '-'); ?>
+                        <?php endif; ?>
+                      </h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <!-- Modal Body -->
+                    <form action="proses_ticket.php?action=update" method="POST">
+                      <div class="modal-body p-4">
+                        <div class="row g-4">
+                          
+                          <input type="hidden" name="id" value="<?= $row['id']; ?>">
+
+                          <!-- KOLOM KIRI (Judul & Riwayat Keluhan) -->
+                          <div class="col-md-7 border-end border-light">
+                            <div class="mb-3">
+                              <label class="form-label small fw-bold text-secondary">Judul Kendala / Keluhan</label>
+                              <input type="text" name="judul" class="form-control border-secondary-subtle text-dark py-2" value="<?= htmlspecialchars($row['judul'] ?? ''); ?>" <?= ($sessionRoleId === 4) ? 'readonly' : ''; ?> required>
+                            </div>
+
+                            <div class="mb-3">
+                              <label class="form-label small fw-bold text-muted">Deskripsi Detail Masalah (Riwayat Awal)</label>
+                              <textarea name="deskripsi" class="form-control bg-light border-0 text-muted" rows="8" readonly><?= htmlspecialchars($row['deskripsi'] ?? 'Tidak ada deskripsi tambahan.'); ?></textarea>
+                            </div>
+                          </div>
+
+                          <!-- KOLOM KANAN (Status & Teknisi) -->
+                          <div class="col-md-5">
+                            <div class="mb-3">
+                              <label class="form-label text-muted small fw-bold">Nomor Tiket Berjalan</label>
+                              <input type="text" class="form-control bg-light border-0 text-info fw-bold py-2" value="<?= htmlspecialchars($row['nomor_tiket'] ?? '-'); ?>" readonly>
+                            </div>
+
+                            <div class="mb-3">
+                              <label class="form-label small fw-bold text-secondary">Status Penanganan</label>
+                              <select name="status" class="form-select border-secondary-subtle text-dark py-2" <?= ($sessionRoleId === 4) ? 'disabled' : ''; ?> required>
+                                <option value="1" <?= $row['status'] == 1 ? 'selected' : ''; ?>>🟢 Open (Belum Ditangani)</option>
+                                <option value="2" <?= $row['status'] == 2 ? 'selected' : ''; ?>>🟡 In Progress (Sedang Dikerjakan)</option>
+                                <option value="3" <?= $row['status'] == 3 ? 'selected' : ''; ?>>🔴 Closed (Selesai Diselesaikan)</option>
+                              </select>
+                            </div>
+
+                            <div class="mb-3">
+                              <label class="form-label small fw-bold text-secondary">Petugas / Teknisi Lapangan</label>
+                              <select name="teknisi" class="form-select border-secondary-subtle text-dark py-2" <?= ($sessionRoleId === 4) ? 'disabled' : ''; ?>>
+                                <option value="">-- Belum Ditunjuk / Kosong --</option>
+                                <?php if (!empty($users)): ?>
+                                  <?php foreach($users as $u): ?>
+                                    <option value="<?= $u['id']; ?>" <?= $row['teknisi'] == $u['id'] ? 'selected' : ''; ?>>
+                                      <?= htmlspecialchars($u['username'] ?? $u['nama']); ?>
+                                    </option>
+                                  <?php endforeach; ?>
+                                <?php endif; ?>
+                              </select>
+                            </div>
+
+                            <!-- Info Box Metadata -->
+                            <div class="card bg-light border-0 p-3 mt-4 text-muted small">
+                              <div class="d-flex justify-content-between mb-1">
+                                <span>Waktu Masuk Tiket:</span>
+                                <span class="text-dark fw-bold"><?= !empty($row['created_at']) ? date('d-m-Y H:i', strtotime($row['created_at'])) : '-'; ?></span>
+                              </div>
+                              <div class="d-flex justify-content-between">
+                                <span>ID Pelapor Asal:</span>
+                                <span class="text-dark fw-bold">User ID: <?= htmlspecialchars($row['pelapor'] ?? '-'); ?></span>
+                              </div>
+                            </div>
+                          </div>
+
+                        </div>
+                      </div>
+
+                      <!-- Modal Footer -->
+                      <div class="modal-footer border-top border-light bg-light d-flex justify-content-end p-3">
+                        <button type="button" class="btn btn-sm btn-secondary me-2 rounded-2" data-bs-dismiss="modal">
+                          <?= ($sessionRoleId === 4) ? 'Tutup' : 'Batal'; ?>
+                        </button>
+                        
+                        <?php if (in_array($sessionRoleId, [1, 2, 3])): ?>
+                        <button type="submit" class="btn btn-sm btn-warning px-4 py-2 fw-bold text-dark rounded-2">
+                          <i class="bi bi-arrow-clockwise me-1"></i> Simpan Perubahan
+                        </button>
+                        <?php endif; ?>
+                        
+                      </div>
+                    </form>
+
+                  </div>
+                </div>
+              </div>
+
+            <?php endforeach; ?> <!-- FIXED TAG PENUTUP LOOP SEKARANG DI SINI -->
           <?php else: ?>
             <tr>
               <td colspan="8" class="text-center py-5 text-muted">
@@ -565,113 +672,6 @@ try {
           <button type="submit" class="btn btn-success btn-sm px-4 py-2 fw-bold rounded-2">
             <i class="bi bi-send-fill me-1"></i> Kirim Tiket
           </button>
-        </div>
-      </form>
-
-    </div>
-  </div>
-</div>
-
-<!-- MODAL EDIT TIKET (BG PUTIH & UKURAN LEBAR) -->
-<div class="modal fade" id="modalEdit<?= $row['id']; ?>" tabindex="-1" aria-labelledby="modalEditLabel<?= $row['id']; ?>" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-xl">
-    <div class="modal-content bg-white text-dark border-0 shadow-lg">
-      
-      <!-- Modal Header -->
-      <div class="modal-header border-bottom border-light bg-light">
-        <h5 class="modal-title d-flex align-items-center fw-bold text-dark" id="modalEditLabel<?= $row['id']; ?>">
-          <!-- Fleksibel Otomatis: Ubah ikon dan teks judul jika user adalah Viewer -->
-          <?php if ($userRole === 'Viewer'): ?>
-            <i class="bi bi-info-circle-fill me-2 text-info"></i> Detail Informasi Tiket #<?= htmlspecialchars($row['nomor']); ?>
-          <?php else: ?>
-            <i class="bi bi-pencil-square me-2 text-warning"></i> Perbarui Tiket #<?= htmlspecialchars($row['nomor']); ?>
-          <?php endif; ?>
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-
-      <!-- Modal Body -->
-      <form action="proses_ticket.php?action=update" method="POST">
-        <div class="modal-body p-4">
-          <div class="row g-4">
-            
-            <input type="hidden" name="id" value="<?= $row['id']; ?>">
-
-            <!-- KOLOM KIRI (Judul & Riwayat Keluhan) -->
-            <div class="col-md-7 border-end border-light">
-              <div class="mb-3">
-                <label class="form-label small fw-bold text-secondary">Judul Kendala / Keluhan</label>
-                <!-- Fleksibel: Kunci input judul jika user adalah Viewer -->
-                <input type="text" name="judul" class="form-control border-secondary-subtle text-dark py-2" value="<?= htmlspecialchars($row['judul']); ?>" <?= ($userRole === 'Viewer') ? 'readonly' : ''; ?> required>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label small fw-bold text-muted">Deskripsi Detail Masalah (Riwayat Awal)</label>
-                <textarea name="deskripsi" class="form-control bg-light border-0 text-muted" rows="8" readonly><?= htmlspecialchars($row['deskripsi'] ?? 'Tidak ada deskripsi tambahan.'); ?></textarea>
-              </div>
-            </div>
-
-            <!-- KOLOM KANAN (Status & Teknisi) -->
-            <div class="col-md-5">
-              <div class="mb-3">
-                <label class="form-label text-muted small fw-bold">Nomor Tiket Berjalan</label>
-                <input type="text" class="form-control bg-light border-0 text-info fw-bold py-2" value="<?= htmlspecialchars($row['nomor']); ?>" readonly>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label small fw-bold text-secondary">Status Penanganan</label>
-                <!-- Fleksibel: Kunci pilihan status jika user adalah Viewer -->
-                <select name="status" class="form-select border-secondary-subtle text-dark py-2" <?= ($userRole === 'Viewer') ? 'disabled' : ''; ?> required>
-                  <option value="1" <?= $row['status'] == 1 ? 'selected' : ''; ?>>🟢 Open (Belum Ditangani)</option>
-                  <option value="2" <?= $row['status'] == 2 ? 'selected' : ''; ?>>🟡 In Progress (Sedang Dikerjakan)</option>
-                  <option value="3" <?= $row['status'] == 3 ? 'selected' : ''; ?>>🔴 Closed (Selesai Diselesaikan)</option>
-                </select>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label small fw-bold text-secondary">Petugas / Teknisi Lapangan</label>
-                <!-- Fleksibel: Kunci pilihan teknisi jika user adalah Viewer -->
-                <select name="teknisi" class="form-select border-secondary-subtle text-dark py-2" <?= ($userRole === 'Viewer') ? 'disabled' : ''; ?>>
-                  <option value="">-- Belum Ditunjuk / Kosong --</option>
-                  <?php if (!empty($users)): ?>
-                    <?php foreach($users as $u): ?>
-                      <option value="<?= $u['id']; ?>" <?= $row['teknisi'] == $u['id'] ? 'selected' : ''; ?>>
-                        <?= htmlspecialchars($u['username'] ?? $u['nama']); ?>
-                      </option>
-                    <?php endforeach; ?>
-                  <?php endif; ?>
-                </select>
-              </div>
-
-              <!-- Info Box Metadata -->
-              <div class="card bg-light border-0 p-3 mt-4 text-muted small">
-                <div class="d-flex justify-content-between mb-1">
-                  <span>Waktu Masuk Tiket:</span>
-                  <span class="text-dark fw-bold"><?= date('d-m-Y H:i', strtotime($row['created_at'])); ?></span>
-                </div>
-                <div class="d-flex justify-content-between">
-                  <span>ID Pelapor Asal:</span>
-                  <span class="text-dark fw-bold">User ID: <?= htmlspecialchars($row['pelapor'] ?? '-'); ?></span>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- Modal Footer -->
-        <div class="modal-footer border-top border-light bg-light d-flex justify-content-end p-3">
-          <button type="button" class="btn btn-sm btn-secondary me-2 rounded-2" data-bs-dismiss="modal">
-            <?= ($userRole === 'Viewer') ? 'Tutup' : 'Batal'; ?>
-          </button>
-          
-          <!-- Fleksibel Otomatis: Hanya munculkan tombol simpan jika user memiliki hak akses Update ('U') -->
-          <?php if (hasCrudAccess(basename($_SERVER['PHP_SELF']), 'U', $userRole)): ?>
-          <button type="submit" class="btn btn-sm btn-warning px-4 py-2 fw-bold text-dark rounded-2">
-            <i class="bi bi-arrow-clockwise me-1"></i> Simpan Perubahan
-          </button>
-          <?php endif; ?>
-          
         </div>
       </form>
 
