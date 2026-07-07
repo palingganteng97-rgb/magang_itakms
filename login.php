@@ -1,14 +1,19 @@
 <?php
-// SINKRONISASI STRUKTUR: Muat auth.php paling atas agar fungsi session & write_log() siap digunakan
-require_once __DIR__ . '/auth.php';
-require_login(); // Memastikan user sudah masuk ke sistem
-
-require_once __DIR__ . '/db.php';          // Memanggil koneksi database PDO asli ($conn)
-require_once __DIR__ . '/helper_rbac.php';  // Memanggil fungsi pengaman hak akses
-
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+// Boleh memuat file auth, tapi JANGAN panggil require_login();
+require_once __DIR__ . '/auth.php'; 
+require_once __DIR__ . '/db.php';
+
+// Logika: Jika user SUDAH login dan terlanjur buka login.php, lempar ke dashboard
+if (isset($_SESSION['user_role_id']) || isset($_SESSION['user'])) {
+    header('Location: dashboard.php');
+    exit;
+}
+
+// ... Sisa kode pemrosesan form login Anda di bawah ...
 
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
