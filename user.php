@@ -3,18 +3,7 @@ require_once __DIR__ . '/auth.php';
 require_login(); // Memastikan user sudah login
 require_once __DIR__ . '/helper_rbac.php';
 
-// =========================================================================
-// PERBAIKAN LOGIKA: Mengunci akses tabel roles secara ketat (Hanya Super Admin/ID 1)
-// =========================================================================
-if (!isset($_SESSION['user_role_id']) || (int)$_SESSION['user_role_id'] !== 1) {
-    header('HTTP/1.1 403 Forbidden');
-    echo "<div style='font-family:sans-serif; text-align:center; margin-top:50px;'>";
-    echo "<h2>403 - Akses Ditolak</h2>";
-    echo "<p>Maaf, data manajemen peran ini hanya dapat diakses oleh Super Admin.</p>";
-    echo "<a href='dashboard.php'>Kembali ke Dashboard</a>";
-    echo "</div>";
-    exit;
-}
+protect_page_by_table('users', 'R'); 
 
 // 1. Konfigurasi Database Utama
 $host = "10.10.6.59";
