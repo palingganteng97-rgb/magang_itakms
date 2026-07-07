@@ -2,10 +2,23 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
+// SISIPKAN PROTEKSI RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+protect_page_by_table('maintenance_logs', 'R'); // Contoh proteksi untuk hak akses Read (Sesuaikan nama tabel dengan berkas ini)
+
 // =========================================================================
 // AMBIL DATA ROLE USER DINAMIS DARI DATABASE SESSION (Kunci Utama Hak Akses)
 // =========================================================================
-$userRole = isset($_SESSION['user']['role']) ? $_SESSION['user']['role'] : 'Viewer';
+// SINKRONISASI KUNCI: Gunakan ID angka (1=Super Admin, 2=Admin IT, 3=Teknisi, 4=Viewer) sesuai helper_rbac.php
+$sessionRoleId = isset($_SESSION['user_role_id']) ? (int)$_SESSION['user_role_id'] : 4;
+
+$roleMapping = [
+    1 => 'Super Admin',
+    2 => 'Admin IT',
+    3 => 'Teknisi',
+    4 => 'Viewer'
+];
+$userRole = isset($roleMapping[$sessionRoleId]) ? $roleMapping[$sessionRoleId] : 'Viewer';
 
 // 1. Konfigurasi Koneksi Database
 $host = "10.10.6.59";
@@ -19,7 +32,7 @@ $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $offset = ($page - 1) * $perPage;
 
 try {
-    $conn = new PDO("mysql:host=$host;dbname=$database", $username, $password);
+    $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8mb4", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // TRIGGER LOG OTOMATIS GLOBAL: Mencatat log kunjungan halaman

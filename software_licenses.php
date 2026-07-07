@@ -2,6 +2,10 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
+// SISIPKAN PROTEKSI RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+protect_page_by_table('software_licenses', 'R'); // Memastikan seluruh role (1, 2, 3, 4) memiliki hak akses Read ke halaman lisensi software
+
 // Pastikan session aktif untuk menampung flash message
 if (session_status() === PHP_SESSION_NONE) {
     session_start();

@@ -6,6 +6,9 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once __DIR__ . '/auth.php';
 require_login();
 
+// SISIPKAN FILE UTAMA RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+
 // Import konfigurasi database Anda
 require_once __DIR__ . '/db.php'; 
 // Catatan: Jika db.php belum menggunakan PDO, silakan sesuaikan variabel koneksinya. 
@@ -13,12 +16,30 @@ require_once __DIR__ . '/db.php';
 
 $action = $_REQUEST['action'] ?? '';
 
+// =========================================================================
+// PERBAIKAN LOGIKA RBAC ASLI: Mengunci aksi manipulasi data tabel servers
+// =========================================================================
+if (!empty($action)) {
+    $table_name = 'servers'; // DIUBAH 1 PER 1: Dikunci langsung ke nama tabel database fisik Anda
+
+    if ($action === 'tambah_server' || $action === 'create') {
+        protect_page_by_table($table_name, 'C'); // Super Admin (1), Admin IT (2), & Teknisi (3) lolos
+    } elseif ($action === 'edit_server' || $action === 'update') {
+        protect_page_by_table($table_name, 'U'); // Super Admin (1), Admin IT (2), & Teknisi (3) lolos
+    } elseif ($action === 'hapus_server' || $action === 'delete') {
+        protect_page_by_table($table_name, 'D'); // Hanya Super Admin (1) & Admin IT (2) yang lolos
+    } else {
+        header('HTTP/1.1 403 Forbidden');
+        exit("Aksi tidak valid atau dilarang.");
+    }
+}
+
 try {
-    // ==========================================
+    // =========================================================================
     // A. PROSES TAMBAH SERVER
-    // ==========================================
+    // =========================================================================
     if ($action === 'tambah_server' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-        $asset_id = !empty($_POST['asset_id']) ? (int)$_POST['asset_id'] : null;
+        $asset_id = empty($_POST['asset_id']) ? null : (int)$_POST['asset_id'];
         $os       = trim($_POST['os'] ?? '');
         $cpu      = trim($_POST['cpu'] ?? '');
         $ram      = trim($_POST['ram'] ?? '');

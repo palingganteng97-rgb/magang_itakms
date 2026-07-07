@@ -1,5 +1,11 @@
 <?php
 require_once 'auth.php';
+require_login();
+
+// SISIPKAN PROTEKSI RBAC DI SINI
+require_once 'helper_rbac.php';
+protect_page_by_table('activity_logs', 'R'); // Memastikan hanya Super Admin & Admin IT yang bisa melihat data log ini
+
 require_once 'db.php'; // Pastikan koneksi database Anda termuat
 
 try {
@@ -10,13 +16,13 @@ try {
     foreach ($logs as $log) {
         echo "<tr>";
         echo "<td>#" . htmlspecialchars($log['id']) . "</td>";
-        echo "<td>" . htmlspecialchars($log['created_at'] ?? $log['waktu_kejadian']) . "</td>";
+        echo "<td>" . htmlspecialchars($log['created_at'] ?? $log['waktu_kejadian'] ?? '') . "</td>";
         echo "<td><span class='badge bg-primary'><i class='fa fa-user'></i> " . htmlspecialchars($log['petugas'] ?? 'admin') . "</span></td>";
         echo "<td>" . htmlspecialchars($log['aktivitas']) . "</td>";
         echo "<td><span class='text-muted'>" . htmlspecialchars($log['nama_tabel']) . "</span></td>";
         echo "<td>" . ($log['data_id'] ? htmlspecialchars($log['data_id']) : '-') . "</td>";
-        echo "<td><code>" . htmlspecialchars($log['ip_address']) . "</code></td>";
-        echo "<td>" . htmlspecialchars(substr($log['browser'] ?? $log['peran'], 0, 7)) . "...</td>";
+        echo "<td><code>" . htmlspecialchars($log['ip_address'] ?? '') . "</code></td>";
+        echo "<td>" . htmlspecialchars(substr($log['browser'] ?? $log['peran'] ?? '', 0, 7)) . "...</td>";
         echo "</tr>";
     }
 } catch (Exception $e) {

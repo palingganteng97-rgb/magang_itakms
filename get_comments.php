@@ -2,7 +2,7 @@
 // ==========================================
 // get_comments.php (Wajib di folder yang sama)
 // ==========================================
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 
 // Matikan display error bawaan PHP agar tidak merusak format JSON
 ini_set('display_errors', 0);
@@ -14,9 +14,18 @@ try {
     if (function_exists('require_login')) {
         // Jika fungsi login Anda menggunakan session_start internal, pastikan tidak crash
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
+        require_login();
     }
     
     require_once __DIR__ . '/db.php';
+    // MUAT HELPER RBAC UNTUK VALIDASI AJAX
+    require_once __DIR__ . '/helper_rbac.php';
+
+    // PROTEKSI KETAT RBAC KHUSUS API JSON: Pastikan peran pengguna memiliki hak akses Read ke tabel komentar tiket
+    if (!function_exists('check_access_by_table') || !check_access_by_table('ticket_comments', 'R')) {
+        echo json_encode(['status' => 'error', 'message' => 'Akses ditolak. Anda tidak memiliki izin untuk melihat komentar.']);
+        exit;
+    }
 
     // 2. Tangkap Parameter ID Tiket
     $ticket_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;

@@ -3,13 +3,38 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
+// SISIPKAN FILE UTAMA RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+
 $host = "10.10.6.59";
 $username = "root_host";
 $password = "password";
 $database = "magang_itakms";
 
+// Menangkap nilai action, baik dari parameter POST maupun URL (GET)
+$action = isset($_POST['action']) ? $_POST['action'] : (isset($_GET['action']) ? $_GET['action'] : '');
+
+// =========================================================================
+// PERBAIKAN LOGIKA RBAC ASLI: Mengunci aksi manipulasi data tabel vendors
+// =========================================================================
+if (!empty($action)) {
+    $table_name = 'vendors'; // Dikunci langsung ke nama tabel database fisik Anda
+
+    if ($action === 'add_vendor') {
+        protect_page_by_table($table_name, 'C'); // Hanya Super Admin (1) & Admin IT (2) yang lolos
+    } elseif ($action === 'edit_vendor') {
+        protect_page_by_table($table_name, 'U'); // Hanya Super Admin (1) & Admin IT (2) yang lolos
+    } elseif ($action === 'delete') {
+        protect_page_by_table($table_name, 'D'); // Hanya Super Admin (1) & Admin IT (2) yang lolos
+    } else {
+        header('HTTP/1.1 403 Forbidden');
+        exit("Aksi tidak valid atau dilarang.");
+    }
+}
+
 try {
-    $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8", $username, $password);
+    // SINKRONISASI: Mengubah charset menjadi utf8mb4 agar kompatibel penuh dengan pembacaan karakter khusus
+    $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8mb4", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
     die("Koneksi database gagal: " . $e->getMessage());

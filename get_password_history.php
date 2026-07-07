@@ -2,6 +2,11 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
+// SISIPKAN PROTEKSI RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+// Memastikan hanya peran yang diizinkan melihat data riwayat password (Super Admin, Admin IT, dan Teknisi)
+protect_page_by_table('password_histories', 'R');
+
 // 1. Konfigurasi Koneksi Database
 $host = "10.10.6.59";
 $username = "root_host";
@@ -17,7 +22,7 @@ if ($vault_id <= 0) {
 }
 
 try {
-    $conn = new PDO("mysql:host=$host;dbname=$database", $username, $password);
+    $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8mb4", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // 2. Query mengambil riwayat kata sandi diurutkan dari yang TERBARU (ORDER BY id DESC)

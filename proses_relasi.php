@@ -2,6 +2,10 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
+// SISIPKAN PROTEKSI RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+protect_page_by_table('network_devices', 'R'); // Mengunci akses baca (Read) secara ketat sesuai nama tabel database asli Anda
+
 // 1. KONFIGURASI KONEKSI DATABASE
 $host = "10.10.6.59";
 $username = "root_host";
@@ -9,7 +13,8 @@ $password = "password";
 $database = "magang_itakms";
 
 try {
-    $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8", $username, $password);
+    // SINKRONISASI: Mengubah charset menjadi utf8mb4 agar kompatibel penuh dengan pembacaan karakter khusus
+    $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8mb4", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
     http_response_code(500);

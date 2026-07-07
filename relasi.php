@@ -5,6 +5,11 @@
 require_once __DIR__ . '/auth.php';
 require_login(); 
 
+// SISIPKAN PROTEKSI RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+// Menggunakan aksi 'Master' (Simbol Mata 👀) agar seluruh peran (1, 2, 3, 4) lolos untuk melihat indeks lokasi
+protect_page_by_table('buildings', 'Master'); 
+
 // Variabel pengaman halaman aktif untuk digunakan oleh sidebar.php
 $currentFile = basename($_SERVER['PHP_SELF']);
 
@@ -21,7 +26,8 @@ $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $offset = ($page - 1) * $perPage;
 
 try {
-    $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8", $username, $password);
+    // SINKRONISASI: Menambahkan charset=utf8mb4 agar kompatibel penuh dengan pembacaan karakter khusus
+    $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8mb4", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // 3. STATISTIK CEPAT AGREGAT TUNGGAL (Sama seperti Dashboard Anda)

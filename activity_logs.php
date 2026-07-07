@@ -5,6 +5,11 @@
 
 require_once __DIR__ . '/auth.php';
 require_login();
+
+// SISPANKAN PROTEKSI RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+protect_page_by_table('activity_logs', 'R'); // Mengunci halaman hanya untuk Super Admin & Admin IT
+
 require_once __DIR__ . '/db.php'; 
 
 // =========================================================================

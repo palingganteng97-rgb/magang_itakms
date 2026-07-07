@@ -1,6 +1,20 @@
 <?php
 require_once __DIR__ . '/auth.php';
-require_login();
+require_login(); // Memastikan user sudah login
+require_once __DIR__ . '/helper_rbac.php';
+
+// =========================================================================
+// PERBAIKAN LOGIKA: Mengunci akses tabel roles secara ketat (Hanya Super Admin/ID 1)
+// =========================================================================
+if (!isset($_SESSION['user_role_id']) || (int)$_SESSION['user_role_id'] !== 1) {
+    header('HTTP/1.1 403 Forbidden');
+    echo "<div style='font-family:sans-serif; text-align:center; margin-top:50px;'>";
+    echo "<h2>403 - Akses Ditolak</h2>";
+    echo "<p>Maaf, data manajemen peran ini hanya dapat diakses oleh Super Admin.</p>";
+    echo "<a href='dashboard.php'>Kembali ke Dashboard</a>";
+    echo "</div>";
+    exit;
+}
 
 // 1. Konfigurasi Database Utama
 $host = "10.10.6.59";
@@ -18,7 +32,8 @@ try {
 
 // AMBIL DAFTAR ROLES UNTUK DROPDOWN FORM HTML
 try {
-    $stmtRoles = $conn->query("SELECT id, nama_role FROM roles ORDER BY nama_role ASC");
+    // SINKRONISASI HEIDISQL: Menyesuaikan nama kolom menjadi 'nama' jika tabel Anda menggunakan 'nama' (bukan nama_role)
+    $stmtRoles = $conn->query("SELECT id, nama FROM roles ORDER BY nama ASC");
     $daftar_roles = $stmtRoles->fetchAll();
 } catch (\PDOException $e) {
     $daftar_roles = []; 

@@ -10,13 +10,18 @@ function require_login() {
         exit;
     }
 
+    // Sinkronisasi session global rbac (Memastikan $_SESSION['user_role_id'] selalu terisi dari data user)
+    if (isset($_SESSION['user']['role_id'])) {
+        $_SESSION['user_role_id'] = $_SESSION['user']['role_id'];
+    }
+
     // =========================================================================
     // TRICK OTOMATIS: REKAM JEJAK KUNJUNGAN HALAMAN TANPA UBAH FILE LAIN
     // =========================================================================
     // 1. Ambil nama file yang sedang dibuka (contoh: dashboard.php, assets.php)
     $running_file = basename($_SERVER['PHP_SELF']);
 
-    // 2. Cegah pencatatan ganda khusus saat membuka halaman log itu sendiri agar tidak spam data
+    // 2. Cegah pencatatan ganda khusus saat membuka halaman log atau logout agar tidak spam data
     if ($running_file !== 'activity_logs.php' && $running_file !== 'logout.php') {
         
         // Buat koneksi database darurat di dalam fungsi agar tidak bergantung pada urutan require_once db.php
@@ -28,8 +33,10 @@ function require_login() {
             $nama_halaman = ucwords(str_replace(['_', '.php'], [' ', ''], $running_file));
             $aktivitas_teks = "Membuka halaman " . $nama_halaman;
 
-            // Jalankan fungsi logger langsung di sini
-            write_log($log_conn, $aktivitas_teks, $running_file, null);
+            // Pastikan fungsi write_log tersedia sebelum dipanggil agar tidak fatal error
+            if (function_exists('write_log')) {
+                write_log($log_conn, $aktivitas_teks, $running_file, null);
+            }
         } catch (Exception $e) {
             error_log("Auto Logger Gagal: " . $e->getMessage());
         }

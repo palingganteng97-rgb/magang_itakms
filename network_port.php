@@ -7,6 +7,14 @@ require_login();
 // =========================================================================
 $currentPage = basename($_SERVER['PHP_SELF']);
 
+// SISIPKAN PROTEKSI RBAC OTOMATIS DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+
+// Trick cerdas: Memetakan nama file langsung ke fungsi proteksi tabel database
+// Contoh: 'assets.php' otomatis dicek sebagai tabel 'assets'
+$tableNameMapping = str_replace('.php', '', $currentPage);
+protect_page_by_table($tableNameMapping, 'R'); // Mengunci hak akses baca (Read) secara dinamis sesuai nama filenya
+
 // 2. Konfigurasi Koneksi Database
 $host = "10.10.6.59";
 $username = "root_host";

@@ -2,10 +2,11 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
-// =========================================================================
-// 1. AMBIL DATA ROLE USER DINAMIS & TERJEMAHKAN ID ANGKA MENJADI TEKS
-// =========================================================================
-$sessionRoleId = isset($_SESSION['user']['role_id']) ? (int)$_SESSION['user']['role_id'] : 4;
+// SISIPKAN FILE UTAMA RBAC DAN SINKRONKAN SESSION
+require_once __DIR__ . '/helper_rbac.php';
+
+// Menyelaraskan session key pembaca ID peran dengan skrip otentikasi utama auth.php
+$sessionRoleId = isset($_SESSION['user_role_id']) ? (int)$_SESSION['user_role_id'] : (isset($_SESSION['user']['role_id']) ? (int)$_SESSION['user']['role_id'] : 4);
 
 $roleMapping = [
     1 => 'Super Admin',
@@ -16,46 +17,10 @@ $roleMapping = [
 
 $userRole = isset($roleMapping[$sessionRoleId]) ? $roleMapping[$sessionRoleId] : 'Viewer';
 
-// =========================================================================
-// 2. PROTEKSI HALAMAN BERDASARKAN MATRIKS RESMI DOKUMEN ANDA
-// =========================================================================
-if ($userRole === 'Viewer') {
-    echo "<script>
-            alert('Akses Ditolak! Akun Viewer tidak memiliki izin untuk melihat data Integrasi API Vendor.');
-            window.location='vendors.php';
-          </script>";
-    exit();
-}
+// PROTEKSI HALAMAN UTAMA: Memeriksa hak akses baca (Read) ke modul Vendor API
+// Berdasarkan matriks: Super Admin, Admin IT, dan Teknisi akan lolos. Peran Viewer (4) otomatis terblokir (403)
+protect_page_by_table('vendor_apis', 'R');
 
-// =========================================================================
-// FIX PENYEBAB ERROR: DEKLARASI FUNGSI CEK HAK AKSES CRUD UNTUK VENDOR APIS
-// =========================================================================
-if (!function_exists('hasCrudAccess')) {
-    function hasCrudAccess($fileName, $actionType, $currentRole) {
-        $crudMatrix = [
-            'vendor_apis.php' => [
-                'Super Admin' => ['C', 'R', 'U', 'D'], 
-                'Admin IT'    => ['C', 'R', 'U', 'D'], 
-                'Teknisi'     => ['R'], 
-                'Viewer'      => []
-            ]
-        ];
-
-        $cleanFileName = basename($fileName);
-        if ($cleanFileName === 'vendor_apis.php') {
-            $fileName = 'vendor_apis.php';
-        }
-
-        if (isset($crudMatrix[$fileName][$currentRole])) {
-            return in_array($actionType, $crudMatrix[$fileName][$currentRole]);
-        }
-        return false;
-    }
-}
-
-// =========================================================================
-// 3. KONFIGURASI DATABASE
-// =========================================================================
 $host = "10.10.6.59";
 $username = "root_host";
 $password = "password";
@@ -73,24 +38,20 @@ try {
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // =========================================================================
-    // 4. LOGIKA PEMROSESAN CRUD (CREATE, UPDATE, DELETE)
+    // PROSES OPERASI MANIPULASI DATA (CRUD) VIA POST METHOD
     // =========================================================================
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $action = $_POST['action'];
 
-        // -----------------------------------------------------------------
-        // PROSES TAMBAH DATA (CREATE)
-        // -----------------------------------------------------------------
         if ($action === 'create') {
-            if (!hasCrudAccess('vendor_apis.php', 'C', $userRole)) {
-                die("Akses Ditolak: Anda tidak memiliki izin untuk menambah data.");
-            }
+            // Menggunakan helper global: Hanya Super Admin (1) & Admin IT (2) yang lolos aksi Create
+            protect_page_by_table('vendor_apis', 'C');
 
             $sqlInsert = "INSERT INTO vendor_apis (vendor_id, nama_api, environment, base_url, client_id, client_secret, user_key, secret_key, dokumentasi) 
                           VALUES (:vendor_id, :nama_api, :environment, :base_url, :client_id, :client_secret, :user_key, :secret_key, :dokumentasi)";
             
             $stmtInsert = $conn->prepare($sqlInsert);
-            $stmtInsert->execute([
+            $sukses_create = $stmtInsert->execute([
                 ':vendor_id'     => $vendor_id,
                 ':nama_api'      => !empty($_POST['nama_api']) ? $_POST['nama_api'] : null,
                 ':environment'   => isset($_POST['environment']) ? (int)$_POST['environment'] : null,
@@ -102,17 +63,19 @@ try {
                 ':dokumentasi'   => !empty($_POST['dokumentasi']) ? $_POST['dokumentasi'] : null
             ]);
 
-            echo "<script>alert('Data API berhasil ditambahkan!'); window.location='vendor_apis.php?vendor_id=$vendor_id';</script>";
+            if ($sukses_create && function_exists('write_log')) {
+                $new_api_id = $conn->lastInsertId();
+                write_log($conn, "Menambahkan konfigurasi API baru untuk Vendor ID: " . $vendor_id, "vendor_apis", $new_api_id);
+            }
+
+            $_SESSION['flash_message'] = "Data API berhasil ditambahkan!";
+            header("Location: vendor_apis.php?vendor_id=" . $vendor_id);
             exit();
         }
 
-        // -----------------------------------------------------------------
-        // PROSES UBAH DATA (UPDATE)
-        // -----------------------------------------------------------------
         if ($action === 'update') {
-            if (!hasCrudAccess('vendor_apis.php', 'U', $userRole)) {
-                die("Akses Ditolak: Anda tidak memiliki izin untuk mengubah data.");
-            }
+            // Menggunakan helper global: Hanya Super Admin (1) & Admin IT (2) yang lolos aksi Update
+            protect_page_by_table('vendor_apis', 'U');
 
             $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
 
@@ -128,7 +91,7 @@ try {
                           WHERE id = :id AND vendor_id = :vendor_id";
             
             $stmtUpdate = $conn->prepare($sqlUpdate);
-            $stmtUpdate->execute([
+            $sukses_update = $stmtUpdate->execute([
                 ':id'            => $id,
                 ':vendor_id'     => $vendor_id,
                 ':nama_api'      => !empty($_POST['nama_api']) ? $_POST['nama_api'] : null,
@@ -141,36 +104,39 @@ try {
                 ':dokumentasi'   => !empty($_POST['dokumentasi']) ? $_POST['dokumentasi'] : null
             ]);
 
-            echo "<script>alert('Data API berhasil diperbarui!'); window.location='vendor_apis.php?vendor_id=$vendor_id';</script>";
+            if ($sukses_update && function_exists('write_log')) {
+                write_log($conn, "Memperbarui konfigurasi kredensial API ID: " . $id, "vendor_apis", $id);
+            }
+
+            $_SESSION['flash_message'] = "Data API berhasil diperbarui!";
+            header("Location: vendor_apis.php?vendor_id=" . $vendor_id);
             exit();
         }
 
-        // -----------------------------------------------------------------
-        // PROSES HAPUS DATA (DELETE)
-        // -----------------------------------------------------------------
         if ($action === 'delete') {
-            if (!hasCrudAccess('vendor_apis.php', 'D', $userRole)) {
-                die("Akses Ditolak: Anda tidak memiliki izin untuk menghapus data.");
-            }
+            // Menggunakan helper global: Hanya Super Admin (1) & Admin IT (2) yang lolos aksi Delete
+            protect_page_by_table('vendor_apis', 'D');
 
             $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
 
             $sqlDelete = "DELETE FROM vendor_apis WHERE id = :id AND vendor_id = :vendor_id";
             $stmtDelete = $conn->prepare($sqlDelete);
-            $stmtDelete->execute([
+            $sukses_delete = $stmtDelete->execute([
                 ':id'        => $id,
                 ':vendor_id' => $vendor_id
             ]);
 
-            echo "<script>alert('Data API berhasil dihapus!'); window.location='vendor_apis.php?vendor_id=$vendor_id';</script>";
+            if ($sukses_delete && function_exists('write_log')) {
+                write_log($conn, "Menghapus konfigurasi API ID: " . $id . " pada Vendor ID: " . $vendor_id, "vendor_apis", $id);
+            }
+
+            $_SESSION['flash_message'] = "Data API berhasil dihapus!";
+            header("Location: vendor_apis.php?vendor_id=" . $vendor_id);
             exit();
         }
     }
 
-    // =========================================================================
-    // 5. PENARIKAN DATA UNTUK VIEW (READ)
-    // =========================================================================
-    // Ambal Informasi Nama Vendor Utama untuk komponen Header
+    // Ambil Informasi Nama Vendor Utama untuk komponen Header
     $vendorSql = "SELECT nama FROM vendors WHERE id = :vendor_id";
     $vendorStmt = $conn->prepare($vendorSql);
     $vendorStmt->execute([':vendor_id' => $vendor_id]);

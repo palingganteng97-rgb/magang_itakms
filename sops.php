@@ -7,8 +7,15 @@ require_once __DIR__ . '/auth.php';
 require_login(); 
 require_once __DIR__ . '/db.php'; 
 
+// SISIPKAN FILE UTAMA RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+
 $currentPage = 'sops.php';
 $upload_dir = 'uploads/sops/';
+
+// PROTEKSI HALAMAN UTAMA: Memastikan peran memiliki akses baca ke modul SOP (Semua peran lolos untuk melihat)
+protect_page_by_table('sops', 'R');
+
 if (!is_dir($upload_dir)) {
     mkdir($upload_dir, 0777, true);
 }
@@ -25,6 +32,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     // === PROSES TAMBAH DATA (CREATE) ===
     if (isset($_POST['action']) && $_POST['action'] == 'create') {
+        
+        // PROTEKSI KHUSUS CREATE: Hanya Super Admin (1) & Admin IT (2) yang diizinkan menambah data
+        protect_page_by_table('sops', 'C');
+
         $category_id = $_POST['category_id'];
         $judul = $_POST['judul'];
         $isi = $_POST['isi'];
@@ -58,6 +69,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // === PROSES UBAH DATA (UPDATE) ===
     if (isset($_POST['action']) && $_POST['action'] == 'update') {
+        
+        // PROTEKSI KHUSUS UPDATE: Hanya Super Admin (1) & Admin IT (2) yang diizinkan mengubah data
+        protect_page_by_table('sops', 'U');
+
         $id = $_POST['id'];
         $category_id = $_POST['category_id'];
         $judul = $_POST['judul'];
@@ -94,6 +109,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 // === PROSES HAPUS DATA (DELETE) ===
 if (isset($_GET['delete'])) {
+    
+    // PROTEKSI KHUSUS DELETE: Hanya Super Admin (1) & Admin IT (2) yang diizinkan menghapus data
+    protect_page_by_table('sops', 'D');
+
     $id = $_GET['delete'];
     
     try {

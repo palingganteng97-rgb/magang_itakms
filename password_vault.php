@@ -2,6 +2,10 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
+// SISIPKAN PROTEKSI RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+protect_page_by_table('password_vaults', 'R'); // Memblokir peran Viewer (ID 4) dari akses modul Password Vault
+
 // 1. Konfigurasi Koneksi Database
 $host = "10.10.6.59";
 $username = "root_host";
@@ -9,7 +13,7 @@ $password = "password";
 $database = "magang_itakms";
 
 try {
-    $conn = new PDO("mysql:host=$host;dbname=$database", $username, $password);
+    $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8mb4", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     $status_msg = '';

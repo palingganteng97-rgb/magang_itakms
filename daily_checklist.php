@@ -8,6 +8,9 @@ require_once __DIR__ . '/auth.php';
 require_login(); 
 require_once __DIR__ . '/db.php'; 
 
+// SISIPKAN FILE UTAMA RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+
 $currentFile = 'daily_checklist.php';
 $message = '';
 $message_type = '';
@@ -22,6 +25,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     // === PROSES TAMBAH DATA (CREATE) ===
     if (isset($_POST['action']) && $_POST['action'] == 'create') {
+        
+        // PROTEKSI KHUSUS CREATE: Pastikan hanya Role_ID 1 & 2 yang diizinkan menambah item checklist baru
+        protect_page_by_table('daily_checklists', 'C');
+
         $tanggal = $_POST['tanggal'];
         $item    = $_POST['item'];
         // KUNCI BARU: Menangkap user_id hasil pilihan dari elemen select modal

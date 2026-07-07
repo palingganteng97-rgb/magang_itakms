@@ -2,6 +2,9 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
+// SISIPKAN FILE UTAMA RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+
 $host = "10.10.6.59";
 $username = "root_host";
 $password = "password";
@@ -17,6 +20,10 @@ try {
 
     // Eksekusi Simpan Data POST
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        
+        // PROTEKSI KHUSUS CREATE: Pastikan Viewer (ID 4) diblokir dari aksi menambah artikel baru
+        protect_page_by_table('knowledge_articles', 'C');
+
         $category_id = !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null;
         $judul = trim($_POST['judul']);
         $isi = $_POST['isi']; // Menampung hasil format teks HTML dari editor area
@@ -34,13 +41,21 @@ try {
 
         $sql = "INSERT INTO knowledge_articles (category_id, judul, isi, lampiran, status) VALUES (:cat, :judul, :isi, :lampiran, :status)";
         $stmt = $conn->prepare($sql);
-        $stmt->execute([
+        $sukses_create = $stmt->execute([
             ':cat' => $category_id,
             ':judul' => $judul,
             ':isi' => $isi,
             ':lampiran' => $lampiran,
             ':status' => $status
         ]);
+
+        // AMBIL ID BARU DAN TULIS LOG AKTIVITAS (CREATE)
+        if ($sukses_create) {
+            $new_article_id = $conn->lastInsertId();
+            if (function_exists('write_log')) {
+                write_log($conn, "Menambahkan artikel knowledge base baru: " . $judul, "knowledge_articles", $new_article_id);
+            }
+        }
 
         header("Location: knowledge_articles.php?msg=success_create");
         exit;

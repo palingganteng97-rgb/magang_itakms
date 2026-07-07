@@ -1,6 +1,7 @@
 <?php
-require_once __DIR__ . '/db.php';
-require_once __DIR__ . '/auth.php'; // HUBUNGKAN DENGAN AUTH.PHP UNTUK MENGAKSES FUNGSI WRITE_LOG()
+// SINKRONISASI STRUKTUR: Muat auth.php paling atas agar session global dan fungsi write_log() siap pakai
+require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/db.php'; // Memanggil koneksi database PDO asli ($conn)
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -23,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (strlen($password) < 6) $errors[] = 'Password minimal 6 karakter.';
 
     if (!$errors) {
-        // cek username/email unik
+        // Cek username/email unik
         $stmt = $conn->prepare('SELECT id FROM users WHERE username = :username OR email = :email LIMIT 1');
         $stmt->execute([':username' => $username, ':email' => $email]);
         $exists = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -31,17 +32,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($exists) {
             $errors[] = 'Username atau email sudah terdaftar.';
         } else {
-            // FIX: Mengamankan password dengan hash bcrypt (Sesuai dengan logika login.php)
+            // Mengamankan password dengan hash bcrypt (Sesuai dengan logika login.php)
             $hash = password_hash($password, PASSWORD_DEFAULT);
             $status = 1;
 
-            // FIX SINKRONISASI DB: Mengubah nama kolom 'password_hash' menjadi 'password' agar sinkron dengan user.php dan login.php
+            // Mengubah nama kolom 'password_hash' menjadi 'password' agar sinkron dengan user.php dan login.php
             $stmtIns = $conn->prepare(
                 'INSERT INTO users (nama, username, email, telepon, status, password)
                  VALUES (:nama, :username, :email, :telepon, :status, :password)'
             );
 
-            // telepon belum ada di form register => kosong
+            // Telepon belum ada di form register => kosong
             $sukses_register = $stmtIns->execute([
                 ':nama' => $nama,
                 ':username' => $username,
@@ -55,8 +56,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($sukses_register) {
                 $new_user_id = (int)$conn->lastInsertId();
                 
-                // Memicu pencatatan log registrasi pengguna baru
-                write_log($conn, "Melakukan registrasi mandiri akun baru dengan username: " . $username, "users", $new_user_id);
+                // Memicu pencatatan log registrasi pengguna baru secara aman
+                if (function_exists('write_log')) {
+                    write_log($conn, "Melakukan registrasi mandiri akun baru dengan username: " . $username, "users", $new_user_id);
+                }
             }
 
             $success = 'Registrasi berhasil. Silakan login.';

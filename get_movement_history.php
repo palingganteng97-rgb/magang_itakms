@@ -1,4 +1,12 @@
 <?php
+// MUAT PENGAMAN AUTH & RBAC TERLEBIH DAHULU
+require_once __DIR__ . '/auth.php';
+require_login(); 
+require_once __DIR__ . '/helper_rbac.php';
+
+// PROTEKSI: Memastikan peran yang sedang aktif memiliki izin membaca tabel perpindahan aset
+protect_page_by_table('asset_movements', 'R');
+
 $host     = "10.10.6.59";
 $username = "root_host";
 $password = "password";

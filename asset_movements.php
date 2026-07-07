@@ -5,6 +5,10 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
+// SISIPKAN PROTEKSI RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+protect_page_by_table('asset_movements', 'R'); // Memastikan pengguna memiliki izin baca (Read) pada tabel perpindahan aset
+
 // 1. Konfigurasi Database Kredensial Anda
 $host     = "10.10.6.59";
 $username = "root_host";

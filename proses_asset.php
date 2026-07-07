@@ -3,11 +3,13 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// =========================================================================
-// FILE PROSES BACKEND: proses_asset.php (CREATE, UPDATE & DELETE MULTI-TABEL)
-// =========================================================================
-session_start();
 require_once 'auth.php'; // HUBUNGKAN DENGAN AUTH.PHP UNTUK MENGAKSES FUNGSI WRITE_LOG()
+if (function_exists('require_login')) {
+    require_login(); // Memastikan pengguna wajib login
+}
+
+// SISIPKAN FILE UTAMA RBAC DI SINI
+require_once 'helper_rbac.php';
 
 $host     = "10.10.6.59";
 $username = "root_host";
@@ -24,12 +26,29 @@ try {
 // Menangkap nilai action, baik dari URL (GET) maupun dari Form Submit (POST)
 $action = isset($_GET['action']) ? $_GET['action'] : (isset($_POST['action']) ? $_POST['action'] : '');
 
+// =========================================================================
+// PERBAIKAN LOGIKA RBAC ASLI: Mengunci aksi manipulasi data tabel assets
+// =========================================================================
+if (!empty($action)) {
+    $table_name = 'assets'; // DIUBAH 1 PER 1: Dikunci langsung ke nama tabel database fisik Anda
+
+    if ($action === 'create') {
+        protect_page_by_table($table_name, 'C'); // Hanya Super Admin (1) & Admin IT (2)
+    } elseif ($action === 'update') {
+        protect_page_by_table($table_name, 'U'); // Super Admin (1), Admin IT (2), & Teknisi (3)
+    } elseif ($action === 'delete') {
+        protect_page_by_table($table_name, 'D'); // Hanya Super Admin (1) & Admin IT (2)
+    } else {
+        header('HTTP/1.1 403 Forbidden');
+        exit("Aksi tidak valid.");
+    }
+}
 
 // ==================== PERBAIKAN TRANSLATOR ROLE ID UTAMA ====================
-// 1. Ambil angka role_id asli dari session login (Super Admin = 1)
-$sessionRoleId = isset($_SESSION['user']['role_id']) ? (int)$_SESSION['user']['role_id'] : 4;
+// SINKRONISASI KUNCI: Menyelaraskan session key pembaca ID peran dengan file auth.php
+$sessionRoleId = isset($_SESSION['user_role_id']) ? (int)$_SESSION['user_role_id'] : (isset($_SESSION['user']['role_id']) ? (int)$_SESSION['user']['role_id'] : 4);
 
-// 2. Petakan angka ID menjadi string nama teks agar sinkron dengan matriks hak akses Anda
+// Petakan angka ID menjadi string nama teks agar sinkron dengan matriks hak akses Anda
 $roleMapping = [
     1 => 'Super Admin',
     2 => 'Admin IT',
@@ -38,11 +57,6 @@ $roleMapping = [
 ];
 
 $userRole = isset($roleMapping[$sessionRoleId]) ? $roleMapping[$sessionRoleId] : 'Viewer';
-// =========================================================================
-
-
-// =========================================================================
-// VALIDASI PROTEKSI BACKEND GLOBAL (FLEKSIBEL SEMUA OPSI ROLE)
 // =========================================================================
 
 // OPSI A: Jika role adalah 'Viewer', tolak semua aksi manipulasi data (C, U, D)

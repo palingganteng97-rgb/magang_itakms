@@ -1,18 +1,35 @@
 <?php
+// MUAT PENGAMAN AUTH & RBAC TERLEBIH DAHULU
+require_once __DIR__ . '/auth.php';
+require_login(); 
+require_once __DIR__ . '/helper_rbac.php';
+
+// PROTEKSI KETAT: Berdasarkan matriks, modul User Management hanya boleh diakses oleh Super Admin (ID 1)
+if (!isset($_SESSION['user_role_id']) || (int)$_SESSION['user_role_id'] !== 1) {
+    header('HTTP/1.1 403 Forbidden');
+    echo "<div style='font-family:sans-serif; text-align:center; margin-top:50px;'>";
+    echo "<h2>403 - Akses Ditolak</h2>";
+    echo "<p>Halaman User Management ini hanya dapat diakses oleh Super Admin.</p>";
+    echo "<a href='dashboard.php'>Kembali ke Dashboard</a>";
+    echo "</div>";
+    exit;
+}
+
 // 1. Konfigurasi Database
-$host = "10.10.6.59"; // Sesuaikan dengan IP di HeidiSQL Anda
-$username = "root_host";    // Sesuaikan username database Anda
-$password = "password";        // Sesuaikan password database Anda
+$host = "10.10.6.59"; 
+$username = "root_host";    
+$password = "password";        
 $database = "magang_itakms";
 
 try {
-    $conn = new PDO("mysql:host=$host;dbname=$database", $username, $password);
+    $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8mb4", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
     
     // 2. Query untuk mengambil data users
     $stmt = $conn->prepare("SELECT id, nama, username, email, telepon, status FROM users");
     $stmt->execute();
-    $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $users = $stmt->fetchAll();
 } catch(PDOException $e) {
     echo "Koneksi gagal: " . $e->getMessage();
     die();

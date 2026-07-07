@@ -2,6 +2,20 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
+// SISIPKAN PROTEKSI KETAT RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+
+// Berdasarkan matriks, modul Role Management hanya boleh diakses oleh Super Admin (ID 1)
+if (!isset($_SESSION['user_role_id']) || (int)$_SESSION['user_role_id'] !== 1) {
+    header('HTTP/1.1 403 Forbidden');
+    echo "<div style='font-family:sans-serif; text-align:center; margin-top:50px;'>";
+    echo "<h2>403 - Akses Ditolak</h2>";
+    echo "<p>Halaman Role Management ini hanya dapat diakses oleh Super Admin.</p>";
+    echo "<a href='dashboard.php'>Kembali ke Dashboard</a>";
+    echo "</div>";
+    exit;
+}
+
 // Database config
 $host = "10.10.6.59";
 $username = "root_host";
@@ -9,7 +23,8 @@ $password = "password";
 $database = "magang_itakms";
 
 try {
-    $conn = new PDO("mysql:host=$host;dbname=$database", $username, $password, [
+    // SINKRONISASI: Menambahkan charset=utf8mb4 agar kompatibel penuh dengan pembacaan karakter khusus
+    $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8mb4", $username, $password, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     ]);

@@ -1,4 +1,16 @@
 <?php
+// MUAT PENGAMAN AUTH & RBAC
+require_once __DIR__ . '/auth.php';
+require_login(); 
+require_once __DIR__ . '/helper_rbac.php';
+
+// PROTEKSI KETAT: Hanya Super Admin (ID 1) yang diizinkan mengintip struktur database internal
+if (!isset($_SESSION['user_role_id']) || (int)$_SESSION['user_role_id'] !== 1) {
+    header('HTTP/1.1 403 Forbidden');
+    echo "<h1>403 Forbidden</h1>Akses ditolak. Halaman ini hanya untuk Super Admin.";
+    exit;
+}
+
 require_once __DIR__ . '/db.php';
 
 try {

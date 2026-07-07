@@ -1,6 +1,10 @@
 <?php
-require_once __DIR__ . '/db.php';
-require_once __DIR__ . '/auth.php'; // HUBUNGKAN DENGAN AUTH.PHP UNTUK MENGAKSES FUNGSI WRITE_LOG()
+// SINKRONISASI STRUKTUR: Muat auth.php paling atas agar fungsi session & write_log() siap digunakan
+require_once __DIR__ . '/auth.php';
+require_login(); // Memastikan user sudah masuk ke sistem
+
+require_once __DIR__ . '/db.php';          // Memanggil koneksi database PDO asli ($conn)
+require_once __DIR__ . '/helper_rbac.php';  // Memanggil fungsi pengaman hak akses
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();

@@ -1,6 +1,7 @@
 <?php
-require_once __DIR__ . '/db.php';
-require_once __DIR__ . '/auth.php'; // HUBUNGKAN DENGAN AUTH.PHP UNTUK MENGAKSES FUNGSI WRITE_LOG()
+// SINKRONISASI STRUKTUR: Muat auth.php paling atas agar session_start() global dan fungsi write_log() siap dipakai
+require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/db.php'; // Memanggil koneksi database PDO asli ($conn)
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -10,11 +11,6 @@ header('Content-Type: text/html; charset=utf-8');
 
 $errors = [];
 $success = '';
-
-// Catatan implementasi:
-// - Karena aplikasi belum punya kolom/flow reset password (token/expiry), fitur ini hanya:
-//   *memverifikasi user ada (username/email) dan status aktif* lalu menampilkan instruksi.
-// - Anda bisa mengganti menjadi mekanisme email token jika sudah menyiapkan kolom token.
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Ambil input email (bisa diisi username atau email oleh user pada form)
@@ -43,7 +39,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $username_log = htmlspecialchars($user['username']);
             
             // Catat ke log aktivitas sistem lengkap beserta Data ID pengenal akunnya
-            write_log($conn, "Melakukan permintaan/aksi reset password untuk akun: " . $username_log, "users", $user_id);
+            if (function_exists('write_log')) {
+                write_log($conn, "Melakukan permintaan/aksi reset password untuk akun: " . $username_log, "users", $user_id);
+            }
 
             // Karena belum ada mekanisme token/email, tampilkan sukses generik.
             $success = 'Jika akun terdaftar, Anda akan menerima instruksi untuk reset password. (Demo: belum kirim email)';

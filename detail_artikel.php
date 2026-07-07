@@ -2,6 +2,10 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
+// SISIPKAN PROTEKSI RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+protect_page_by_table('knowledge_articles', 'U'); // Memastikan hanya Role 1, 2, dan 3 yang bisa mengedit artikel
+
 // =========================================================================
 // 1. KONFIGURASI DATABASE
 // =========================================================================

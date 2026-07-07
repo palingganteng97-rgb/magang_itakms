@@ -4,10 +4,10 @@ require_login();
 require_once __DIR__ . '/db.php'; // Memanggil koneksi database PDO asli ($conn)
 
 // ==================== PERBAIKAN TRANSLATOR ROLE ID UTAMA ====================
-// 1. Ambil angka role_id asli dari session login (Super Admin = 1)
-$sessionRoleId = isset($_SESSION['user']['role_id']) ? (int)$_SESSION['user']['role_id'] : 4;
+// SINKRONISASI KUNCI: Ambil langsung dari session global rbac yang diatur oleh auth.php
+$sessionRoleId = isset($_SESSION['user_role_id']) ? (int)$_SESSION['user_role_id'] : 4;
 
-// 2. Petakan angka ID menjadi string nama teks agar sinkron dengan matriks hak akses Anda
+// Petakan angka ID menjadi string nama teks agar sinkron dengan matriks hak akses Anda
 $roleMapping = [
     1 => 'Super Admin',
     2 => 'Admin IT',
@@ -32,7 +32,7 @@ $ticket_open           = 0;
 $maintenance_bulan_ini = 0;
 $checklist_hari_ini    = "0/0";
 $lisensi_habis         = 0;
-$activity_logs         = []; 
+$activity_logs         = [];
 
 // =========================================================================
 // SINKRONISASI DATA STATISTIK WIDGET MENGIKUTI FILE MODUL ASLINYA (ANTI-DUMMY)

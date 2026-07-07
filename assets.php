@@ -5,6 +5,10 @@
 require_once __DIR__ . '/auth.php';
 require_login(); // KUNCI UTAMA: Ini yang akan otomatis memicu write_log untuk assets.php
 
+// SISIPKAN PROTEKSI RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+protect_page_by_table('assets', 'R'); // Memastikan seluruh role (1, 2, 3, 4) memiliki hak akses Read ke halaman aset
+
 // =========================================================================
 // LOGIKA BACKEND: assets.php (SUDAH MEMULIHKAN DROPDOWN RUANGAN MODAL MUTASI)
 // =========================================================================

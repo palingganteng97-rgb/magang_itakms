@@ -1,20 +1,26 @@
 <?php
-// =========================================================================
-// 1. KONEKSI DATABASE & INISIALISASI (MENGGUNAKAN PDO SESUAI PROYEK ANDA)
-// =========================================================================
 require_once __DIR__ . '/auth.php';
 require_login();
 
-// Menyamakan kredensial dengan file dashboard.php Anda
+// SISIPKAN PROTEKSI RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+protect_page_by_table('knowledge_articles', 'R'); // Memastikan seluruh role memiliki hak akses membaca indeks artikel
+
+// =========================================================================
+// 1. KONFIGURASI DATABASE & PROSES CRUD
+// =========================================================================
 $host = "10.10.6.59";
 $username = "root_host";
 $password = "password";
 $database = "magang_itakms";
 
-$currentPage = 'maintenance.php';
+// Paginasi
+$perPage = 50;
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$offset = ($page - 1) * $perPage;
 
 try {
-    $conn = new PDO("mysql:host=$host;dbname=$database", $username, $password);
+    $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8mb4", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // =========================================================================

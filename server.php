@@ -2,6 +2,10 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
+// SISIPKAN PROTEKSI RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+protect_page_by_table('servers', 'R'); // Memastikan seluruh role memiliki hak akses membaca indeks data server
+
 // Menggunakan koneksi database terpusat proyek Anda
 require_once __DIR__ . '/db.php'; 
 

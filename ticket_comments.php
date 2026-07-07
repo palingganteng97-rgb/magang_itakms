@@ -9,6 +9,12 @@ require_once __DIR__ . '/auth.php';
 require_login();
 require_once __DIR__ . '/db.php'; 
 
+// SISIPKAN FILE UTAMA RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+
+// PROTEKSI HALAMAN UTAMA: Memastikan peran memiliki izin baca pada modul komentar tiket
+protect_page_by_table('ticket_comments', 'R');
+
 // 3. LOGIKA VALIDASI PARAMETER ID TIKET DI URL (?id=...)
 $ticket_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
@@ -47,10 +53,23 @@ try {
     }
 
     // Pengaman tambahan khusus: jika session macet di ID 1 padahal tiket ini milik pelapor ID 2
-    // Serta login name terdeteksi bukan admin utama (untuk berjaga-jaga sistem multi-login Anda)
     if ($current_user_id == 1 && isset($ticket['pelapor']) && $ticket['pelapor'] == 2) {
-        // Jika sistem mencurigai Anda sedang membuka browser dari akun user ID 2 biasa, rekam sebagai 2
         $current_user_id = 2; 
+    }
+
+    // =========================================================================
+    // PROTEKSI KETAT RBAC: Kriteria "Create + Read Milik Sendiri" khusus Viewer (ID 4)
+    // =========================================================================
+    if (isset($_SESSION['user_role_id']) && (int)$_SESSION['user_role_id'] === 4) {
+        if ((int)$ticket['pelapor'] !== (int)$current_user_id) {
+            header('HTTP/1.1 403 Forbidden');
+            echo "<div style='font-family:sans-serif; text-align:center; margin-top:50px;'>";
+            echo "<h2>403 - Akses Ditolak</h2>";
+            echo "<p>Sebagai Viewer, Anda hanya diizinkan berdiskusi pada Tiket aduan milik Anda sendiri.</p>";
+            echo "<a href='dashboard.php'>Kembali ke Dashboard</a>";
+            echo "</div>";
+            exit;
+        }
     }
 
     // 5. PERBAIKAN LOGIKA PROSES SIMPAN (INSERT) ATAU PERBAIKAN EDIT PESAN (UPDATE)
@@ -64,6 +83,9 @@ try {
             // ==========================================
             // JALUR A: LOGIKA EDIT PESAN LAMA (UPDATE)
             // ==========================================
+            // Proteksi Aksi Update Komentar: Memastikan peran diizinkan melakukan pembaharuan data
+            protect_page_by_table('ticket_comments', 'U');
+
             if (!empty($message)) {
                 $stmtUpdate = $db->prepare("UPDATE ticket_comments SET komentar = :comment WHERE id = :edit_id AND ticket_id = :ticket_id");
                 $stmtUpdate->execute([
@@ -72,7 +94,6 @@ try {
                     ':ticket_id' => $ticket_id
                 ]);
                 
-                // Segarkan halaman agar hasil editan langsung tampil di balon chat
                 header("Location: ticket_comments.php?id=" . $ticket_id);
                 exit;
             }
@@ -80,6 +101,9 @@ try {
             // ==========================================
             // JALUR B: LOGIKA KIRIM CHAT BARU (INSERT)
             // ==========================================
+            // Proteksi Aksi Create Komentar: Memastikan peran diizinkan menambah data aduan (Semua peran lolos)
+            protect_page_by_table('ticket_comments', 'C');
+
             $nama_file_db = null; 
 
             // Logika Pemeriksaan Berkas File Lampiran
@@ -119,6 +143,10 @@ try {
 
     // ─── LOGIKA PROSES HAPUS DISKUSI DAN LAMPIRAN FILE FISIK (GET) ───
     if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['comment_id'])) {
+        
+        // Proteksi Aksi Delete Komentar: Memastikan peran diizinkan melakukan penghapusan data
+        protect_page_by_table('ticket_comments', 'D');
+
         $comment_id = (int)$_GET['comment_id'];
 
         $stmtFile = $db->prepare("SELECT lampiran FROM ticket_comments WHERE id = :comment_id AND ticket_id = :ticket_id");

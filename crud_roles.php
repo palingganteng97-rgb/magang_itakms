@@ -5,12 +5,13 @@
 require_once __DIR__ . '/auth.php';
 
 // Jika ingin proteksi ketat: pastikan hanya admin/login yang boleh akses.
-// Di project ini, auth.php biasanya berisi helper require_login().
 if (function_exists('require_login')) {
     require_login();
 }
 
 require_once __DIR__ . '/db.php';
+// MUAT HELPER RBAC UNTUK VALIDASI AJAX
+require_once __DIR__ . '/helper_rbac.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -21,6 +22,11 @@ function respond(bool $ok, string $message = '', mixed $data = null): void {
         'data' => $data,
     ]);
     exit;
+}
+
+// PROTEKSI KETAT RBAC KHUSUS API JSON: Hanya Super Admin (ID 1) yang diizinkan mengelola data Role
+if (!isset($_SESSION['user_role_id']) || (int)$_SESSION['user_role_id'] !== 1) {
+    respond(false, 'Akses ditolak. Anda tidak memiliki izin untuk mengelola data peran.');
 }
 
 $action = $_POST['action'] ?? '';

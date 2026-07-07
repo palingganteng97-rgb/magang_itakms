@@ -2,14 +2,18 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
+// SISIPKAN PROTEKSI RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+protect_page_by_table('tickets', 'R'); // Memastikan seluruh role memiliki hak akses membaca indeks daftar tiket
+
 // 1. Konfigurasi Database sesuai dashboard Anda
 $host = "10.10.6.59";
 $username = "root_host";
 $password = "password";
 $database = "magang_itakms";
 
-// Ambil role user dinamis dari session login asli Anda beserta ID-nya
-$userRole = isset($_SESSION['user']['role']) ? $_SESSION['user']['role'] : 'Viewer';
+// SINKRONISASI KUNCI: Gunakan ID angka (1=Super Admin, 2=Admin IT, 3=Teknisi, 4=Viewer) sesuai helper_rbac.php
+$sessionRoleId = isset($_SESSION['user_role_id']) ? (int)$_SESSION['user_role_id'] : 4;
 $current_user_id = $_SESSION['user']['id'] ?? 0;
 
 // Pagination
@@ -24,7 +28,8 @@ $users = [];
 $totalPages = 1;
 
 try {
-    $conn = new PDO("mysql:host=$host;dbname=$database", $username, $password);
+    // SINKRONISASI: Menambahkan charset=utf8mb4 agar kompatibel penuh dengan pembacaan karakter khusus
+    $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8mb4", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // Ambil data untuk dropdown Form (Tambah/Edit)
@@ -32,16 +37,16 @@ try {
     $users = $conn->query("SELECT id, username FROM users")->fetchAll(PDO::FETCH_ASSOC);
 
     // =========================================================================
-    // LOGIKA PENYARINGAN DATA SESUAI MATRIKS (DINAMIS UNTUK VIEWERS)
+    // LOGIKA PENYARINGAN DATA SESUAI MATRIKS (DINAMIS UNTUK VIEWERS - ID 4)
     // =========================================================================
-    if ($userRole === 'Viewer') {
-        // Opsi Viewers: Hitung total tiket MILIK SENDIRI saja
+    if ($sessionRoleId === 4) {
+        // Opsi Viewers (ID 4): Hitung total tiket MILIK SENDIRI saja
         $stmtCount = $conn->prepare("SELECT COUNT(*) FROM tickets WHERE pelapor = :user_id");
         $stmtCount->execute([':user_id' => $current_user_id]);
         $totalTickets = $stmtCount->fetchColumn();
         $totalPages = max(1, ceil($totalTickets / $perPage));
 
-        // PERBAIKAN: Mengubah u.nama menjadi u.username agar tidak error (disesuaikan dengan isi tabel users Anda)
+        // Ambil data tiket milik sendiri saja
         $query = "SELECT t.*, u.username AS nama_pelapor, ut.username AS nama_teknisi 
                   FROM tickets t 
                   LEFT JOIN users u ON t.pelapor = u.id 
@@ -53,12 +58,12 @@ try {
         $stmt = $conn->prepare($query);
         $stmt->bindValue(':user_id', $current_user_id, PDO::PARAM_INT);
     } else {
-        // Opsi Admin/Teknisi: Hitung total SEMUA tiket masuk
+        // Opsi Super Admin/Admin IT/Teknisi: Hitung total SEMUA tiket masuk
         $stmtCount = $conn->query("SELECT COUNT(*) FROM tickets");
         $totalTickets = $stmtCount->fetchColumn();
         $totalPages = max(1, ceil($totalTickets / $perPage));
 
-        // PERBAIKAN: Mengubah u.nama menjadi u.username
+        // Ambil seluruh data tiket masuk di sistem
         $query = "SELECT t.*, u.username AS nama_pelapor, ut.username AS nama_teknisi 
                   FROM tickets t 
                   LEFT JOIN users u ON t.pelapor = u.id 

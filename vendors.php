@@ -2,6 +2,10 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
+// SISIPKAN PROTEKSI RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+protect_page_by_table('vendors', 'R'); // Memastikan seluruh role memiliki hak akses membaca indeks data vendor
+
 // 1. Konfigurasi Database
 $host = "10.10.6.59";
 $username = "root_host";
@@ -14,7 +18,8 @@ $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $offset = ($page - 1) * $perPage;
 
 try {
-    $conn = new PDO("mysql:host=$host;dbname=$database", $username, $password);
+    // SINKRONISASI: Menambahkan charset=utf8mb4 agar kompatibel penuh dengan pembacaan karakter khusus
+    $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8mb4", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // 2. Ambil parameter pencarian jika ada (Opsional untuk fitur Cari Vendor)

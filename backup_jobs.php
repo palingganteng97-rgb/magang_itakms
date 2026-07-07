@@ -7,6 +7,9 @@ require_once __DIR__ . '/auth.php';
 require_login(); 
 require_once __DIR__ . '/db.php'; 
 
+// SISIPKAN FILE UTAMA RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+
 $currentPage = 'backup_jobs.php';
 
 $message = '';
@@ -16,6 +19,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     // === PROSES TAMBAH DATA (CREATE) ===
     if (isset($_POST['action']) && $_POST['action'] == 'create') {
+        
+        // PROTEKSI KHUSUS CREATE: Pastikan hanya Role_ID 1 & 2 yang diizinkan menambah data baru
+        protect_page_by_table('backup_jobs', 'C');
+
         $server_id = $_POST['server_id'];
         $lokasi    = $_POST['lokasi'];
         $jadwal    = $_POST['jadwal'];

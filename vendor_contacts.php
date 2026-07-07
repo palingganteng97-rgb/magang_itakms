@@ -2,6 +2,10 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
+// SISIPKAN PROTEKSI RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+protect_page_by_table('vendors', 'R'); // Memastikan seluruh role (1, 2, 3, 4) memiliki hak akses baca (Read) ke data vendor
+
 $host = "10.10.6.59";
 $username = "root_host";
 $password = "password";
@@ -12,7 +16,8 @@ $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $offset = ($page - 1) * $perPage;
 
 try {
-    $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8", $username, $password);
+    // SINKRONISASI: Mengubah charset menjadi utf8mb4 agar kompatibel penuh dengan pembacaan karakter khusus
+    $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8mb4", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // 1. Ambil data dropdown vendor (Hanya kolom yang dibutuhkan agar hemat memori RAM)
@@ -23,7 +28,6 @@ try {
     $totalPages = ceil($totalRows / $perPage);
 
     // 3. OPTIMASI UTAMA: Ambil ID Kontak terlebih dahulu dengan teknik Subquery Indexing
-    // Cara ini memangkas beban pencarian teks JOIN yang lambat di awal
     $sql = "SELECT vc.id, vc.vendor_id, vc.nama, vc.jabatan, vc.telepon, vc.email, v.nama AS nama_vendor 
             FROM (
                 SELECT id FROM vendor_contacts ORDER BY id DESC LIMIT :limit OFFSET :offset

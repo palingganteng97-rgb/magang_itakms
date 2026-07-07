@@ -2,6 +2,10 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
+// SISIPKAN PROTEKSI RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+protect_page_by_table('knowledge_articles', 'U'); // Memblokir peran Viewer (ID 4) dari hak akses edit
+
 // 1. Tangkap parameter ID artikel yang akan diedit dari URL
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if ($id <= 0) {

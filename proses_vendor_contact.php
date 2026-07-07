@@ -3,13 +3,36 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
+// SISIPKAN FILE UTAMA RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+
 $host = "10.10.6.59";
 $username = "root_host";
 $password = "password";
 $database = "magang_itakms";
 
+// Menangkap nilai action, baik dari parameter POST maupun URL (GET)
+$action = isset($_POST['action']) ? $_POST['action'] : (isset($_GET['action']) ? $_GET['action'] : '');
+
+// =========================================================================
+// PERBAIKAN LOGIKA RBAC ASLI: Mengunci aksi manipulasi data kontak vendor
+// =========================================================================
+if (!empty($action)) {
+    // Dipetakan langsung ke modul vendor di database Anda
+    $table_name = 'vendors'; 
+
+    if ($action === 'add_contact' || $action === 'create') {
+        protect_page_by_table($table_name, 'C'); // Hanya Super Admin (1) & Admin IT (2) yang lolos
+    } elseif ($action === 'edit_contact' || $action === 'update') {
+        protect_page_by_table($table_name, 'U'); // Hanya Super Admin (1) & Admin IT (2) yang lolos
+    } elseif ($action === 'delete_contact' || $action === 'delete') {
+        protect_page_by_table($table_name, 'D'); // Hanya Super Admin (1) & Admin IT (2) yang lolos
+    }
+}
+
 try {
-    $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8", $username, $password);
+    // SINKRONISASI: Mengubah charset menjadi utf8mb4 agar kompatibel penuh dengan pembacaan karakter khusus
+    $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8mb4", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
     die("Koneksi database gagal: " . $e->getMessage());
@@ -18,10 +41,10 @@ try {
 // 2. LOGIKA TAMBAH DATA (CREATE CONTACT)
 if (isset($_POST['action']) && $_POST['action'] == 'add_contact') {
     $vendor_id = (int)$_POST['vendor_id'];
-    $nama      = trim($_POST['nama']);
-    $jabatan   = trim($_POST['jabatan']);
-    $telepon   = trim($_POST['telepon']);
-    $email     = trim($_POST['email']);
+    $nama      = trim($_POST['nama'] ?? '');
+    $jabatan   = trim($_POST['jabatan'] ?? '');
+    $telepon   = trim($_POST['telepon'] ?? '');
+    $email     = trim($_POST['email'] ?? '');
 
     // Validasi input wajib sesuai skema database (vendor_id dan nama tidak boleh kosong)
     if (empty($vendor_id) || empty($nama)) {

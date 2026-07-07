@@ -2,6 +2,11 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
+// SISIPKAN PROTEKSI RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+// Menggunakan aksi 'Master' (Simbol Mata 👀) agar seluruh peran (1, 2, 3, 4) diizinkan membaca komponen pendukung aset
+protect_page_by_table('asset_statuses', 'Master'); 
+
 // 1. KONFIGURASI KONEKSI DATABASE UTAMA
 $host = "10.10.6.59";
 $username = "root_host";

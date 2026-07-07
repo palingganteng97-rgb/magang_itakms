@@ -3,9 +3,12 @@
 require_once __DIR__ . '/auth.php';
 require_login();
 
+// SISIPKAN FILE UTAMA RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+
 // ==================== PERBAIKAN TRANSLATOR ROLE ID UTAMA ====================
 // Ambil angka role_id asli dari session login (Super Admin = 1)
-$sessionRoleId = isset($_SESSION['user']['role_id']) ? (int)$_SESSION['user']['role_id'] : 4;
+$sessionRoleId = isset($_SESSION['user_role_id']) ? (int)$_SESSION['user_role_id'] : (isset($_SESSION['user']['role_id']) ? (int)$_SESSION['user']['role_id'] : 4);
 
 // Petakan angka ID menjadi string nama teks agar sinkron dengan matriks hak akses Anda
 $roleMapping = [
@@ -24,18 +27,32 @@ $username = "root_host";
 $password = "password";
 $database = "magang_itakms";
 
+// Menangkap nilai action dari parameter request form (POST/GET)
+$action = isset($_GET['action']) ? $_GET['action'] : (isset($_POST['action']) ? $_POST['action'] : '');
+
+// =========================================================================
+// PERBAIKAN LOGIKA RBAC ASLI: Mengunci aksi manipulasi data tabel tickets
+// =========================================================================
+if (!empty($action)) {
+    $table_name = 'tickets'; // Dikunci langsung ke nama tabel database fisik Anda
+
+    if ($action === 'tambah_ticket' || $action === 'create') {
+        protect_page_by_table($table_name, 'C'); // Semua peran (1, 2, 3, 4) lolos untuk membuat tiket
+    } elseif ($action === 'edit_ticket' || $action === 'update') {
+        protect_page_by_table($table_name, 'U'); // Super Admin (1), Admin IT (2), & Teknisi (3) lolos
+    } elseif ($action === 'hapus_ticket' || $action === 'delete') {
+        protect_page_by_table($table_name, 'D'); // Hanya Super Admin (1), Admin IT (2), & Teknisi (3) lolos. Viewer (4) di-block!
+    }
+}
+
 try {
     // Menggunakan koneksi PDO sesuai dashboard utama Anda
-    $conn = new PDO("mysql:host=$host;dbname=$database", $username, $password);
+    $conn = new PDO("mysql:host=$host;dbname=$database;charset=utf8mb4", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // Ambil parameter aksi dari URL form
     $action = $_GET['action'] ?? '';
 
-    // =========================================================================
-    // VALIDASI PROTEKSI HAK AKSES OPERASIONAL TIKET
-    // =========================================================================
-    
     // Skenario A: Viewer dilarang keras melakukan aksi UPDATE atau DELETE tiket secara global
     if ($userRole === 'Viewer' && in_array($action, ['update', 'delete', 'edit'])) {
         if (function_exists('write_log')) {

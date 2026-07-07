@@ -7,10 +7,16 @@ require_once __DIR__ . '/auth.php';
 require_login(); 
 require_once __DIR__ . '/db.php'; 
 
+// SISIPKAN FILE UTAMA RBAC DI SINI
+require_once __DIR__ . '/helper_rbac.php';
+
 $currentPage = 'sop_categories.php';
 
 $message = '';
 $message_type = '';
+
+// PROTEKSI HALAMAN UTAMA: Memastikan peran memiliki akses baca ke modul SOP Categories (Semua peran lolos)
+protect_page_by_table('sop_categories', 'R');
 
 // TRIGGER LOG OTOMATIS GLOBAL: Mencatat log kunjungan halaman
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['delete'])) {
@@ -21,6 +27,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     // === PROSES TAMBAH KATEGORI ===
     if (isset($_POST['action']) && $_POST['action'] == 'create') {
+        
+        // PROTEKSI KHUSUS CREATE: Hanya Super Admin (1) & Admin IT (2) yang diizinkan menambah
+        protect_page_by_table('sop_categories', 'C');
+
         $nama = $_POST['nama'];
 
         try {
@@ -44,6 +54,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // === PROSES UBAH KATEGORI ===
     if (isset($_POST['action']) && $_POST['action'] == 'update') {
+        
+        // PROTEKSI KHUSUS UPDATE: Hanya Super Admin (1) & Admin IT (2) yang diizinkan mengubah
+        protect_page_by_table('sop_categories', 'U');
+
         $id = $_POST['id'];
         $nama = $_POST['nama'];
 
@@ -68,6 +82,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 // === PROSES HAPUS KATEGORI ===
 if (isset($_GET['delete'])) {
+    
+    // PROTEKSI KHUSUS DELETE: Hanya Super Admin (1) & Admin IT (2) yang diizinkan menghapus
+    protect_page_by_table('sop_categories', 'D');
+
     $id = $_GET['delete'];
     
     try {
