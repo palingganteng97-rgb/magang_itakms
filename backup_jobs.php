@@ -660,6 +660,20 @@ try {
   </div>
 </div>
 
+<script>
+// INTERAKSI DOM DAN SINKRONISASI POSISI SCROLL SIDEBAR UTAMA (KUNCI ABSOLUT)
+document.addEventListener("DOMContentLoaded", function() {
+    const menuContainer = document.querySelector('.menu-scroll-container');
+    const activeMenu = document.querySelector('.menu-scroll-container .active-style');
+    
+    // FIX MUTLAK: Selalu menetap mengunci fokus menu aktif saat halaman selesai dimuat (klik / reload)
+    if (menuContainer && activeMenu) {
+        const activeOffsetTop = activeMenu.offsetTop;
+        menuContainer.scrollTop = activeOffsetTop - 20;
+    }
+});
+</script>
+
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

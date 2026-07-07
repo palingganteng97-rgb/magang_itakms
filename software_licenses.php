@@ -552,11 +552,6 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
-/**
- * Mengatur isi form pada Modal Tambah / Ubah Lisensi
- * @param {string} mode - Berisi nilai 'create' atau 'update'
- * @param {Object|null} data - Objek data lisensi dari database jika modenya 'update'
- */
 function setupModal(mode, data = null) {
     document.getElementById('form_action').value = mode;
 
@@ -583,11 +578,6 @@ function setupModal(mode, data = null) {
     }
 }
 
-/**
- * Mengirimkan data ID dan Nama Software ke Modal Konfirmasi Hapus
- * @param {number|string} id - ID baris lisensi yang akan dihapus
- * @param {string} nama - Nama software yang akan dihapus untuk teks konfirmasi
- */
 function setupDeleteModal(id, nama) {
     document.getElementById('delete_form_id').value = id;
     document.getElementById('delete_software_name').innerText = nama;

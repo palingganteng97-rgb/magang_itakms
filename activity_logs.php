@@ -170,7 +170,7 @@ try {
                 margin-left: 280px !important;
                 width: calc(100% - 280px) !important;
                 min-height: 100vh !important;
-                display: block !important; /* Kembalikan sifat block di laptop */
+                display: block !important; 
             }
             .offcanvas-backdrop, .offcanvas-backdrop.show {
                 display: none !important;
@@ -181,39 +181,48 @@ try {
         }
 
         /* ==================================================== */
-        /* CONFIG LAYOUT MOBILE / HP (Lebar Layar < 768px)     */
+        /* CONFIG LAYOUT MOBILE / HP (Lebar Layar < 768px)      */
         /* ==================================================== */
         @media (max-width: 767.98px) {
             body {
                 overflow: auto !important;
                 position: relative !important;
-                display: block !important; /* Hancurkan flexbox desktop di HP */
+                display: block !important; 
             }
-            /* Kunci container induk luar agar di HP melepas kuncian flex */
             .d-md-flex {
                 display: block !important; 
             }
-            .sidebar-fixed {
+            
+            /* SOLUSI UTAMA SCROLL MOBILE: Paksa buka akses overflow-y scroll di tingkat paling luar laci */
+            .offcanvas-md.sidebar-fixed {
                 position: fixed !important;
                 width: 280px !important;
                 height: 100vh !important;
+                max-height: 100vh !important;
+                overflow-y: scroll !important; 
+                overflow-x: hidden !important;
+                -webkit-overflow-scrolling: touch !important; 
             }
+            
+            /* Biarkan kontainer dalam memanjang alami mengikuti scroll luar */
             .menu-scroll-container {
                 max-height: none !important;
-                overflow-y: visible !important;
+                height: auto !important;
+                overflow: visible !important;
+                display: block !important;
             }
-            /* SOLUSI UTAMA: Hancurkan pembatasan tinggi pendek di HP */
+            
             .main-content {
                 width: 100% !important;
                 margin-left: 0 !important;
-                min-height: calc(100vh - 70px) !important; /* Ambil sisa tinggi layar HP */
+                min-height: calc(100vh - 70px) !important; 
                 display: block !important;
-                height: auto !important; /* Biarkan memanjang alami mengikuti jumlah data tabel */
+                height: auto !important; 
             }
             .offcanvas-backdrop.show {
                 display: block !important;
-                opacity: 0 !important;
-                background-color: transparent !important;
+                opacity: 0.5 !important;
+                background-color: #000000 !important;
                 visibility: visible !important;
             }
         }
@@ -254,6 +263,16 @@ try {
         }
     </style>
 
+    <style>
+    .card-clickable {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card-clickable:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
+    }
+    </style>
+
 </head>
 <body>
 
@@ -286,12 +305,10 @@ try {
       <i class="bi bi-speedometer2 me-2"></i> ITAKMS
   </h4>
   
-  <!-- 3. AREA MENU TENGAH (Otomatis & Fleksibel untuk Semua Opsi Berbasis Fungsi PHP) -->
+  <!-- 3. AREA MENU TENGAH -->
   <?php
-  // Ambil nama file yang sedang aktif saat ini secara real-time
   $currentFile = basename($_SERVER['PHP_SELF']);
 
-  // Fungsi pintar untuk otomatis mencetak class 'active-style' jika nama file cocok
   if (!function_exists('checkActiveMenu')) {
       function checkActiveMenu($targetFile, $currentFile) {
           return ($currentFile === $targetFile) ? 'active-style' : '';
@@ -299,7 +316,13 @@ try {
   }
   ?>
   
-<?php include __DIR__ . '/sidebar.php'; ?>
+  <div class="menu-scroll-container flex-grow-1 w-100">
+      <ul class="nav flex-column mb-auto list-unstyled w-100">
+          <?php include __DIR__ . '/sidebar.php'; ?>
+      </ul>
+  </div>
+
+</div>
 
 <!-- AREA UTAMA KONTEN -->
 <main class="col-md-8 ms-sm-auto col-lg-9 px-md-4 pt-4 offset-md-4 offset-lg-3">
@@ -508,7 +531,19 @@ function prepareUpdate(id, nama) {
     document.getElementById('categoryName').value = nama;
 }
 </script>
-
+<script>
+// INTERAKSI DOM DAN SINKRONISASI POSISI SCROLL SIDEBAR UTAMA (KUNCI ABSOLUT)
+document.addEventListener("DOMContentLoaded", function() {
+    const menuContainer = document.querySelector('.menu-scroll-container');
+    const activeMenu = document.querySelector('.menu-scroll-container .active-style');
+    
+    // FIX MUTLAK: Selalu menetap mengunci fokus menu aktif saat halaman selesai dimuat (klik / reload)
+    if (menuContainer && activeMenu) {
+        const activeOffsetTop = activeMenu.offsetTop;
+        menuContainer.scrollTop = activeOffsetTop - 20;
+    }
+});
+</script>
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

@@ -732,36 +732,6 @@ document.addEventListener("click", function(t) {
     }
 });
 
-// INTERAKSI DOM DAN SINKRONISASI POSISI SCROLL SIDEBAR UTAMA
-document.addEventListener("DOMContentLoaded", function() {
-    // -------------------------------------------------------------
-    // FIX UTAMA: FITUR AUTO-SCROLL UNTUK MENETAPKAN FOKUS MENU
-    // -------------------------------------------------------------
-    const menuContainer = document.querySelector('.menu-scroll-container');
-    const activeMenu = document.querySelector('.menu-scroll-container .active-style');
-    
-    if (menuContainer && activeMenu) {
-        // Hitung jarak vertikal opsi menu aktif dari atap pembungkus sidebar
-        const activeOffsetTop = activeMenu.offsetTop;
-        
-        // Gulung otomatis kontainer ke menu tersebut dan beri jarak aman 20px dari atas
-        menuContainer.scrollTop = activeOffsetTop - 20;
-    }
-
-    // AKSI INTERAKTIF TOMBOL MATA UNTUK MENGINTIP KATA SANDI
-    const togglePasswordBtn = document.getElementById('togglePassword');
-    const passwordInput = document.getElementById('userPassword');
-    const passwordIcon = document.getElementById('togglePasswordIcon');
-    if (togglePasswordBtn && passwordInput && passwordIcon) {
-        togglePasswordBtn.addEventListener('click', function() {
-            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordInput.setAttribute('type', type);
-            passwordIcon.classList.toggle('bi-eye');
-            passwordIcon.classList.toggle('bi-eye-slash');
-        });
-    }
-});
-
 // LOGIKA RESET INPUT FORMULIR (TAMBAH USER BARU)
 window.clearForm = function() {
     const form = document.getElementById('userForm'); if (form) form.reset();
